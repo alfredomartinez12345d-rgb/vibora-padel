@@ -2,7 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Resultados, cuadros, ranking y mapa del circuito de pádel profesional.">
+<meta name="theme-color" content="#0a0c1c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Víbora">
 <title>Víbora Pádel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
@@ -251,6 +260,20 @@ nav.bot a[aria-current="page"]{box-shadow:0 6px 20px -4px rgba(110,110,255,.6)}
 .mpanel .tres .tx span{margin-top:2px}
 .mpanel .tres .tx span.dot{display:inline-block;margin-top:0}
 .mpanel .tres .tx .pill{display:inline;margin-left:4px;vertical-align:2px}
+
+/* ---------- App instalable y apoyo ---------- */
+header.top{padding-top:calc(16px + env(safe-area-inset-top))}
+nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
+.inst{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;border-color:rgba(61,214,245,.4);background:linear-gradient(135deg,rgba(61,214,245,.16),var(--surface) 60%)}
+.inst img{width:52px;height:52px;border-radius:14px;box-shadow:0 6px 18px -6px rgba(0,0,0,.8)}
+.inst b{display:block;font-family:var(--display);font-size:22px;line-height:1.1}
+.inst .sub{font-size:13px}
+.inst .row2{grid-column:1/-1;display:flex;gap:8px}
+.btn.pri{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 6px 18px -6px rgba(110,110,255,.7)}
+.apoyo{border-color:rgba(255,197,61,.35);background:linear-gradient(135deg,rgba(255,197,61,.14),var(--surface) 60%)}
+.apoyo .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.apoyo .btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.shop{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:600}
 </style>
 </head>
 <body>
@@ -432,6 +455,29 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
 
+/* ---------- Apoyo y afiliados: pon aquí tus enlaces para activarlos (vacío = no se muestra) ---------- */
+const APOYO={
+  donar:'',                       // p. ej. 'https://ko-fi.com/tu-usuario' o tu página de Buy Me a Coffee
+  tienda:'',                      // tu enlace de afiliado a una tienda de pádel (Amazon, Padel Nuestro…)
+  tiendaTexto:'Palas y material de pádel'
+};
+const safeUrl=u=>/^https:\/\/[^\s"'<>]+$/.test(u||'')?u:'';
+function apoyoCard(){const d=safeUrl(APOYO.donar),t=safeUrl(APOYO.tienda);if(!d&&!t)return '';
+  return `<section><div class="card apoyo"><h2><span class="gold">♥</span> Apoya Víbora</h2><p class="sub" style="margin-top:6px">Víbora es gratis y sin anuncios. Si te es útil, puedes ayudar a mantenerla.</p><div class="row2">${d?`<a class="btn pri" href="${d}" target="_blank" rel="noopener">☕ Invítame a un café</a>`:''}${t?`<a class="btn" href="${t}" target="_blank" rel="sponsored noopener">🎾 ${APOYO.tiendaTexto}</a>`:''}</div>${t?'<p class="sub" style="margin-top:10px;font-size:12px">El enlace de la tienda es de afiliado: si compras, Víbora recibe una pequeña comisión sin que a ti te cueste más.</p>':''}</div></section>`}
+function shopLink(){const t=safeUrl(APOYO.tienda);return t?`<a class="card shop" href="${t}" target="_blank" rel="sponsored noopener"><span>🎾 ${APOYO.tiendaTexto}<span class="sub" style="display:block;font-weight:400;font-size:12px">Enlace de afiliado</span></span><span class="back">Ver ›</span></a>`:''}
+
+/* ---------- App instalable ---------- */
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+let instEv=null,instHide=false;
+try{instHide=localStorage.getItem('vibora-inst')==='no'}catch(e){}
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;if(route().v==='inicio'){document.getElementById('app').className='noanim';render()}});
+window.addEventListener('appinstalled',()=>{instEv=null;instHide=true;render()});
+function installCard(){if(standalone()||instHide||(!instEv&&!isIOS))return '';
+  const how=instEv?'Tenla en tu pantalla de inicio como una app y consúltala aunque no tengas cobertura.':'En Safari, toca <b style="display:inline;font:inherit;font-weight:700">Compartir</b> y luego <b style="display:inline;font:inherit;font-weight:700">Añadir a pantalla de inicio</b>.';
+  return `<div class="card inst"><img src="icon-192.png" alt=""><div><b>Instala Víbora</b><span class="sub">${how}</span></div><div class="row2">${instEv?'<button type="button" class="btn pri" data-inst="go">Instalar</button>':''}<button type="button" class="btn" data-inst="no">${instEv?'Ahora no':'Entendido'}</button></div></div>`}
+
 /* ---------- Vistas ---------- */
 let cat='men',rankTab='ofi',hA=null,hB=null,tView='br',brStart=0,duelTab='jug',sim=[];
 const inCat=m=>m.cat===cat;
@@ -465,7 +511,7 @@ inicio(){const nt=nextT(),last=lastPremier();
   const favS=fl.length?`<section><div class="card"><h2><span class="gold">★</span> Tus favoritos</h2>${fl.map(i=>{const x=playerMatches(i).slice(-1)[0];return pline(i,`<span class="chip ${eloDelta(P[i])>=0?'up':'down'}">${Math.round(P[i].elo)}</span>`,x?`${x.won?'Ganó':'Perdió'} ${scoreStr(x.m,x.s)} · ${tb(x.m.t).name}`:'Sin partidos con resultado')}).join('')}</div></section>`:'';
   const lt=T.find(t=>t.status==='live'&&M.some(m=>m.t===t.id&&inCat(m)&&m.st===3));
   const links=`<div class="links"><a href="#records">Récords y curiosidades<span>Remontadas, tie-breaks, matagigantes</span></a>${lt?`<a href="#torneo-${lt.id}" data-tv="qn">Quiniela<span>Rellena el cuadro de ${lt.loc}</span></a>`:`<a href="#h2h" data-duel="sim">Simulador<span>¿Quién ganaría?</span></a>`}</div>`;
-  return `${count}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${NOTE}`},
+  return `${count}${installCard()}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${apoyoCard()}${NOTE}`},
 torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div class="list">${T.slice().sort((a,b)=>a.start<b.start?1:-1).map(t=>{
   const fl=flag(isoOf(t.country)||(geoOf(t)||{}).iso),head=`<b>${fl?fl+' ':''}${t.name}</b><span class="sub">${lvp(t)} ${tinfo(t)}</span>`;
   if(t.hidden)return `<div class="trow off" ${lvs(t)}><span>${head}<span class="sub">Resultados fuera del plan gratuito de datos</span></span></div>`;
@@ -549,7 +595,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   ${fin.length?`<section><div class="card"><h2>Hasta dónde llega</h2><div class="donut" style="margin-top:10px">${donut(parts,fin.length)}<div class="lg">${parts.map(x=>`<div><i style="background:${x.c}"></i>${x.l}<span>${x.n} · ${Math.round(100*x.n/fin.length)}%</span></div>`).join('')}</div></div>
   <div style="margin-top:8px">${res.map(x=>`<a class="tres" href="#partido-${x.m.id}"><span class="tx"><b>${x.t.name}</b> <span class="pill ${x.champ?'hot':x.lvl<0?'next':''}">${x.champ?'Ganó':x.lvl<0?'Sigue en juego':'Llegó a '+RL[x.m.round]}</span><span>vs ${pl(x.s?x.m.a:x.m.b)}</span></span><span class="rs ${x.champ?'gold':x.won?'up':'down'}">${scoreStr(x.m,x.s)}</span></a>`).join('')}</div></div></section>`:''}
   <section><div class="card"><h2>Con cada compañero</h2><table><thead><tr><th>Compañero</th><th>V-D</th><th>% vict.</th><th>Química</th></tr></thead><tbody>${[...partners].map(([q,xs])=>{const rr=rec(xs),ex=xs.reduce((n,x)=>n+(x.m.pre!=null?(x.s?1-x.m.pre:x.m.pre):0.5),0),d=rr.w-ex;return `<tr><td><a href="#pareja-${key([id,q])}">${P[q].name}</a></td><td>${rr.w}-${rr.l}</td><td>${pct(rr)}</td><td class="${d>=0.5?'up':d<=-0.5?'down':''}">${d>=0?'+':'−'}${Math.abs(d).toFixed(1)}</td></tr>`}).join('')||'<tr><td>Sin partidos con resultado</td><td></td><td></td><td></td></tr>'}</tbody></table><p class="sub">Química: victorias de más o de menos respecto a lo que pronosticaba el Elo.</p></div></section>
-  <section><div class="card"><h2>Según la pista</h2><table><thead><tr><th>Condición</th><th>V-D</th><th>% vict.</th></tr></thead><tbody><tr><td>Indoor</td><td>${inR.w}-${inR.l}</td><td>${pct(inR)}</td></tr><tr><td>Outdoor</td><td>${outR.w}-${outR.l}</td><td>${pct(outR)}</td></tr></tbody></table><p class="sub">Solo torneos con el tipo de pista informado.</p></div></section>${NOTE}`},
+  <section><div class="card"><h2>Según la pista</h2><table><thead><tr><th>Condición</th><th>V-D</th><th>% vict.</th></tr></thead><tbody><tr><td>Indoor</td><td>${inR.w}-${inR.l}</td><td>${pct(inR)}</td></tr><tr><td>Outdoor</td><td>${outR.w}-${outR.l}</td><td>${pct(outR)}</td></tr></tbody></table><p class="sub">Solo torneos con el tipo de pista informado.</p></div></section>${shopLink()}${NOTE}`},
 pareja(a){const pr=a.slice(0,2);if(pr.length<2||!P[pr[0]]||!P[pr[1]])return V.ranking();const ms=pairMatches(pr),r=rec(ms);
   return `<a class="back" href="#ranking">‹ Ranking</a>
   <div style="display:flex;gap:14px;align-items:center">${duo(pr,'lg')}<div><h1>${pl(pr)}</h1><p class="sub">${pr.map(i=>`<a class="back" href="#jugador-${i}">${P[i].name}</a>`).join(' y ')}</p>${ms.length?`<div class="form" style="margin-top:8px">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div></div>
@@ -621,6 +667,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if
   const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else picks[mi]=sd;saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
+  const ins=e.target.closest('[data-inst]');if(ins){if(ins.dataset.inst==='go'&&instEv){const ev=instEv;ev.prompt();ev.userChoice.then(c=>{instEv=null;if(c.outcome!=='accepted'){instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}}render()})}else{instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}render()}return}
   const pn=e.target.closest('[data-pin]');if(pn){mapSel=pn.dataset.pin;document.getElementById('app').className='noanim';render();const q=document.querySelector(`[data-pin="${mapSel}"]`);if(q&&e.detail===0)q.focus();return}
   const mz=e.target.closest('[data-mz]');if(mz){mapZ=mz.dataset.mz;document.getElementById('app').className='noanim';render();return}
   const ms=e.target.closest('[data-mapsel]');if(ms){mapSel=ms.dataset.mapsel;mapZ='mundo'}

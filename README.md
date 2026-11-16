@@ -27,3 +27,13 @@ La URL será: https://TU_USUARIO.github.io/vibora-padel/
 
 ## Para actualizar manualmente
 Ve a Actions → "Actualizar datos Víbora Pádel" → Run workflow
+
+## App instalable
+`manifest.webmanifest`, `sw.js` y los iconos (`icon-*.png`, `apple-touch-icon.png`, generados desde `icon.svg`) permiten instalar Víbora en el móvil y abrirla sin conexión con los últimos datos descargados. En Inicio aparece una tarjeta «Instala Víbora» (Android/Chrome: botón Instalar; iPhone: instrucciones de Safari).
+
+## Apoyo y enlaces de afiliado
+En `template.html`, busca `const APOYO` y rellena:
+- `donar`: tu enlace de Ko-fi o Buy Me a Coffee.
+- `tienda`: tu enlace de afiliado a una tienda de pádel.
+
+Si se dejan vacíos, no se muestra nada. Con alguno relleno aparece «Apoya Víbora» al final de Inicio, y el enlace de la tienda también al final de la ficha de cada jugador. Solo se aceptan direcciones `https://`.
