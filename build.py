@@ -1,4 +1,4 @@
-import json, sys, glob, os, re
+import json, sys, glob, os, re, datetime
 
 d_matches, d_meta, tpl, out = sys.argv[1:5]
 
@@ -19,11 +19,32 @@ for f in sorted(glob.glob(os.path.join(d_matches, 't*_matches_*.json'))):
         m['_t'] = t
         raw[m['id']] = m
 
-# Ranking y puntos (inscritos en Dubai P1)
+# Ranking y puntos: inscritos de los últimos torneos; gana el dato del torneo más reciente
+def val(x, *keys):
+    if isinstance(x, dict):
+        for k in keys:
+            if x.get(k) is not None:
+                return x[k]
+        return None
+    return x
+
+
 rk = {}
-for f in sorted(glob.glob(os.path.join(d_matches, 't*_players_*.json'))):
-    for p in json.load(open(f)).get('data', []):
-        rk[p['id']] = (p.get('ranking'), p.get('points'))
+rk_from = []
+pf = {}
+for f in glob.glob(os.path.join(d_matches, 't*_players_*.json')):
+    pf.setdefault(int(re.search(r't(\d+)_players', f).group(1)), []).append(f)
+for t in sorted(pf, key=lambda i: (tmeta.get(i) or {}).get('start_date') or ''):
+    n = 0
+    for f in pf[t]:
+        for p in json.load(open(f)).get('data', []):
+            r = val(p.get('ranking'), 'position', 'ranking', 'rank')
+            pts = val(p.get('points'), 'points', 'value')
+            if r is not None:
+                rk[p['id']] = (int(r), pts)
+                n += 1
+    if n and t in tmeta:
+        rk_from.append(tmeta[t]['name'])
 
 ST = {'finished': 0, 'retired': 1, 'walkover': 2, 'scheduled': 3}
 other = {}
@@ -65,7 +86,7 @@ for m in raw.values():
               (m['court'] or '').strip() or None, ST[m['status']], teams[0], teams[1],
               m['seeds']['team_1'], m['seeds']['team_2'], sets, w])
 
-tids = {m['_t'] for m in raw.values()} | {i for i, t in tmeta.items() if t['connections']['season'] == '/api/seasons/5'}
+tids = {m['_t'] for m in raw.values()} | set(tmeta)
 T = []
 for i in sorted(tids):
     t = tmeta.get(i)
@@ -75,9 +96,10 @@ for i in sorted(tids):
 
 has={m[1] for m in M}
 T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
-data = {'snap': '2026-11-16', 'P': P, 'T': T, 'M': M}
+data = {'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'P': P, 'T': T, 'M': M}
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 assert '</' not in js
 html = open(tpl, encoding='utf-8').read().replace('/*DATA*/null', js)
 open(out, 'w', encoding='utf-8').write(html)
+print('ranking de', rk_from, 'jugadores con ranking', sum(1 for p in P.values() if p[5] is not None))
 print('players', len(P), 'tournaments', len(T), 'matches', len(M), 'hidden tournaments', sorted(hidden_t), 'other statuses', other, 'bytes', len(html.encode()))

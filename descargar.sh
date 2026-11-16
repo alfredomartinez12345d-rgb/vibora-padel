@@ -83,27 +83,49 @@ for TID in $T_IDS; do
   done
 done
 
-# Players del torneo más grande (ranking oficial)
-MAIN_TID=$(python3 -c "
-import json, glob, os
-best, bestid = 0, 0
-for f in glob.glob('$OUT/t*_matches_1.json'):
-    tid = int(os.path.basename(f).split('_')[0][1:])
-    d = json.load(open(f))
-    n = d.get('meta', {}).get('total', 0)
-    if n > best:
-        best, bestid = n, tid
-print(bestid)
-")
-echo "Torneo principal para ranking: $MAIN_TID"
-page=1
-while true; do
-  f="$OUT/t${MAIN_TID}_players_${page}.json"
-  get "$BASE/tournaments/$MAIN_TID/players?page=$page" "$f"
-  sleep $PAUSE
-  LAST=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('meta',{}).get('last_page',1))")
-  [[ "$page" -ge "$LAST" ]] && break
-  page=$((page+1))
+# ¿Hay más páginas? Usa meta.last_page si existe; si no, links.next. Para si la página viene vacía.
+more_pages() {
+  python3 -c "
+import json, sys
+d = json.load(open(sys.argv[1])); p = int(sys.argv[2])
+m = d.get('meta') or {}; l = d.get('links') or {}
+last = m.get('last_page') or (m.get('pagination') or {}).get('total_pages')
+more = int(last) > p if last else bool(l.get('next'))
+print(1 if more and d.get('data') else 0)" "$1" "$2"
+}
+
+# Ranking oficial: inscritos de los 3 torneos más recientes ya empezados (sin FIP), todas las páginas.
+# build.py se queda, para cada jugador, con el dato del torneo más reciente.
+RANK_TIDS=$(python3 -c "
+import json, glob, datetime, sys
+hoy = datetime.date.today().isoformat()
+dl = set(int(x) for x in sys.argv[1].split())
+ts = {}
+for f in glob.glob('$OUT/tournaments_*.json'):
+    for t in json.load(open(f)).get('data', []):
+        ts[t['id']] = t
+c = [t for t in ts.values() if t['id'] in dl and (t.get('start_date') or '') <= hoy
+     and not str(t.get('level') or '').startswith('fip')]
+c.sort(key=lambda t: t.get('start_date') or '', reverse=True)
+print(' '.join(str(t['id']) for t in c[:3]))
+" "$T_IDS")
+echo "Torneos para el ranking: $RANK_TIDS"
+for RTID in $RANK_TIDS; do
+  page=1
+  while true; do
+    f="$OUT/t${RTID}_players_${page}.json"
+    get "$BASE/tournaments/$RTID/players?page=$page" "$f"
+    sleep $PAUSE
+    [[ "$(more_pages "$f" "$page")" == "1" ]] || break
+    page=$((page+1))
+  done
+  python3 -c "
+import json, glob
+fs = glob.glob('$OUT/t${RTID}_players_*.json'); n = r = 0; k = set()
+for f in fs:
+    for p in json.load(open(f)).get('data', []):
+        n += 1; r += p.get('ranking') is not None; k |= set(p)
+print('  torneo $RTID:', len(fs), 'páginas,', n, 'jugadores,', r, 'con ranking; campos:', sorted(k))"
 done
 
 echo "==> Descarga completa en $OUT/"
