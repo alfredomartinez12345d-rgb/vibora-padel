@@ -35,12 +35,11 @@ echo "==> Descargando temporadas y torneos..."
 get "$BASE/seasons" "$OUT/seasons.json"
 sleep $PAUSE
 
-# Extraer IDs de torneos de la temporada más reciente
+# Extraer ID de la temporada más reciente
 SEASON_ID=$(python3 -c "
-import json, sys
+import json
 data = json.load(open('$OUT/seasons.json'))
 seasons = data.get('data', data) if isinstance(data, dict) else data
-# Coger la más reciente (mayor id)
 s = max(seasons, key=lambda x: x['id'])
 print(s['id'])
 ")
@@ -57,18 +56,17 @@ while true; do
   page=$((page+1))
 done
 
-# Extraer IDs de torneos — solo niveles Premier Padel y FIP Platinum/Gold
-# (excluye FIP Silver, FIP Other y torneos locales para no tardar horas)
+# Solo los 30 torneos más recientes por fecha de inicio
 T_IDS=$(python3 -c "
 import json, glob
-NIVELES = {'major','p1','p2','finals','fip_platinum','fip_gold'}
-ids = []
+all_t = []
 for f in sorted(glob.glob('$OUT/tournaments_*.json')):
     d = json.load(open(f))
     for t in d.get('data', []):
-        if t.get('level','') in NIVELES:
-            ids.append(t['id'])
-print(' '.join(map(str, ids)))
+        all_t.append(t)
+all_t.sort(key=lambda x: x.get('start_date',''), reverse=True)
+ids = [str(t['id']) for t in all_t[:30]]
+print(' '.join(ids))
 ")
 echo "Torneos: $T_IDS"
 
@@ -77,10 +75,6 @@ for TID in $T_IDS; do
   page=1
   while true; do
     f="$OUT/t${TID}_matches_${page}.json"
-    [[ -f "$f" ]] && {
-      LAST=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('meta',{}).get('last_page',1))")
-      [[ "$page" -ge "$LAST" ]] && break || { page=$((page+1)); continue; }
-    }
     get "$BASE/tournaments/$TID/matches?page=$page" "$f"
     sleep $PAUSE
     LAST=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('meta',{}).get('last_page',1))")
@@ -91,10 +85,9 @@ done
 
 # Players del torneo más grande (ranking oficial)
 MAIN_TID=$(python3 -c "
-import json, glob
+import json, glob, os
 best, bestid = 0, 0
 for f in glob.glob('$OUT/t*_matches_1.json'):
-    import os
     tid = int(os.path.basename(f).split('_')[0][1:])
     d = json.load(open(f))
     n = d.get('meta', {}).get('total', 0)
