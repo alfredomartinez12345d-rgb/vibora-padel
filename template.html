@@ -270,15 +270,10 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 .inst .sub{font-size:13px}
 .inst .row2{grid-column:1/-1;display:flex;gap:8px}
 .btn.pri{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 6px 18px -6px rgba(110,110,255,.7)}
-.apoyo{border-color:rgba(255,197,61,.35);background:linear-gradient(135deg,rgba(255,197,61,.14),var(--surface) 60%)}
-.apoyo .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.apoyo .btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
 .pala{display:flex;align-items:center;gap:12px;padding:12px 14px;border-color:rgba(217,224,33,.35);background:linear-gradient(120deg,rgba(217,224,33,.12),var(--surface) 55%)}
 .palaic{width:42px;height:42px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(217,224,33,.16);color:#e3ea4a}
 .palaic svg{width:24px;height:24px;fill:currentColor}
 .pala .tx{flex:1;min-width:0}.pala .tx b{display:block;font-weight:700;font-size:16px;overflow-wrap:anywhere;margin-top:2px}.pala .tx span{font-size:11px;color:var(--muted)}
-.pala .btn{align-self:center;white-space:nowrap;text-decoration:none}
-.shop{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:600}
 </style>
 </head>
 <body>
@@ -460,13 +455,7 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
 
-/* ---------- Enlace de afiliado: pon aquí tu enlace para activarlo (vacío = no se muestra) ---------- */
-const APOYO={
-  tienda:'',                      // tu enlace de afiliado a una tienda de pádel (Amazon, Padel Nuestro…)
-  tiendaTexto:'Palas y material de pádel',
-  amazonTag:''                    // tu código de Amazon Afiliados (p. ej. 'vibora-21'): convierte la pala de cada jugador en un enlace a Amazon
-};
-/* Pala de cada jugador. Fuente: PadelAddict, palas de la temporada 2026 (marzo de 2026); pueden cambiar durante el año.
+/* ---------- Pala de cada jugador. Fuente: PadelAddict, palas de la temporada 2026 (marzo de 2026); pueden cambiar durante el año.
    Formato: [categoría, nombres de pila posibles, apellidos, pala]. Para añadir o corregir uno, edita esta lista. */
 const PALAS=[
   ['men',['arturo'],'coello','HEAD Coello Pro'],
@@ -490,13 +479,8 @@ const PALAS=[
   ['women',['paula'],'josemaria','HEAD Extreme Motion LTD'],
   ['women',['beatriz','bea'],'gonzalez','Bullpadel Pearl 26']];
 const palaOf=p=>{const w=' '+norm(p.name).replace(/[^a-z0-9]+/g,' ')+' ';const x=PALAS.find(([c,fn,sn])=>c===p.cat&&w.includes(' '+sn+' ')&&fn.some(f=>w.startsWith(' '+f+' ')));return x?x[3]:null};
-function palaCard(p){const pala=palaOf(p);if(!pala)return '';const tag=/^[a-z0-9-]{3,40}$/i.test(APOYO.amazonTag||'')?APOYO.amazonTag:'';
-  const url=tag?`https://www.amazon.es/s?k=${encodeURIComponent('pala '+pala)}&tag=${encodeURIComponent(tag)}`:'';
-  return `<div class="card pala"><span class="palaic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.5 2a7.5 7.5 0 0 1 5.3 12.8c-1.6 1.6-3.7 2.3-5.8 2.2l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-.9-.9a1.5 1.5 0 0 1 0-2.1l4.4-4.4A7.5 7.5 0 0 1 14.5 2Zm-1 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-3 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></span><span class="tx"><h2>Juega con</h2><b>${pala}</b>${url?'<span>Enlace de afiliado</span>':''}</span>${url?`<a class="btn pri" href="${url}" target="_blank" rel="sponsored noopener">Ver pala ›</a>`:''}</div>`}
-const safeUrl=u=>/^https:\/\/[^\s"'<>]+$/.test(u||'')?u:'';
-function apoyoCard(){const t=safeUrl(APOYO.tienda);if(!t)return '';
-  return `<section><div class="card apoyo"><h2>🎾 Material de pádel</h2><p class="sub" style="margin-top:6px">Palas, zapatillas y todo lo que usan los profesionales.</p><div class="row2"><a class="btn pri" href="${t}" target="_blank" rel="sponsored noopener">${APOYO.tiendaTexto} ›</a></div><p class="sub" style="margin-top:10px;font-size:12px">Enlace de afiliado: si compras, Víbora recibe una pequeña comisión sin que a ti te cueste más.</p></div></section>`}
-function shopLink(){const t=safeUrl(APOYO.tienda);return t?`<a class="card shop" href="${t}" target="_blank" rel="sponsored noopener"><span>🎾 ${APOYO.tiendaTexto}<span class="sub" style="display:block;font-weight:400;font-size:12px">Enlace de afiliado</span></span><span class="back">Ver ›</span></a>`:''}
+function palaCard(p){const pala=palaOf(p);if(!pala)return '';
+  return `<div class="card pala"><span class="palaic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.5 2a7.5 7.5 0 0 1 5.3 12.8c-1.6 1.6-3.7 2.3-5.8 2.2l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-.9-.9a1.5 1.5 0 0 1 0-2.1l4.4-4.4A7.5 7.5 0 0 1 14.5 2Zm-1 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-3 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></span><span class="tx"><h2>Juega con</h2><b>${pala}</b></span></div>`}
 
 /* ---------- App instalable ---------- */
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -543,7 +527,7 @@ inicio(){const nt=nextT(),last=lastPremier();
   const favS=fl.length?`<section><div class="card"><h2><span class="gold">★</span> Tus favoritos</h2>${fl.map(i=>{const x=playerMatches(i).slice(-1)[0];return pline(i,`<span class="chip ${eloDelta(P[i])>=0?'up':'down'}">${Math.round(P[i].elo)}</span>`,x?`${x.won?'Ganó':'Perdió'} ${scoreStr(x.m,x.s)} · ${tb(x.m.t).name}`:'Sin partidos con resultado')}).join('')}</div></section>`:'';
   const lt=T.find(t=>t.status==='live'&&M.some(m=>m.t===t.id&&inCat(m)&&m.st===3));
   const links=`<div class="links"><a href="#records">Récords y curiosidades<span>Remontadas, tie-breaks, matagigantes</span></a>${lt?`<a href="#torneo-${lt.id}" data-tv="qn">Quiniela<span>Rellena el cuadro de ${lt.loc}</span></a>`:`<a href="#h2h" data-duel="sim">Simulador<span>¿Quién ganaría?</span></a>`}</div>`;
-  return `${count}${installCard()}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${apoyoCard()}${NOTE}`},
+  return `${count}${installCard()}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${NOTE}`},
 torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div class="list">${T.slice().sort((a,b)=>a.start<b.start?1:-1).map(t=>{
   const fl=flag(isoOf(t.country)||(geoOf(t)||{}).iso),head=`<b>${fl?fl+' ':''}${t.name}</b><span class="sub">${lvp(t)} ${tinfo(t)}</span>`;
   if(t.hidden)return `<div class="trow off" ${lvs(t)}><span>${head}<span class="sub">Resultados fuera del plan gratuito de datos</span></span></div>`;
@@ -627,7 +611,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   ${fin.length?`<section><div class="card"><h2>Hasta dónde llega</h2><div class="donut" style="margin-top:10px">${donut(parts,fin.length)}<div class="lg">${parts.map(x=>`<div><i style="background:${x.c}"></i>${x.l}<span>${x.n} · ${Math.round(100*x.n/fin.length)}%</span></div>`).join('')}</div></div>
   <div style="margin-top:8px">${res.map(x=>`<a class="tres" href="#partido-${x.m.id}"><span class="tx"><b>${x.t.name}</b> <span class="pill ${x.champ?'hot':x.lvl<0?'next':''}">${x.champ?'Ganó':x.lvl<0?'Sigue en juego':'Llegó a '+RL[x.m.round]}</span><span>vs ${pl(x.s?x.m.a:x.m.b)}</span></span><span class="rs ${x.champ?'gold':x.won?'up':'down'}">${scoreStr(x.m,x.s)}</span></a>`).join('')}</div></div></section>`:''}
   <section><div class="card"><h2>Con cada compañero</h2><table><thead><tr><th>Compañero</th><th>V-D</th><th>% vict.</th><th>Química</th></tr></thead><tbody>${[...partners].map(([q,xs])=>{const rr=rec(xs),ex=xs.reduce((n,x)=>n+(x.m.pre!=null?(x.s?1-x.m.pre:x.m.pre):0.5),0),d=rr.w-ex;return `<tr><td><a href="#pareja-${key([id,q])}">${P[q].name}</a></td><td>${rr.w}-${rr.l}</td><td>${pct(rr)}</td><td class="${d>=0.5?'up':d<=-0.5?'down':''}">${d>=0?'+':'−'}${Math.abs(d).toFixed(1)}</td></tr>`}).join('')||'<tr><td>Sin partidos con resultado</td><td></td><td></td><td></td></tr>'}</tbody></table><p class="sub">Química: victorias de más o de menos respecto a lo que pronosticaba el Elo.</p></div></section>
-  <section><div class="card"><h2>Según la pista</h2><table><thead><tr><th>Condición</th><th>V-D</th><th>% vict.</th></tr></thead><tbody><tr><td>Indoor</td><td>${inR.w}-${inR.l}</td><td>${pct(inR)}</td></tr><tr><td>Outdoor</td><td>${outR.w}-${outR.l}</td><td>${pct(outR)}</td></tr></tbody></table><p class="sub">Solo torneos con el tipo de pista informado.</p></div></section>${shopLink()}${NOTE}`},
+  <section><div class="card"><h2>Según la pista</h2><table><thead><tr><th>Condición</th><th>V-D</th><th>% vict.</th></tr></thead><tbody><tr><td>Indoor</td><td>${inR.w}-${inR.l}</td><td>${pct(inR)}</td></tr><tr><td>Outdoor</td><td>${outR.w}-${outR.l}</td><td>${pct(outR)}</td></tr></tbody></table><p class="sub">Solo torneos con el tipo de pista informado.</p></div></section>${NOTE}`},
 pareja(a){const pr=a.slice(0,2);if(pr.length<2||!P[pr[0]]||!P[pr[1]])return V.ranking();const ms=pairMatches(pr),r=rec(ms);
   return `<a class="back" href="#ranking">‹ Ranking</a>
   <div style="display:flex;gap:14px;align-items:center">${duo(pr,'lg')}<div><h1>${pl(pr)}</h1><p class="sub">${pr.map(i=>`<a class="back" href="#jugador-${i}">${P[i].name}</a>`).join(' y ')}</p>${ms.length?`<div class="form" style="margin-top:8px">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div></div>
