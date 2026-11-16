@@ -272,6 +272,11 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 .btn.pri{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 6px 18px -6px rgba(110,110,255,.7)}
 .pala{display:flex;align-items:center;gap:12px;padding:12px 14px;border-color:rgba(217,224,33,.35);background:linear-gradient(120deg,rgba(217,224,33,.12),var(--surface) 55%)}
 .palaic{width:42px;height:42px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(217,224,33,.16);color:#e3ea4a}
+.avwrap{position:relative;flex:none;display:inline-flex}
+.avwrap .foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%;border-radius:50%;border:2px solid rgba(255,255,255,.14)}
+.palaic{position:relative;overflow:hidden}
+.palaic:has(.foto){width:58px;height:78px;background:#f4f5ff}
+.palaic .foto{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#f4f5ff;padding:2px}
 .palaic svg{width:24px;height:24px;fill:currentColor}
 .pala .tx{flex:1;min-width:0}.pala .tx b{display:block;font-weight:700;font-size:16px;overflow-wrap:anywhere;margin-top:2px}.pala .tx span{font-size:11px;color:var(--muted)}
 </style>
@@ -479,8 +484,12 @@ const PALAS=[
   ['women',['paula'],'josemaria','HEAD Extreme Motion LTD'],
   ['women',['beatriz','bea'],'gonzalez','Bullpadel Pearl 26']];
 const palaOf=p=>{const w=' '+norm(p.name).replace(/[^a-z0-9]+/g,' ')+' ';const x=PALAS.find(([c,fn,sn])=>c===p.cat&&w.includes(' '+sn+' ')&&fn.some(f=>w.startsWith(' '+f+' ')));return x?x[3]:null};
+/* Fotos opcionales: fotos/jugadores/<nombre-apellido>.jpg y fotos/palas/<nombre-apellido>.jpg (p. ej. arturo-coello.jpg).
+   Si el archivo no existe, se ve como siempre (iniciales o icono). */
+const fotoSlug=p=>{const w=' '+norm(p.name).replace(/[^a-z0-9]+/g,' ')+' ';const x=PALAS.find(([c,fn,sn])=>c===p.cat&&w.includes(' '+sn+' ')&&fn.some(f=>w.startsWith(' '+f+' ')));return x?x[1][0]+'-'+x[2].replace(/ /g,'-'):null};
+const foto=(dir,slug,alt='')=>slug?`<img class="foto" src="fotos/${dir}/${slug}.jpg" alt="${alt}" loading="lazy" onerror="this.remove()">`:'';
 function palaCard(p){const pala=palaOf(p);if(!pala)return '';
-  return `<div class="card pala"><span class="palaic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.5 2a7.5 7.5 0 0 1 5.3 12.8c-1.6 1.6-3.7 2.3-5.8 2.2l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-.9-.9a1.5 1.5 0 0 1 0-2.1l4.4-4.4A7.5 7.5 0 0 1 14.5 2Zm-1 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-3 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></span><span class="tx"><h2>Juega con</h2><b>${pala}</b></span></div>`}
+  return `<div class="card pala"><span class="palaic" aria-hidden="true">${foto('palas',fotoSlug(p))}<svg viewBox="0 0 24 24"><path d="M14.5 2a7.5 7.5 0 0 1 5.3 12.8c-1.6 1.6-3.7 2.3-5.8 2.2l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-.9-.9a1.5 1.5 0 0 1 0-2.1l4.4-4.4A7.5 7.5 0 0 1 14.5 2Zm-1 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-3 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></span><span class="tx"><h2>Juega con</h2><b>${pala}</b></span></div>`}
 
 /* ---------- App instalable ---------- */
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -603,7 +612,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   const rcard=(x,t,c)=>x?`<a href="#jugador-${x.q}"><h2 style="color:${c}">${t}</h2><span style="display:flex;gap:8px;align-items:center">${av(x.q)}<b>${P[x.q].sn}</b></span><span class="sub">${x.w} victorias · ${x.l} derrotas</span></a>`:'';
   const rivS=bn||vf?`<section><div class="duel">${rcard(bn,'Bestia negra','var(--red)')}${rcard(vf,'Víctima favorita','var(--mint)')}</div></section>`:'';
   return `<a class="back" href="#ranking">‹ Ranking</a>
-  <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button></div>
+  <div style="display:flex;gap:14px;align-items:center"><span class="avwrap">${av(id,'xl')}${foto('jugadores',fotoSlug(p),p.name)}</span><div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button></div>
   ${palaCard(p)}<div class="kpis"><div class="kpi a"><b>${Math.round(p.elo)}</b><span>Elo${pos?' · n.º '+pos:''}</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Victorias-derrotas</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos</span></div></div>
   ${wrapS}${rivS}
   ${tl.length?`<section><div class="card"><h2>Parejas desde junio</h2><div class="tl" style="margin-top:10px">${tl.map((x,i)=>`${i?'<span class="sub">→</span>':''}<a class="st" href="#pareja-${key([id,x.q])}">${av(x.q,'sm')}<span>${P[x.q].sn}</span><small>${fd(x.d)}</small></a>`).join('')}</div></div></section>`:''}
