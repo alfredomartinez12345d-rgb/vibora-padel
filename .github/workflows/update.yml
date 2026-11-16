@@ -2,14 +2,26 @@ name: Actualizar datos Víbora Pádel
 
 on:
   schedule:
-    - cron: '30 1 * * *'
+    - cron: '30 1 * * *'       # completa: toda la temporada, cada noche
+    - cron: '15,45 * * * *'    # rápida: cada 30 min, solo si hay un torneo en juego
   workflow_dispatch:
+    inputs:
+      modo:
+        description: 'completa (toda la temporada) o rapida (solo torneos en juego)'
+        type: choice
+        options: [completa, rapida]
+        default: completa
+
+# Una ejecución detrás de otra, nunca dos a la vez
+concurrency:
+  group: actualizar-vibora
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pages: write
       id-token: write
 
@@ -22,22 +34,73 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Descargar datos de Padel API
+      - name: Elegir modo
+        id: modo
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            MODO="${{ inputs.modo }}"
+          elif [[ "${{ github.event.schedule }}" == "30 1 * * *" ]]; then
+            MODO=completa
+          else
+            MODO=rapida
+          fi
+          echo "modo=$MODO" >> "$GITHUB_OUTPUT"
+          echo "Modo: $MODO"
+
+      # Datos de la última ejecución (la rápida parte de ellos)
+      - name: Recuperar datos guardados
+        if: steps.modo.outputs.modo == 'rapida'
+        uses: actions/cache/restore@v4
+        with:
+          path: datos
+          key: datos-${{ github.run_id }}
+          restore-keys: datos-
+
+      - name: Actualización rápida (torneos en juego)
+        id: rapida
+        if: steps.modo.outputs.modo == 'rapida'
         env:
           PADEL_API_TOKEN: ${{ secrets.PADEL_API_TOKEN }}
-        run: |
-          chmod +x descargar.sh
-          bash descargar.sh
+        run: bash directo.sh
 
-      - name: Construir index.html
+      - name: Descargar toda la temporada
+        if: steps.modo.outputs.modo == 'completa'
+        env:
+          PADEL_API_TOKEN: ${{ secrets.PADEL_API_TOKEN }}
+        run: bash descargar.sh
+
+      - name: ¿Hay que publicar?
+        id: pub
+        run: |
+          if [[ "${{ steps.modo.outputs.modo }}" == "completa" || "${{ steps.rapida.outputs.hay_directo }}" == "1" ]]; then
+            echo "si=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nada nuevo que publicar."
+          fi
+
+      - name: Guardar datos para la próxima ejecución
+        if: steps.pub.outputs.si == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: datos
+          key: datos-${{ github.run_id }}
+
+      - name: Construir la web
+        if: steps.pub.outputs.si == '1'
         run: |
           python3 -I build.py datos datos template.html index.html
           echo "Tamaño: $(wc -c < index.html) bytes"
+          # Solo se publica la app: los datos en bruto de la API no salen a la web
+          mkdir -p _site
+          cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png apple-touch-icon.png _site/
+          [[ -d fotos ]] && cp -r fotos _site/ || true
 
       - name: Publicar en GitHub Pages
+        if: steps.pub.outputs.si == '1'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Desplegar
+        if: steps.pub.outputs.si == '1'
         uses: actions/deploy-pages@v4
