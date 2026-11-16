@@ -61,3 +61,9 @@ Las fotos de los jugadores vienen de Padel API (`photo_url`). La de la pala es o
 - `delfina-brea.jpg`
 - `paula-josemaria.jpg`
 - `beatriz-gonzalez.jpg`
+
+## Estadísticas de visitas
+GoatCounter (anónimo, sin cookies): https://viborapadel.goatcounter.com
+- Cada pantalla cuenta como una vista (`/inicio`, `/ranking`, `/torneos`, `/jugador/<nombre>`, `/torneo/<nombre>`…).
+- Eventos: `app-instalada`, `quiniela` (una vez por visita) y `favorito/<jugador>`.
+- No cuenta las visitas desde `localhost`.
