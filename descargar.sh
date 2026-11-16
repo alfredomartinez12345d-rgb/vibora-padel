@@ -15,73 +15,21 @@ mkdir -p "$OUT"
 get() {
   local url="$1" dest="$2"
   while true; do
-    CODE=$(curl -s -o "$dest.tmp" -w "%{http_code}" -H "$H" "$url")
+    CODE=$(curl -s -D "$dest.hdr" -o "$dest.tmp" -w "%{http_code}" -H "$H" "$url")
     if [[ "$CODE" == "200" ]]; then
-      mv "$dest.tmp" "$dest"
+      mv "$dest.tmp" "$dest"; rm -f "$dest.hdr"
       return 0
     elif [[ "$CODE" == "429" ]]; then
-      RA=$(grep -i "Retry-After" "$dest.tmp" 2>/dev/null | awk '{print $2}' | tr -d '\r' || echo 60)
-      echo "429 en $url — espero ${RA}s"
+      RA=$(grep -i "^Retry-After:" "$dest.hdr" 2>/dev/null | awk '{print $2}' | tr -d '\r' || true)
+      echo "429 en $url — espero ${RA:-60}s"
       sleep "${RA:-60}"
     else
       echo "Error $CODE en $url" >&2
-      rm -f "$dest.tmp"
+      rm -f "$dest.tmp" "$dest.hdr"
       return 1
     fi
   done
 }
-
-echo "==> Descargando temporadas y torneos..."
-get "$BASE/seasons" "$OUT/seasons.json"
-sleep $PAUSE
-
-# Extraer ID de la temporada más reciente
-SEASON_ID=$(python3 -c "
-import json
-data = json.load(open('$OUT/seasons.json'))
-seasons = data.get('data', data) if isinstance(data, dict) else data
-s = max(seasons, key=lambda x: x['id'])
-print(s['id'])
-")
-echo "Temporada activa: $SEASON_ID"
-
-# Torneos de esa temporada (todas las páginas)
-page=1
-while true; do
-  f="$OUT/tournaments_${page}.json"
-  get "$BASE/tournaments?season_id=$SEASON_ID&page=$page" "$f"
-  sleep $PAUSE
-  LAST=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('meta',{}).get('last_page',1))")
-  [[ "$page" -ge "$LAST" ]] && break
-  page=$((page+1))
-done
-
-# Solo los 30 torneos más recientes por fecha de inicio
-T_IDS=$(python3 -c "
-import json, glob
-all_t = []
-for f in sorted(glob.glob('$OUT/tournaments_*.json')):
-    d = json.load(open(f))
-    for t in d.get('data', []):
-        all_t.append(t)
-all_t.sort(key=lambda x: x.get('start_date',''), reverse=True)
-ids = [str(t['id']) for t in all_t[:30]]
-print(' '.join(ids))
-")
-echo "Torneos: $T_IDS"
-
-# Partidos de cada torneo
-for TID in $T_IDS; do
-  page=1
-  while true; do
-    f="$OUT/t${TID}_matches_${page}.json"
-    get "$BASE/tournaments/$TID/matches?page=$page" "$f"
-    sleep $PAUSE
-    LAST=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('meta',{}).get('last_page',1))")
-    [[ "$page" -ge "$LAST" ]] && break
-    page=$((page+1))
-  done
-done
 
 # ¿Hay más páginas? Usa meta.last_page si existe; si no, links.next. Para si la página viene vacía.
 more_pages() {
@@ -94,31 +42,69 @@ more = int(last) > p if last else bool(l.get('next'))
 print(1 if more and d.get('data') else 0)" "$1" "$2"
 }
 
-# Ranking oficial: inscritos de los 3 torneos más recientes ya empezados (sin FIP), todas las páginas.
-# build.py se queda, para cada jugador, con el dato del torneo más reciente.
-RANK_TIDS=$(python3 -c "
-import json, glob, datetime, sys
-hoy = datetime.date.today().isoformat()
-dl = set(int(x) for x in sys.argv[1].split())
-ts = {}
-for f in glob.glob('$OUT/tournaments_*.json'):
-    for t in json.load(open(f)).get('data', []):
-        ts[t['id']] = t
-c = [t for t in ts.values() if t['id'] in dl and (t.get('start_date') or '') <= hoy
-     and not str(t.get('level') or '').startswith('fip')]
-c.sort(key=lambda t: t.get('start_date') or '', reverse=True)
-print(' '.join(str(t['id']) for t in c[:3]))
-" "$T_IDS")
-echo "Torneos para el ranking: $RANK_TIDS"
-for RTID in $RANK_TIDS; do
-  page=1
+# Descarga todas las páginas de un listado: get_all URL_BASE PREFIJO
+get_all() {
+  local base="$1" prefix="$2" page=1 sep='?'
+  [[ "$base" == *\?* ]] && sep='&'
   while true; do
-    f="$OUT/t${RTID}_players_${page}.json"
-    get "$BASE/tournaments/$RTID/players?page=$page" "$f"
+    get "${base}${sep}page=${page}" "${prefix}_${page}.json" || return 1
     sleep $PAUSE
-    [[ "$(more_pages "$f" "$page")" == "1" ]] || break
+    [[ "$(more_pages "${prefix}_${page}.json" "$page")" == "1" ]] || break
     page=$((page+1))
   done
+}
+
+echo "==> Descargando temporadas..."
+get_all "$BASE/seasons" "$OUT/seasons"
+
+# Temporada de Premier Padel activa (si no hay, la activa que empezó más tarde)
+SEASON_ID=$(python3 -c "
+import json, glob
+ss = [s for f in glob.glob('$OUT/seasons_*.json') for s in json.load(open(f)).get('data', [])]
+act = [s for s in ss if s.get('status') == 'active'] or ss
+prem = [s for s in act if 'premier' in (s.get('name') or '').lower()] or act
+s = max(prem, key=lambda x: x.get('start_date') or '')
+print(s['id'])
+")
+echo "$SEASON_ID" > "$OUT/season.txt"
+echo "Temporada: $SEASON_ID"
+
+echo "==> Descargando torneos de la temporada..."
+get_all "$BASE/seasons/$SEASON_ID/tournaments" "$OUT/tournaments" \
+  || get_all "$BASE/tournaments?season_id=$SEASON_ID" "$OUT/tournaments"
+
+# Torneos de la temporada que ya han empezado (los pendientes aún no tienen partidos)
+T_IDS=$(python3 -c "
+import json, glob, datetime
+hoy = datetime.date.today().isoformat()
+ts = {t['id']: t for f in glob.glob('$OUT/tournaments_*.json') for t in json.load(open(f)).get('data', [])}
+ts = [t for t in ts.values() if (t.get('connections') or {}).get('season') == '/api/seasons/$SEASON_ID'
+      and (t.get('start_date') or '') <= hoy]
+ts.sort(key=lambda t: t.get('start_date') or '', reverse=True)
+print(' '.join(str(t['id']) for t in ts))
+")
+echo "Torneos: $T_IDS"
+
+# Partidos de cada torneo
+for TID in $T_IDS; do
+  get_all "$BASE/tournaments/$TID/matches" "$OUT/t${TID}_matches" || echo "  Sin partidos del torneo $TID, sigo"
+done
+
+# Ranking oficial: la API solo da inscritos de torneos en juego o por jugar.
+# Se prueban (sin FIP) el que está en juego y los próximos, y después los últimos jugados.
+RANK_TIDS=$(python3 -c "
+import json, glob
+ts = {t['id']: t for f in glob.glob('$OUT/tournaments_*.json') for t in json.load(open(f)).get('data', [])}
+ts = [t for t in ts.values() if (t.get('connections') or {}).get('season') == '/api/seasons/$SEASON_ID'
+      and not str(t.get('level') or '').startswith('fip')]
+live = [t for t in ts if t.get('status') == 'live']
+pend = sorted([t for t in ts if t.get('status') == 'pending'], key=lambda t: t.get('start_date') or '')
+done = sorted([t for t in ts if t.get('status') not in ('live', 'pending')], key=lambda t: t.get('start_date') or '', reverse=True)
+print(' '.join(str(t['id']) for t in (live + pend + done)[:5]))
+")
+echo "Torneos para el ranking: $RANK_TIDS"
+for RTID in $RANK_TIDS; do
+  get_all "$BASE/tournaments/$RTID/players" "$OUT/t${RTID}_players" || { echo "  Sin inscritos del torneo $RTID"; continue; }
   python3 -c "
 import json, glob
 fs = glob.glob('$OUT/t${RTID}_players_*.json'); n = r = 0; k = set()

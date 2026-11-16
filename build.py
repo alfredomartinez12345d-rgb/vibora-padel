@@ -11,6 +11,12 @@ for f in sorted(glob.glob(os.path.join(d_meta, 'tournaments_*.json'))):
     except Exception:
         pass
 
+# Solo la temporada elegida por descargar.sh (si se guardó)
+sf = os.path.join(d_meta, 'season.txt')
+if os.path.exists(sf):
+    sid = open(sf).read().strip()
+    tmeta = {i: t for i, t in tmeta.items() if (t.get('connections') or {}).get('season') == f'/api/seasons/{sid}'}
+
 # Partidos
 raw = {}
 for f in sorted(glob.glob(os.path.join(d_matches, 't*_matches_*.json'))):
@@ -74,7 +80,7 @@ for m in raw.values():
             ids.append(p['id'])
             if p['id'] not in P:
                 r = rk.get(p['id'], (None, None))
-                P[p['id']] = [p['name'], p['short_name'], p['nationality'], p['side'], 1 if m['category'] == 'women' else 0, r[0], r[1]]
+                P[p['id']] = [p['name'], p['short_name'], p['nationality'], p['side'], 1 if m['category'] == 'women' else 0, r[0], r[1], p.get('photo_url')]
         teams.append(ids)
     sets = []
     for s in (m['score'] or []):

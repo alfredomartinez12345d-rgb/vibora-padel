@@ -34,12 +34,8 @@ Ve a Actions → "Actualizar datos Víbora Pádel" → Run workflow
 ## Pala de cada jugador
 La ficha de cada jugador muestra «Juega con …» si está en la lista `const PALAS` de `template.html` (fuente: PadelAddict, temporada 2026). Para añadir o corregir un jugador, edita una línea de `PALAS`: `['men' o 'women', [nombres de pila], 'apellido', 'Marca y modelo']`.
 
-### Fotos de jugadores y palas
-Sube las fotos (en .jpg) a estas carpetas del repositorio. Si una foto no está, se ve como siempre.
-- `fotos/jugadores/<nombre>.jpg`: foto del jugador, mejor cuadrada y con la cara centrada arriba.
-- `fotos/palas/<nombre>.jpg`: foto de su pala, mejor con fondo blanco.
-
-Nombres de archivo (los mismos en las dos carpetas):
+### Fotos
+Las fotos de los jugadores vienen de Padel API (`photo_url`). La de la pala es opcional: sube `fotos/palas/<nombre>.jpg` (mejor con fondo blanco) con uno de estos nombres:
 - `arturo-coello.jpg`
 - `agustin-tapia.jpg`
 - `alejandro-galan.jpg`
