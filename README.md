@@ -34,4 +34,7 @@ Ve a Actions → "Actualizar datos Víbora Pádel" → Run workflow
 ## Enlace de afiliado
 En `template.html`, busca `const APOYO` y rellena `tienda` con tu enlace de afiliado a una tienda de pádel.
 
-Si se deja vacío, no se muestra nada. Relleno, aparece «Material de pádel» al final de Inicio y al final de la ficha de cada jugador. Solo se aceptan direcciones `https://`.
+Si se deja vacío, no se muestra nada. Relleno, aparece «Material de pádel» al final de Inicio y al final de la ficha de cada jugador.
+
+### Pala de cada jugador
+La ficha de cada jugador muestra «Juega con …» si está en la lista `const PALAS` de `template.html` (fuente: PadelAddict, temporada 2026). Si rellenas `amazonTag` en `const APOYO` con tu código de Amazon Afiliados, aparece un botón «Ver pala» que busca esa pala en Amazon con tu código. Para añadir o corregir un jugador, edita una línea de `PALAS`: `['men' o 'women', [nombres de pila], 'apellido', 'Marca y modelo']`. Solo se aceptan direcciones `https://`.

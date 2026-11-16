@@ -273,6 +273,11 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 .apoyo{border-color:rgba(255,197,61,.35);background:linear-gradient(135deg,rgba(255,197,61,.14),var(--surface) 60%)}
 .apoyo .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .apoyo .btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.pala{display:flex;align-items:center;gap:12px;padding:12px 14px;border-color:rgba(217,224,33,.35);background:linear-gradient(120deg,rgba(217,224,33,.12),var(--surface) 55%)}
+.palaic{width:42px;height:42px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(217,224,33,.16);color:#e3ea4a}
+.palaic svg{width:24px;height:24px;fill:currentColor}
+.pala .tx{flex:1;min-width:0}.pala .tx b{display:block;font-weight:700;font-size:16px;overflow-wrap:anywhere;margin-top:2px}.pala .tx span{font-size:11px;color:var(--muted)}
+.pala .btn{align-self:center;white-space:nowrap;text-decoration:none}
 .shop{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:600}
 </style>
 </head>
@@ -458,8 +463,36 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
 /* ---------- Enlace de afiliado: pon aquí tu enlace para activarlo (vacío = no se muestra) ---------- */
 const APOYO={
   tienda:'',                      // tu enlace de afiliado a una tienda de pádel (Amazon, Padel Nuestro…)
-  tiendaTexto:'Palas y material de pádel'
+  tiendaTexto:'Palas y material de pádel',
+  amazonTag:''                    // tu código de Amazon Afiliados (p. ej. 'vibora-21'): convierte la pala de cada jugador en un enlace a Amazon
 };
+/* Pala de cada jugador. Fuente: PadelAddict, palas de la temporada 2026 (marzo de 2026); pueden cambiar durante el año.
+   Formato: [categoría, nombres de pila posibles, apellidos, pala]. Para añadir o corregir uno, edita esta lista. */
+const PALAS=[
+  ['men',['arturo'],'coello','HEAD Coello Pro'],
+  ['men',['agustin','agus'],'tapia','NOX AT10 Genius 12K Alum Xtreme'],
+  ['men',['alejandro','ale'],'galan','Adidas Metalbone 3.5 HRD+'],
+  ['men',['federico','fede'],'chingotto','Bullpadel Neuron 02 Edge'],
+  ['men',['juan'],'lebron','Babolat Viper 3.0 J.Lebrón'],
+  ['men',['franco'],'stupaczuk','Siux Electra ST5 Pro Shadow Red'],
+  ['men',['francisco','paquito'],'navarro','Bullpadel Hack 04'],
+  ['men',['miguel','mike'],'yanguas','Lok Maxx Hype 2 Yanguas World'],
+  ['men',['jorge','coki'],'nieto','Kuima Hybrid Pro'],
+  ['men',['leandro','leo'],'augsburger','Siux Fenix Pro Glow Purple'],
+  ['men',['jon'],'sanz','Drop Shot Axion Attack 1.5'],
+  ['men',['martin'],'di nenno','Bullpadel XPlo'],
+  ['men',['francisco','fran'],'guerrero','Head Speed Pro'],
+  ['men',['lucas'],'bergamini','Tactical El Jefe Master Edition'],
+  ['men',['jeronimo','momo'],'gonzalez','Wilson Endure Pro V1'],
+  ['men',['javier','javi'],'leal','Wilson Defy Pro V1'],
+  ['women',['gemma'],'triay','Bullpadel Elite W 26'],
+  ['women',['delfina','delfi'],'brea','Bullpadel Vertex Woman'],
+  ['women',['paula'],'josemaria','HEAD Extreme Motion LTD'],
+  ['women',['beatriz','bea'],'gonzalez','Bullpadel Pearl 26']];
+const palaOf=p=>{const w=' '+norm(p.name).replace(/[^a-z0-9]+/g,' ')+' ';const x=PALAS.find(([c,fn,sn])=>c===p.cat&&w.includes(' '+sn+' ')&&fn.some(f=>w.startsWith(' '+f+' ')));return x?x[3]:null};
+function palaCard(p){const pala=palaOf(p);if(!pala)return '';const tag=/^[a-z0-9-]{3,40}$/i.test(APOYO.amazonTag||'')?APOYO.amazonTag:'';
+  const url=tag?`https://www.amazon.es/s?k=${encodeURIComponent('pala '+pala)}&tag=${encodeURIComponent(tag)}`:'';
+  return `<div class="card pala"><span class="palaic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.5 2a7.5 7.5 0 0 1 5.3 12.8c-1.6 1.6-3.7 2.3-5.8 2.2l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-.9-.9a1.5 1.5 0 0 1 0-2.1l4.4-4.4A7.5 7.5 0 0 1 14.5 2Zm-1 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-3 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></span><span class="tx"><h2>Juega con</h2><b>${pala}</b>${url?'<span>Enlace de afiliado</span>':''}</span>${url?`<a class="btn pri" href="${url}" target="_blank" rel="sponsored noopener">Ver pala ›</a>`:''}</div>`}
 const safeUrl=u=>/^https:\/\/[^\s"'<>]+$/.test(u||'')?u:'';
 function apoyoCard(){const t=safeUrl(APOYO.tienda);if(!t)return '';
   return `<section><div class="card apoyo"><h2>🎾 Material de pádel</h2><p class="sub" style="margin-top:6px">Palas, zapatillas y todo lo que usan los profesionales.</p><div class="row2"><a class="btn pri" href="${t}" target="_blank" rel="sponsored noopener">${APOYO.tiendaTexto} ›</a></div><p class="sub" style="margin-top:10px;font-size:12px">Enlace de afiliado: si compras, Víbora recibe una pequeña comisión sin que a ti te cueste más.</p></div></section>`}
@@ -587,7 +620,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   const rivS=bn||vf?`<section><div class="duel">${rcard(bn,'Bestia negra','var(--red)')}${rcard(vf,'Víctima favorita','var(--mint)')}</div></section>`:'';
   return `<a class="back" href="#ranking">‹ Ranking</a>
   <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button></div>
-  <div class="kpis"><div class="kpi a"><b>${Math.round(p.elo)}</b><span>Elo${pos?' · n.º '+pos:''}</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Victorias-derrotas</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos</span></div></div>
+  ${palaCard(p)}<div class="kpis"><div class="kpi a"><b>${Math.round(p.elo)}</b><span>Elo${pos?' · n.º '+pos:''}</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Victorias-derrotas</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos</span></div></div>
   ${wrapS}${rivS}
   ${tl.length?`<section><div class="card"><h2>Parejas desde junio</h2><div class="tl" style="margin-top:10px">${tl.map((x,i)=>`${i?'<span class="sub">→</span>':''}<a class="st" href="#pareja-${key([id,x.q])}">${av(x.q,'sm')}<span>${P[x.q].sn}</span><small>${fd(x.d)}</small></a>`).join('')}</div></div></section>`:''}
   ${p.hist.length>2?`<section><div class="card"><h2>Evolución del Elo</h2>${chart(p.hist)}<p class="sub">Torneo a torneo desde junio. La línea discontinua marca los 1500 de partida.</p></div></section>`:''}
