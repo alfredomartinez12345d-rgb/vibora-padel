@@ -2,7 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Resultados, cuadros, ranking y mapa del circuito de pádel profesional.">
+<meta name="theme-color" content="#0a0c1c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Víbora">
 <title>Víbora Pádel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
@@ -47,6 +56,7 @@ section{display:flex;flex-direction:column;gap:10px}
 .seg button[aria-pressed="true"]{background:var(--grad);color:#fff;box-shadow:0 4px 16px rgba(110,110,255,.45)}
 /* Avatares con iniciales y color propio */
 .av{--h:220;display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:38px;border-radius:50%;font-family:var(--display);font-weight:700;font-size:16px;color:#fff;background:linear-gradient(135deg,hsl(var(--h) 85% 58%),hsl(calc(var(--h) + 45) 80% 40%));border:2px solid rgba(255,255,255,.14)}
+.av{position:relative;overflow:hidden}.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 15%;background:var(--surface2)}
 .av.lg{width:64px;height:64px;font-size:26px}.av.xl{width:84px;height:84px;font-size:34px}
 .av.sm{width:26px;height:26px;font-size:11px;border-width:1px}
 .duo{display:flex}.duo .av+.av{margin-left:-12px}
@@ -251,6 +261,23 @@ nav.bot a[aria-current="page"]{box-shadow:0 6px 20px -4px rgba(110,110,255,.6)}
 .mpanel .tres .tx span{margin-top:2px}
 .mpanel .tres .tx span.dot{display:inline-block;margin-top:0}
 .mpanel .tres .tx .pill{display:inline;margin-left:4px;vertical-align:2px}
+
+/* ---------- App instalable y apoyo ---------- */
+header.top{padding-top:calc(16px + env(safe-area-inset-top))}
+nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
+.inst{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;border-color:rgba(61,214,245,.4);background:linear-gradient(135deg,rgba(61,214,245,.16),var(--surface) 60%)}
+.inst img{width:52px;height:52px;border-radius:14px;box-shadow:0 6px 18px -6px rgba(0,0,0,.8)}
+.inst b{display:block;font-family:var(--display);font-size:22px;line-height:1.1}
+.inst .sub{font-size:13px}
+.inst .row2{grid-column:1/-1;display:flex;gap:8px}
+.btn.pri{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 6px 18px -6px rgba(110,110,255,.7)}
+.pala{display:flex;align-items:center;gap:12px;padding:12px 14px;border-color:rgba(217,224,33,.35);background:linear-gradient(120deg,rgba(217,224,33,.12),var(--surface) 55%)}
+.palaic{width:42px;height:42px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(217,224,33,.16);color:#e3ea4a}
+.palaic{position:relative;overflow:hidden}
+.palaic:has(.foto){width:58px;height:78px;background:#f4f5ff}
+.palaic .foto{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#f4f5ff;padding:2px}
+.palaic svg{width:24px;height:24px;fill:currentColor}
+.pala .tx{flex:1;min-width:0}.pala .tx b{display:block;font-weight:700;font-size:16px;overflow-wrap:anywhere;margin-top:2px}.pala .tx span{font-size:11px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -272,7 +299,7 @@ nav.bot a[aria-current="page"]{box-shadow:0 6px 20px -4px rgba(110,110,255,.6)}
 const D=/*DATA*/null;
 
 /* ---------- Carga de datos reales (Padel API) ---------- */
-const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,elo:1500,hist:[1500],ms:[],lastT:null}}
+const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^https:\/\/[^\s"'<>]+$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
 const LV={major:'Major',p1:'P1',p2:'P2',finals:'Finals',fip_platinum:'FIP Platinum'};
 const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--violet)',fip_platinum:'var(--mint)'};
 const T=D.T.map(([id,name,level,loc,country,start,end,court,status,hidden])=>({id,name,level,loc,country,start,end,court,status,hidden:!!hidden}));
@@ -328,7 +355,7 @@ function pairStats(c){const ps={};M.filter(m=>m.cat===c&&played(m)).sort(chrono)
 const IC={trophy:'<svg class="ic gold" viewBox="0 0 24 24"><path d="M7 4h10v3a5 5 0 0 1-10 0V4Zm-3 1h3v2a3 3 0 0 1-3-2Zm16 0h-3v2a3 3 0 0 0 3-2ZM11 13h2v4h3v2H8v-2h3v-4Z"/></svg>'};
 const flag=n=>n&&/^[A-Z]{2}$/.test(n)?String.fromCodePoint(...[...n].map(c=>127397+c.charCodeAt(0))):'';
 const ini=p=>(p.name.split(' ')[0][0]+(p.sn[0]||'')).toUpperCase();
-const av=(id,cls='')=>`<span class="av ${cls}" style="--h:${(id*47)%360}" aria-hidden="true">${ini(P[id])}</span>`;
+const av=(id,cls='')=>`<span class="av ${cls}" style="--h:${(id*47)%360}" aria-hidden="true">${ini(P[id])}${P[id].photo?`<img src="${P[id].photo}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`;
 const duo=(pr,cls='')=>`<span class="duo">${pr.map(i=>av(i,cls)).join('')}</span>`;
 const lvs=t=>`style="--lv:${LC[t.level]||'var(--blue)'}"`;
 function pill(m){return m.st===3?`<span class="pill next">${fd(m.date)||'Pendiente'}</span>`:m.st?`<span class="pill">${['','Retirada','No presentado'][m.st]}</span>`:''}
@@ -432,6 +459,49 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
 
+/* ---------- Pala de cada jugador. Fuente: PadelAddict, palas de la temporada 2026 (marzo de 2026); pueden cambiar durante el año.
+   Formato: [categoría, nombres de pila posibles, apellidos, pala]. Para añadir o corregir uno, edita esta lista. */
+const PALAS=[
+  ['men',['arturo'],'coello','HEAD Coello Pro'],
+  ['men',['agustin','agus'],'tapia','NOX AT10 Genius 12K Alum Xtreme'],
+  ['men',['alejandro','ale'],'galan','Adidas Metalbone 3.5 HRD+'],
+  ['men',['federico','fede'],'chingotto','Bullpadel Neuron 02 Edge'],
+  ['men',['juan'],'lebron','Babolat Viper 3.0 J.Lebrón'],
+  ['men',['franco'],'stupaczuk','Siux Electra ST5 Pro Shadow Red'],
+  ['men',['francisco','paquito'],'navarro','Bullpadel Hack 04'],
+  ['men',['miguel','mike'],'yanguas','Lok Maxx Hype 2 Yanguas World'],
+  ['men',['jorge','coki'],'nieto','Kuima Hybrid Pro'],
+  ['men',['leandro','leo'],'augsburger','Siux Fenix Pro Glow Purple'],
+  ['men',['jon'],'sanz','Drop Shot Axion Attack 1.5'],
+  ['men',['martin'],'di nenno','Bullpadel XPlo'],
+  ['men',['francisco','fran'],'guerrero','Head Speed Pro'],
+  ['men',['lucas'],'bergamini','Tactical El Jefe Master Edition'],
+  ['men',['jeronimo','momo'],'gonzalez','Wilson Endure Pro V1'],
+  ['men',['javier','javi'],'leal','Wilson Defy Pro V1'],
+  ['women',['gemma'],'triay','Bullpadel Elite W 26'],
+  ['women',['delfina','delfi'],'brea','Bullpadel Vertex Woman'],
+  ['women',['paula'],'josemaria','HEAD Extreme Motion LTD'],
+  ['women',['beatriz','bea'],'gonzalez','Bullpadel Pearl 26']];
+const palaOf=p=>{const w=' '+norm(p.name).replace(/[^a-z0-9]+/g,' ')+' ';const x=PALAS.find(([c,fn,sn])=>c===p.cat&&w.includes(' '+sn+' ')&&fn.some(f=>w.startsWith(' '+f+' ')));return x?x[3]:null};
+/* Foto opcional de la pala: fotos/palas/<nombre-apellido>.jpg (p. ej. arturo-coello.jpg).
+   Si el archivo no existe, se ve el icono. Las fotos de los jugadores vienen de Padel API. */
+const fotoSlug=p=>{const w=' '+norm(p.name).replace(/[^a-z0-9]+/g,' ')+' ';const x=PALAS.find(([c,fn,sn])=>c===p.cat&&w.includes(' '+sn+' ')&&fn.some(f=>w.startsWith(' '+f+' ')));return x?x[1][0]+'-'+x[2].replace(/ /g,'-'):null};
+const foto=(dir,slug,alt='')=>slug?`<img class="foto" src="fotos/${dir}/${slug}.jpg" alt="${alt}" loading="lazy" onerror="this.remove()">`:'';
+function palaCard(p){const pala=palaOf(p);if(!pala)return '';
+  return `<div class="card pala"><span class="palaic" aria-hidden="true">${foto('palas',fotoSlug(p))}<svg viewBox="0 0 24 24"><path d="M14.5 2a7.5 7.5 0 0 1 5.3 12.8c-1.6 1.6-3.7 2.3-5.8 2.2l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-.9-.9a1.5 1.5 0 0 1 0-2.1l4.4-4.4A7.5 7.5 0 0 1 14.5 2Zm-1 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-3 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></span><span class="tx"><h2>Juega con</h2><b>${pala}</b></span></div>`}
+
+/* ---------- App instalable ---------- */
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+let instEv=null,instHide=false;
+try{instHide=localStorage.getItem('vibora-inst')==='no'}catch(e){}
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;if(route().v==='inicio'){document.getElementById('app').className='noanim';render()}});
+window.addEventListener('appinstalled',()=>{instEv=null;instHide=true;render()});
+function installCard(){if(standalone()||instHide||(!instEv&&!isIOS))return '';
+  const how=instEv?'Tenla en tu pantalla de inicio como una app y consúltala aunque no tengas cobertura.':'En Safari, toca <b style="display:inline;font:inherit;font-weight:700">Compartir</b> y luego <b style="display:inline;font:inherit;font-weight:700">Añadir a pantalla de inicio</b>.';
+  return `<div class="card inst"><img src="icon-192.png" alt=""><div><b>Instala Víbora</b><span class="sub">${how}</span></div><div class="row2">${instEv?'<button type="button" class="btn pri" data-inst="go">Instalar</button>':''}<button type="button" class="btn" data-inst="no">${instEv?'Ahora no':'Entendido'}</button></div></div>`}
+
 /* ---------- Vistas ---------- */
 let cat='men',rankTab='ofi',hA=null,hB=null,tView='br',brStart=0,duelTab='jug',sim=[];
 const inCat=m=>m.cat===cat;
@@ -465,7 +535,7 @@ inicio(){const nt=nextT(),last=lastPremier();
   const favS=fl.length?`<section><div class="card"><h2><span class="gold">★</span> Tus favoritos</h2>${fl.map(i=>{const x=playerMatches(i).slice(-1)[0];return pline(i,`<span class="chip ${eloDelta(P[i])>=0?'up':'down'}">${Math.round(P[i].elo)}</span>`,x?`${x.won?'Ganó':'Perdió'} ${scoreStr(x.m,x.s)} · ${tb(x.m.t).name}`:'Sin partidos con resultado')}).join('')}</div></section>`:'';
   const lt=T.find(t=>t.status==='live'&&M.some(m=>m.t===t.id&&inCat(m)&&m.st===3));
   const links=`<div class="links"><a href="#records">Récords y curiosidades<span>Remontadas, tie-breaks, matagigantes</span></a>${lt?`<a href="#torneo-${lt.id}" data-tv="qn">Quiniela<span>Rellena el cuadro de ${lt.loc}</span></a>`:`<a href="#h2h" data-duel="sim">Simulador<span>¿Quién ganaría?</span></a>`}</div>`;
-  return `${count}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${NOTE}`},
+  return `${count}${installCard()}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${NOTE}`},
 torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div class="list">${T.slice().sort((a,b)=>a.start<b.start?1:-1).map(t=>{
   const fl=flag(isoOf(t.country)||(geoOf(t)||{}).iso),head=`<b>${fl?fl+' ':''}${t.name}</b><span class="sub">${lvp(t)} ${tinfo(t)}</span>`;
   if(t.hidden)return `<div class="trow off" ${lvs(t)}><span>${head}<span class="sub">Resultados fuera del plan gratuito de datos</span></span></div>`;
@@ -507,7 +577,8 @@ ranking(){const tabs=`<div class="seg">${[['ofi','Oficial'],['elo','Elo Víbora'
   const tint=i=>i<2?'t1':i<4?'t2':i<8?'t3':'';
   let body,expl;
   if(rankTab==='ofi'){const rs=Object.values(P).filter(p=>p.cat===cat&&p.rank).sort((a,b)=>a.rank-b.rank).slice(0,60);
-    expl='Ranking FIP y puntos de los inscritos en el Dubai P1. La última columna es la distancia con el anterior.';
+    expl=`Ranking FIP y puntos${D.rk&&D.rk.length?' según '+D.rk.join(', '):''}. Solo aparecen los jugadores inscritos en esos torneos. La última columna es la distancia con el anterior.`;
+    if(!rs.length)return `<h1>Ranking ${cat==='men'?'masculino':'femenino'}</h1>${tabs}<div class="card"><h2>Sin ranking oficial</h2><p class="sub" style="margin-top:6px">Padel API solo da el ranking de los inscritos en torneos en juego o por jugar, y en esta descarga no ha llegado ninguno. Mientras tanto, mira el <a class="back" href="#ranking" data-rank="elo">Elo Víbora</a>.</p></div>${NOTE}`;
     body=rs.map((p,i)=>`<a class="${tint(i)}" href="#jugador-${p.id}"><span class="n">${p.rank}</span>${av(p.id)}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.nat||''}</span></span><span class="big">${p.pts!=null?p.pts.toLocaleString('es-ES'):'—'}</span><span class="dif">${i&&p.pts!=null&&rs[i-1].pts!=null&&rs[i-1].pts!==p.pts?(rs[i-1].pts-p.pts).toLocaleString('es-ES'):'–'}</span></a>`).join('')}
   else if(rankTab==='elo'){const rs=byElo(cat).slice(0,60);
     expl='Elo calculado por Víbora con los partidos desde junio: sube o baja según a quién ganas o pierdes. La última columna es el cambio en su último torneo.';
@@ -542,7 +613,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   const rivS=bn||vf?`<section><div class="duel">${rcard(bn,'Bestia negra','var(--red)')}${rcard(vf,'Víctima favorita','var(--mint)')}</div></section>`:'';
   return `<a class="back" href="#ranking">‹ Ranking</a>
   <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button></div>
-  <div class="kpis"><div class="kpi a"><b>${Math.round(p.elo)}</b><span>Elo${pos?' · n.º '+pos:''}</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Victorias-derrotas</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos</span></div></div>
+  ${palaCard(p)}<div class="kpis"><div class="kpi a"><b>${Math.round(p.elo)}</b><span>Elo${pos?' · n.º '+pos:''}</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Victorias-derrotas</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos</span></div></div>
   ${wrapS}${rivS}
   ${tl.length?`<section><div class="card"><h2>Parejas desde junio</h2><div class="tl" style="margin-top:10px">${tl.map((x,i)=>`${i?'<span class="sub">→</span>':''}<a class="st" href="#pareja-${key([id,x.q])}">${av(x.q,'sm')}<span>${P[x.q].sn}</span><small>${fd(x.d)}</small></a>`).join('')}</div></div></section>`:''}
   ${p.hist.length>2?`<section><div class="card"><h2>Evolución del Elo</h2>${chart(p.hist)}<p class="sub">Torneo a torneo desde junio. La línea discontinua marca los 1500 de partida.</p></div></section>`:''}
@@ -621,6 +692,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if
   const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else picks[mi]=sd;saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
+  const ins=e.target.closest('[data-inst]');if(ins){if(ins.dataset.inst==='go'&&instEv){const ev=instEv;ev.prompt();ev.userChoice.then(c=>{instEv=null;if(c.outcome!=='accepted'){instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}}render()})}else{instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}render()}return}
   const pn=e.target.closest('[data-pin]');if(pn){mapSel=pn.dataset.pin;document.getElementById('app').className='noanim';render();const q=document.querySelector(`[data-pin="${mapSel}"]`);if(q&&e.detail===0)q.focus();return}
   const mz=e.target.closest('[data-mz]');if(mz){mapZ=mz.dataset.mz;document.getElementById('app').className='noanim';render();return}
   const ms=e.target.closest('[data-mapsel]');if(ms){mapSel=ms.dataset.mapsel;mapZ='mundo'}
