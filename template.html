@@ -384,7 +384,7 @@ function donut(parts,total){const C=2*Math.PI*42;let off=0;
 const tdates=t=>t.start.slice(5,7)===t.end.slice(5,7)?`${+t.start.slice(8)}–${fd(t.end)}`:`${fd(t.start)} – ${fd(t.end)}`;
 const tinfo=t=>`${t.loc} · ${tdates(t)}${t.court?' · '+(t.court==='indoor'?'Indoor':'Outdoor'):''}`;
 const lvp=t=>`<span class="pill lv" ${lvs(t)}>${LV[t.level]||t.level}</span>`;
-const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel desde junio. App no oficial, sin relación con Premier Padel ni con la FIP.</p>`;
+const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel desde junio. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.</p>`;
 const ord=(x,y)=>x.round-y.round||x.idx-y.idx;
 const pline=(id,right,sub)=>{const p=P[id];return `<a class="prow" href="#jugador-${id}">${av(id)}<span class="tx"><b>${p.name}</b><span>${sub??(flag(p.nat)+' '+(p.nat||''))}</span></span>${right||''}</a>`};
 
@@ -497,7 +497,7 @@ try{instHide=localStorage.getItem('vibora-inst')==='no'}catch(e){}
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;if(route().v==='inicio'){document.getElementById('app').className='noanim';render()}});
-window.addEventListener('appinstalled',()=>{instEv=null;instHide=true;render()});
+window.addEventListener('appinstalled',()=>{gcEvent('app-instalada','App instalada');instEv=null;instHide=true;render()});
 function installCard(){if(standalone()||instHide||(!instEv&&!isIOS))return '';
   const how=instEv?'Tenla en tu pantalla de inicio como una app y consúltala aunque no tengas cobertura.':'En Safari, toca <b style="display:inline;font:inherit;font-weight:700">Compartir</b> y luego <b style="display:inline;font:inherit;font-weight:700">Añadir a pantalla de inicio</b>.';
   return `<div class="card inst"><img src="icon-192.png" alt=""><div><b>Instala Víbora</b><span class="sub">${how}</span></div><div class="row2">${instEv?'<button type="button" class="btn pri" data-inst="go">Instalar</button>':''}<button type="button" class="btn" data-inst="no">${instEv?'Ahora no':'Entendido'}</button></div></div>`}
@@ -688,8 +688,8 @@ function render(){const r=route();
 window.addEventListener('hashchange',()=>{document.getElementById('app').className='';render();window.scrollTo(0,0)});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if(b){rankTab=b.dataset.rank;render();return}
   const tv=e.target.closest('[data-tv]');if(tv){tView=tv.dataset.tv;render();return}
-  const fb=e.target.closest('[data-fav]');if(fb){const i=+fb.dataset.fav;favs.has(i)?favs.delete(i):favs.add(i);saveLocal();document.getElementById('app').className='noanim';render();return}
-  const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else picks[mi]=sd;saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
+  const fb=e.target.closest('[data-fav]');if(fb){const i=+fb.dataset.fav;favs.has(i)?favs.delete(i):(favs.add(i),gcEvent('favorito/'+slug(P[i].name),'Favorito: '+P[i].name));saveLocal();document.getElementById('app').className='noanim';render();return}
+  const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else{picks[mi]=sd;if(!window.gcQn){window.gcQn=1;gcEvent('quiniela','Rellena la quiniela')}}saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
   const ins=e.target.closest('[data-inst]');if(ins){if(ins.dataset.inst==='go'&&instEv){const ev=instEv;ev.prompt();ev.userChoice.then(c=>{instEv=null;if(c.outcome!=='accepted'){instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}}render()})}else{instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}render()}return}
@@ -702,7 +702,20 @@ document.addEventListener('keydown',e=>{const pn=e.target.closest&&e.target.clos
 document.addEventListener('input',e=>{if(e.target.id==='q')document.getElementById('qres').innerHTML=searchRes(e.target.value)});
 document.addEventListener('change',e=>{const sm=/^sim-(\d)$/.exec(e.target.id);if(sm){sim[+sm[1]]=+e.target.value;render();return}if(e.target.id==='h2h-a'){hA=+e.target.value;render()}if(e.target.id==='h2h-b'){hB=+e.target.value;render()}});
 setInterval(()=>{const el=document.getElementById('cd');if(el)el.textContent=cdText()},1000);
-render();
+/* ---------- Estadísticas de visitas (GoatCounter: anónimas, sin cookies) ---------- */
+const gcQ=[];
+function gc(o){gcQ.push(o);gcFlush()}
+function gcFlush(){const g=window.goatcounter;if(!g||!g.count)return;while(gcQ.length){try{g.count(gcQ.shift())}catch(e){}}}
+const slug=x=>norm(x||'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+function gcView(){const r=route(),a=r.args[0];let path='/'+r.v,title=r.v;
+  if(r.v==='jugador'&&P[a]){path+='/'+slug(P[a].name);title='Jugador: '+P[a].name}
+  else if(r.v==='torneo'&&tb(a)){path+='/'+slug(tb(a).name);title='Torneo: '+tb(a).name}
+  gc({path,title})}
+const gcEvent=(name,title)=>gc({path:name,title:title||name,event:true});
+window.addEventListener('hashchange',gcView);
+render();gcView();
 </script>
+<script>window.goatcounter={no_onload:true}</script>
+<script data-goatcounter="https://viborapadel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" onload="gcFlush()"></script>
 </body>
 </html>

@@ -25,8 +25,13 @@ vibora-padel/
 
 La URL será: https://TU_USUARIO.github.io/vibora-padel/
 
-## Para actualizar manualmente
-Ve a Actions → "Actualizar datos Víbora Pádel" → Run workflow
+## Actualizaciones
+- **Completa**, cada noche (01:30 UTC): descarga toda la temporada (`descargar.sh`).
+- **Rápida**, cada 30 minutos (a y cuarto y a menos cuarto): si hoy hay un torneo en juego, vuelve a bajar solo su calendario y sus partidos (`directo.sh`) partiendo de los datos guardados en la caché de GitHub, y publica. Si no hay torneo, termina sin gastar peticiones ni publicar.
+
+Para lanzarla a mano: Actions → "Actualizar datos Víbora Pádel" → Run workflow, y elige `completa` o `rapida`.
+
+Solo se publica la app (carpeta `_site`); los datos en bruto de la API no salen a la web.
 
 ## App instalable
 `manifest.webmanifest`, `sw.js` y los iconos (`icon-*.png`, `apple-touch-icon.png`, generados desde `icon.svg`) permiten instalar Víbora en el móvil y abrirla sin conexión con los últimos datos descargados. En Inicio aparece una tarjeta «Instala Víbora» (Android/Chrome: botón Instalar; iPhone: instrucciones de Safari).
@@ -56,3 +61,9 @@ Las fotos de los jugadores vienen de Padel API (`photo_url`). La de la pala es o
 - `delfina-brea.jpg`
 - `paula-josemaria.jpg`
 - `beatriz-gonzalez.jpg`
+
+## Estadísticas de visitas
+GoatCounter (anónimo, sin cookies): https://viborapadel.goatcounter.com
+- Cada pantalla cuenta como una vista (`/inicio`, `/ranking`, `/torneos`, `/jugador/<nombre>`, `/torneo/<nombre>`…).
+- Eventos: `app-instalada`, `quiniela` (una vez por visita) y `favorito/<jugador>`.
+- No cuenta las visitas desde `localhost`.
