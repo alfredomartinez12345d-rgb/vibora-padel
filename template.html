@@ -455,15 +455,14 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
 
-/* ---------- Apoyo y afiliados: pon aquí tus enlaces para activarlos (vacío = no se muestra) ---------- */
+/* ---------- Enlace de afiliado: pon aquí tu enlace para activarlo (vacío = no se muestra) ---------- */
 const APOYO={
-  donar:'',                       // p. ej. 'https://ko-fi.com/tu-usuario' o tu página de Buy Me a Coffee
   tienda:'',                      // tu enlace de afiliado a una tienda de pádel (Amazon, Padel Nuestro…)
   tiendaTexto:'Palas y material de pádel'
 };
 const safeUrl=u=>/^https:\/\/[^\s"'<>]+$/.test(u||'')?u:'';
-function apoyoCard(){const d=safeUrl(APOYO.donar),t=safeUrl(APOYO.tienda);if(!d&&!t)return '';
-  return `<section><div class="card apoyo"><h2><span class="gold">♥</span> Apoya Víbora</h2><p class="sub" style="margin-top:6px">Víbora es gratis y sin anuncios. Si te es útil, puedes ayudar a mantenerla.</p><div class="row2">${d?`<a class="btn pri" href="${d}" target="_blank" rel="noopener">☕ Invítame a un café</a>`:''}${t?`<a class="btn" href="${t}" target="_blank" rel="sponsored noopener">🎾 ${APOYO.tiendaTexto}</a>`:''}</div>${t?'<p class="sub" style="margin-top:10px;font-size:12px">El enlace de la tienda es de afiliado: si compras, Víbora recibe una pequeña comisión sin que a ti te cueste más.</p>':''}</div></section>`}
+function apoyoCard(){const t=safeUrl(APOYO.tienda);if(!t)return '';
+  return `<section><div class="card apoyo"><h2>🎾 Material de pádel</h2><p class="sub" style="margin-top:6px">Palas, zapatillas y todo lo que usan los profesionales.</p><div class="row2"><a class="btn pri" href="${t}" target="_blank" rel="sponsored noopener">${APOYO.tiendaTexto} ›</a></div><p class="sub" style="margin-top:10px;font-size:12px">Enlace de afiliado: si compras, Víbora recibe una pequeña comisión sin que a ti te cueste más.</p></div></section>`}
 function shopLink(){const t=safeUrl(APOYO.tienda);return t?`<a class="card shop" href="${t}" target="_blank" rel="sponsored noopener"><span>🎾 ${APOYO.tiendaTexto}<span class="sub" style="display:block;font-weight:400;font-size:12px">Enlace de afiliado</span></span><span class="back">Ver ›</span></a>`:''}
 
 /* ---------- App instalable ---------- */
