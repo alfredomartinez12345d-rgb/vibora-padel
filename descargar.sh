@@ -57,14 +57,17 @@ while true; do
   page=$((page+1))
 done
 
-# Extraer IDs de torneos
+# Extraer IDs de torneos — solo niveles Premier Padel y FIP Platinum/Gold
+# (excluye FIP Silver, FIP Other y torneos locales para no tardar horas)
 T_IDS=$(python3 -c "
 import json, glob
+NIVELES = {'major','p1','p2','finals','fip_platinum','fip_gold'}
 ids = []
 for f in sorted(glob.glob('$OUT/tournaments_*.json')):
     d = json.load(open(f))
     for t in d.get('data', []):
-        ids.append(t['id'])
+        if t.get('level','') in NIVELES:
+            ids.append(t['id'])
 print(' '.join(map(str, ids)))
 ")
 echo "Torneos: $T_IDS"
