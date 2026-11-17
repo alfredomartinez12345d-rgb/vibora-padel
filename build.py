@@ -15,7 +15,9 @@ for f in sorted(glob.glob(os.path.join(d_meta, 'tournaments_*.json'))):
 sf = os.path.join(d_meta, 'season.txt')
 if os.path.exists(sf):
     sid = open(sf).read().strip()
-    tmeta = {i: t for i, t in tmeta.items() if (t.get('connections') or {}).get('season') == f'/api/seasons/{sid}'}
+    ff = os.path.join(d_meta, 'fip_ids.txt')
+    fip_ids = set(int(x) for x in open(ff).read().split()) if os.path.exists(ff) else set()
+    tmeta = {i: t for i, t in tmeta.items() if (t.get('connections') or {}).get('season') == f'/api/seasons/{sid}' or i in fip_ids}
 
 # Partidos
 raw = {}
@@ -127,7 +129,9 @@ try:
 except Exception:
     pass
 yt_videos = yt.get('videos') or []
-yt_handle = re.sub(r'[^@A-Za-z0-9_.-]', '', yt.get('handle') or '@PremierPadelOfficial')
+canales = yt.get('channels') if isinstance(yt.get('channels'), dict) else {}
+yt_handles = {'premier': re.sub(r'[^@A-Za-z0-9_.-]', '', canales.get('premier') or '@PremierPadelOfficial'),
+              'fip': re.sub(r'[^@A-Za-z0-9_.-]', '', canales.get('fip') or '@padelfip')}
 enlazados = 0
 if yt_videos:
     for m in M:
@@ -137,14 +141,18 @@ if yt_videos:
         pk = pista(m[6])
         if not pk:
             continue
+        circuito = 'fip' if str(t.get('level') or '').startswith('fip') else 'premier'
         claves = {w for w in (nrm(t.get('name')) + nrm(t.get('location'))).split() if len(w) > 3 and w not in GENERIC and not w.isdigit()}
         mejor = None
         for v in yt_videos:
             tt = nrm(v.get('title'))
-            if pista(v.get('title')) != pk or (claves and not any(f' {c} ' in tt for c in claves)):
+            if v.get('circuit', 'premier') != circuito or pista(v.get('title')) != pk or (claves and not any(f' {c} ' in tt for c in claves)):
                 continue
-            if mejor is None or (v.get('status') == 'live' and mejor.get('status') != 'live'):
-                mejor = v
+            # Preferencia: en directo antes que programada, y en español antes que en inglés
+            nota = (v.get('status') == 'live', ' esp ' in tt or ' espanol ' in tt)
+            if mejor is None or nota > mejor[0]:
+                mejor = (nota, v)
+        mejor = mejor and mejor[1]
         if mejor and re.fullmatch(r'[A-Za-z0-9_-]{6,20}', mejor['id']):
             m.append(mejor['id'])
             enlazados += 1
@@ -152,7 +160,7 @@ print('youtube', len(yt_videos), 'emisiones,', enlazados, 'partidos enlazados')
 
 has={m[1] for m in M}
 T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
-data = {'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handle, 'P': P, 'T': T, 'M': M}
+data = {'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M}
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 assert '</' not in js
 push = re.sub(r'[^0-9a-fA-F-]', '', os.environ.get('ONESIGNAL_APP_ID', ''))

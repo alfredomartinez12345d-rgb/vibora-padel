@@ -366,13 +366,15 @@ const PUSH_APP=/*PUSH*/""; /* App ID de OneSignal (lo pone build.py); vacío = s
 
 /* ---------- Carga de datos reales (Padel API) ---------- */
 const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^https:\/\/[^\s"'<>]+$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
-const LV={major:'Major',p1:'P1',p2:'P2',finals:'Finals',fip_platinum:'FIP Platinum'};
-const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--violet)',fip_platinum:'var(--mint)'};
+const LV={major:'Major',p1:'P1',p2:'P2',finals:'Finals',fip_platinum:'FIP Platinum',fip_gold:'FIP Gold',fip_silver:'FIP Silver'};
+const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--violet)',fip_platinum:'var(--mint)',fip_gold:'#ff7eb6',fip_silver:'#9aa1c7'};
 const okUrl=u=>/^https:\/\/[^\s"'<>()]+$/.test(u||'')?u:null;
 const T=D.T.map(([id,name,level,loc,country,start,end,court,status,hidden,photo])=>({id,name,level,loc,country,start,end,court,status,hidden:!!hidden,photo:okUrl(photo)}));
 const TM={};T.forEach(t=>TM[t.id]=t);const tb=id=>TM[id];
 const M=D.M.map(a=>({yt:/^[A-Za-z0-9_-]{6,20}$/.test(a[17]||'')?a[17]:null,id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],idx:a[4],date:a[5],court:a[6],st:a[7],a:a[8],b:a[9],sa:a[10],sb:a[11],sets:a[12],w:a[13],at:a[14]&&!isNaN(Date.parse(a[14]))?new Date(a[14]):null,approx:!!a[15],ord:a[16]}));
 const MM={};M.forEach(m=>MM[m.id]=m);
+const isFipT=t=>!!t&&String(t.level||'').startsWith('fip');
+const prem=m=>!isFipT(TM[m.t]); /* las estadísticas solo cuentan Premier Padel */
 const RN={1:'Final',2:'Semifinales',4:'Cuartos',8:'Octavos',16:'Dieciseisavos',32:'Primera ronda'};
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const fd=s=>s?(+s.slice(8,10))+' '+MES[+s.slice(5,7)-1]:'';
@@ -384,7 +386,7 @@ const chrono=(x,y)=>x.date<y.date?-1:x.date>y.date?1:y.round-x.round||x.id-y.id;
 /* ---------- Elo propio: 1500 de partida, K=32, media de la pareja ---------- */
 const avg=pr=>(P[pr[0]].elo+P[pr[1]].elo)/2;
 const PK=new Set();
-M.filter(m=>m.a.length===2&&m.b.length===2).sort(chrono).forEach(m=>{
+M.filter(m=>m.a.length===2&&m.b.length===2&&prem(m)).sort(chrono).forEach(m=>{
   [...m.a,...m.b].forEach(i=>P[i].ms.push(m));PK.add(key(m.a));PK.add(key(m.b));
   if(!played(m))return;
   [...m.a,...m.b].forEach(i=>{const p=P[i];if(p.lastT!==null&&p.lastT!==m.t)p.hist.push(p.elo);p.lastT=m.t});
@@ -413,7 +415,7 @@ const winP=m=>m.w===0?m.pre:1-m.pre;
 const norm=x=>x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const lastPair=id=>{const m=P[id].ms[P[id].ms.length-1];return m?(sideOf(m,id)?m.b:m.a):null};
 const prob=(A,B)=>1/(1+Math.pow(10,(avg(B)-avg(A))/400));
-function pairStats(c){const ps={};M.filter(m=>m.cat===c&&played(m)).sort(chrono).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr),o=(ps[k]??={pr,n:0,w:0,come:0,tbw:0,tbl:0,three:0,up:0,cur:0,best:0}),won=m.w===s;o.n++;
+function pairStats(c){const ps={};M.filter(m=>m.cat===c&&played(m)&&prem(m)).sort(chrono).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr),o=(ps[k]??={pr,n:0,w:0,come:0,tbw:0,tbl:0,three:0,up:0,cur:0,best:0}),won=m.w===s;o.n++;
   if(won){o.w++;o.cur++;o.best=Math.max(o.best,o.cur)}else o.cur=0;
   if(m.st===0&&m.sets.length){if(won&&m.sets[0][s]<m.sets[0][1-s])o.come++;if(m.sets.length===3)o.three++;m.sets.forEach(z=>{if(z[2]!=null)(z[s]>z[1-s]?o.tbw++:o.tbl++)})}
   if(won&&m.pre!=null&&winP(m)<0.35)o.up++}));return Object.values(ps)}
@@ -452,7 +454,7 @@ const tdates=t=>t.start.slice(5,7)===t.end.slice(5,7)?`${+t.start.slice(8)}–${
 const tinfo=t=>`${t.loc} · ${tdates(t)}${t.court?' · '+(t.court==='indoor'?'Indoor':'Outdoor'):''}`;
 const tban=(t,cls='')=>t&&t.photo?`<div class="tban ${cls}"><img src="${t.photo}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>`:'';
 const lvp=t=>`<span class="pill lv" ${lvs(t)}>${LV[t.level]||t.level}</span>`;
-const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel desde junio. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.${PUSH_APP?' Los avisos al móvil los envía OneSignal solo si los activas.':''}</p>`;
+const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel y los torneos FIP Platinum y Gold recientes; Elo, rankings y récords solo cuentan Premier Padel. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.${PUSH_APP?' Los avisos al móvil los envía OneSignal solo si los activas.':''}</p>`;
 const ord=(x,y)=>x.round-y.round||x.idx-y.idx;
 const pline=(id,right,sub)=>{const p=P[id];return `<a class="prow" href="#jugador-${id}">${av(id)}<span class="tx"><b>${p.name}</b><span>${sub??(flag(p.nat)+' '+(p.nat||''))}</span></span>${right||''}</a>`};
 
@@ -611,7 +613,8 @@ function oopCourts(ms){const by={};ms.forEach(m=>(by[m.court||'Pista']??=[]).pus
 /* Botón de YouTube: partidos sin jugar hasta cuartos de un torneo en juego */
 const YT_ICON='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8ZM10 15V9l5.2 3L10 15Z"/></svg>';
 const ytUrl=m=>{const t=tb(m.t);if(m.st!==3||m.round<4||!t||t.status!=='live')return null;
-  return m.yt?'https://www.youtube.com/watch?v='+m.yt:'https://www.youtube.com/'+(/^@[A-Za-z0-9_.-]+$/.test(D.yt||'')?D.yt:'@PremierPadelOfficial')+'/streams'};
+  const ch=(D.yt||{})[isFipT(t)?'fip':'premier'],h=/^@[A-Za-z0-9_.-]+$/.test(ch||'')?ch:(isFipT(t)?'@padelfip':'@PremierPadelOfficial');
+  return m.yt?'https://www.youtube.com/watch?v='+m.yt:'https://www.youtube.com/'+h+'/streams'};
 const ytBtn=(m,big)=>{const u=ytUrl(m);return u?`<a class="ytb${big?' big':''}" href="${u}" target="_blank" rel="noopener" data-yt="${m.yt?'directo':'canal'}">${YT_ICON}<span>${m.yt?'Ver en YouTube':'Buscar en YouTube'}${m.court?' · '+m.court:''}</span></a>`:''};
 const OOPNOTE='<p class="sub" style="font-size:12px">Horas en tu zona horaria. «Aprox.»: hora estimada, depende de cuánto duren los partidos anteriores.</p>';
 
@@ -634,7 +637,7 @@ inicio(){const nt=nextT(),last=lastPremier();
   const tl=Object.values(tp).sort((a,b)=>b.n-a.n).slice(0,5),mx=tl.length?tl[0].n:1;
   const tit=`<section><div class="card"><h2>${IC.trophy} Títulos por pareja · desde junio</h2><div class="list" style="gap:14px;margin-top:12px">${tl.map(x=>`<a class="tt" href="#pareja-${key(x.pr)}"><span class="hd"><span>${pl(x.pr)}</span><b>${x.n}</b></span><span class="tbar" style="width:${Math.max(30,Math.round(100*x.n/mx))}%">${['major','finals','p1','p2'].filter(l=>x.lv[l]).map(l=>`<span style="--lv:${LC[l]};flex:${x.lv[l]}">${x.lv[l]}<small>${LV[l].toUpperCase()}</small></span>`).join('')}</span></a>`).join('')}</div></div></section>`;
   /* rachas de parejas */
-  const ps={};M.filter(m=>inCat(m)&&played(m)).sort(chrono).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr),o=(ps[k]??={pr,st:0,t:0});o.st=m.w===s?o.st+1:0;o.t=m.t}));
+  const ps={};M.filter(m=>inCat(m)&&played(m)&&prem(m)).sort(chrono).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr),o=(ps[k]??={pr,st:0,t:0});o.st=m.w===s?o.st+1:0;o.t=m.t}));
   const recent=new Set(T.filter(t=>!t.hidden&&t.status!=='pending').sort((a,b)=>a.start<b.start?1:-1).slice(0,3).map(t=>t.id));
   const rach=Object.values(ps).filter(o=>o.st>=3&&recent.has(o.t)).sort((a,b)=>b.st-a.st).slice(0,4);
   const rachS=rach.length?`<section><div class="card"><h2>En racha</h2>${rach.map(o=>`<a class="prow" href="#pareja-${key(o.pr)}">${duo(o.pr)}<span class="tx"><b>${pl(o.pr)}</b><span>Victorias seguidas</span></span><span class="chip fire">${o.st}</span></a>`).join('')}</div></section>`:'';
@@ -698,7 +701,7 @@ ranking(){const tabs=`<div class="seg">${[['ofi','Oficial'],['elo','Elo Víbora'
   else if(rankTab==='elo'){const rs=byElo(cat).slice(0,60);
     expl='Elo calculado por Víbora con los partidos desde junio: sube o baja según a quién ganas o pierdes. La última columna es el cambio en su último torneo.';
     body=rs.map((p,i)=>{const d=eloDelta(p);return `<a class="${tint(i)}" href="#jugador-${p.id}"><span class="n">${i+1}</span>${av(p.id)}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.nat||''}</span></span><span class="big">${Math.round(p.elo)}</span><span class="dif ${d>0?'up':d<0?'down':''}">${d>0?'+':''}${d}</span></a>`}).join('')}
-  else{const pm={};M.filter(m=>inCat(m)&&played(m)).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr);(pm[k]??={pr,w:0,l:0})[m.w===s?'w':'l']++}));
+  else{const pm={};M.filter(m=>inCat(m)&&played(m)&&prem(m)).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr);(pm[k]??={pr,w:0,l:0})[m.w===s?'w':'l']++}));
     const rs=Object.values(pm).filter(x=>x.w+x.l>=6).sort((a,b)=>b.w/(b.w+b.l)-a.w/(a.w+a.l)||b.w-a.w).slice(0,40);
     expl='Parejas con al menos 6 partidos juntos desde junio, ordenadas por porcentaje de victorias.';
     body=rs.map((x,i)=>`<a class="${tint(i)}" href="#pareja-${key(x.pr)}"><span class="n">${i+1}</span>${duo(x.pr)}<span class="tx"><b>${pl(x.pr)}</b><span>${x.w} victorias · ${x.l} derrotas</span></span><span class="big">${pct(x)}</span></a>`).join('')}

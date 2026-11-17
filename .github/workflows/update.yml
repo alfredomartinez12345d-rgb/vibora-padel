@@ -87,6 +87,7 @@ jobs:
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
           YT_CHANNEL: ${{ vars.YT_CHANNEL }}
+          YT_CHANNEL_FIP: ${{ vars.YT_CHANNEL_FIP }}
         run: python3 -I youtube.py datos
 
       # Avisos al móvil (OneSignal); sin las claves no hace nada

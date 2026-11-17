@@ -26,12 +26,29 @@ echo "==> Descargando torneos de la temporada..."
 get_all "$BASE/seasons/$SEASON_ID/tournaments" "$OUT/tournaments" \
   || get_all "$BASE/tournaments?season_id=$SEASON_ID" "$OUT/tournaments"
 
+# Circuito FIP: solo Platinum y Gold de la temporada FIP activa (los Silver son decenas)
+FIP_SEASON=$(python3 -c "
+import json, glob
+ss = [s for f in glob.glob('$OUT/seasons_*.json') for s in json.load(open(f)).get('data', [])]
+fip = [s for s in ss if s.get('status') == 'active' and 'fip' in (s.get('name') or '').lower()]
+print(max(fip, key=lambda x: x.get('start_date') or '')['id'] if fip else '')
+")
+: > "$OUT/fip_ids.txt"
+echo "$FIP_SEASON" > "$OUT/fip_season.txt"
+if [[ -n "$FIP_SEASON" ]]; then
+  echo "==> Descargando torneos FIP (temporada $FIP_SEASON)..."
+  get_all "$BASE/seasons/$FIP_SEASON/tournaments" "$OUT/tournaments_fip" || echo "  Sin calendario FIP"
+  python3 "$DIR/fip.py" "$OUT" "$FIP_SEASON" > "$OUT/fip_ids.txt" || true
+  echo "Torneos FIP: $(cat "$OUT/fip_ids.txt")"
+fi
+
 # Torneos de la temporada que ya han empezado (los pendientes aún no tienen partidos)
 T_IDS=$(python3 -c "
 import json, glob, datetime
 hoy = datetime.date.today().isoformat()
 ts = {t['id']: t for f in glob.glob('$OUT/tournaments_*.json') for t in json.load(open(f)).get('data', [])}
-ts = [t for t in ts.values() if (t.get('connections') or {}).get('season') == '/api/seasons/$SEASON_ID'
+fip = set(int(x) for x in open('$OUT/fip_ids.txt').read().split())
+ts = [t for t in ts.values() if ((t.get('connections') or {}).get('season') == '/api/seasons/$SEASON_ID' or t['id'] in fip)
       and (t.get('start_date') or '') <= hoy]
 ts.sort(key=lambda t: t.get('start_date') or '', reverse=True)
 print(' '.join(str(t['id']) for t in ts))
