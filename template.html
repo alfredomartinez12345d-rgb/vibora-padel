@@ -279,6 +279,23 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 .palaic svg{width:24px;height:24px;fill:currentColor}
 .pala .tx{flex:1;min-width:0}.pala .tx b{display:block;font-weight:700;font-size:16px;overflow-wrap:anywhere;margin-top:2px}.pala .tx span{font-size:11px;color:var(--muted)}
 
+
+/* ---------- Orden de juego y fotos de torneos ---------- */
+.oop{--lv:var(--blue);display:flex;gap:12px;align-items:stretch;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--lv);border-radius:16px;padding:10px 12px}
+.oop.fav{border-color:color-mix(in srgb,var(--gold) 55%,var(--line));border-left-color:var(--gold);background:linear-gradient(90deg,rgba(255,197,61,.1),transparent 55%),var(--surface)}
+.oopt{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:54px;border-right:1px solid var(--line);padding-right:10px}
+.oopt b{font-family:var(--display);font-size:24px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.oopt small{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.oopm{flex:1;min-width:0}
+.oopc{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.tban{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:16/7;background:var(--surface2);border:1px solid var(--line)}
+.tban img{width:100%;height:100%;object-fit:cover;display:block}
+.tban::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(10,12,28,.7))}
+.tban.in{margin:-16px -16px 12px;border-radius:20px 20px 0 0;border:0;aspect-ratio:16/6}
+.count{position:relative;overflow:hidden;isolation:isolate}
+.count>*{position:relative;z-index:2}
+.count .cbg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;z-index:0}
+.count.wph::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(10,12,28,.94),rgba(10,12,28,.5))}
 /* ---------- Animación de entrada ---------- */
 #intro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(600px 420px at 50% 42%,rgba(155,107,255,.28),transparent 70%),radial-gradient(rgba(185,198,255,.07) 1px,transparent 1.5px);background-size:auto,22px 22px;cursor:pointer}
 #intro .in-g{position:relative;display:flex;align-items:center;gap:14px;visibility:hidden}
@@ -341,9 +358,10 @@ const D=/*DATA*/null;
 const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^https:\/\/[^\s"'<>]+$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
 const LV={major:'Major',p1:'P1',p2:'P2',finals:'Finals',fip_platinum:'FIP Platinum'};
 const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--violet)',fip_platinum:'var(--mint)'};
-const T=D.T.map(([id,name,level,loc,country,start,end,court,status,hidden])=>({id,name,level,loc,country,start,end,court,status,hidden:!!hidden}));
+const okUrl=u=>/^https:\/\/[^\s"'<>()]+$/.test(u||'')?u:null;
+const T=D.T.map(([id,name,level,loc,country,start,end,court,status,hidden,photo])=>({id,name,level,loc,country,start,end,court,status,hidden:!!hidden,photo:okUrl(photo)}));
 const TM={};T.forEach(t=>TM[t.id]=t);const tb=id=>TM[id];
-const M=D.M.map(a=>({id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],idx:a[4],date:a[5],court:a[6],st:a[7],a:a[8],b:a[9],sa:a[10],sb:a[11],sets:a[12],w:a[13]}));
+const M=D.M.map(a=>({id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],idx:a[4],date:a[5],court:a[6],st:a[7],a:a[8],b:a[9],sa:a[10],sb:a[11],sets:a[12],w:a[13],at:a[14]&&!isNaN(Date.parse(a[14]))?new Date(a[14]):null,approx:!!a[15],ord:a[16]}));
 const MM={};M.forEach(m=>MM[m.id]=m);
 const RN={1:'Final',2:'Semifinales',4:'Cuartos',8:'Octavos',16:'Dieciseisavos',32:'Primera ronda'};
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -422,6 +440,7 @@ function donut(parts,total){const C=2*Math.PI*42;let off=0;
   <text x="55" y="56" text-anchor="middle" font-family="Barlow Condensed,Arial" font-weight="700" font-size="26" fill="var(--ink)">${total}</text><text x="55" y="70" text-anchor="middle" font-size="8" letter-spacing="1" fill="var(--muted)">TORNEOS</text></svg>`}
 const tdates=t=>t.start.slice(5,7)===t.end.slice(5,7)?`${+t.start.slice(8)}–${fd(t.end)}`:`${fd(t.start)} – ${fd(t.end)}`;
 const tinfo=t=>`${t.loc} · ${tdates(t)}${t.court?' · '+(t.court==='indoor'?'Indoor':'Outdoor'):''}`;
+const tban=(t,cls='')=>t&&t.photo?`<div class="tban ${cls}"><img src="${t.photo}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>`:'';
 const lvp=t=>`<span class="pill lv" ${lvs(t)}>${LV[t.level]||t.level}</span>`;
 const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel desde junio. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.</p>`;
 const ord=(x,y)=>x.round-y.round||x.idx-y.idx;
@@ -493,7 +512,7 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   const leg2=`<div class="mleg">${[...new Set(T.map(t=>t.level))].filter(l=>LV[l]).map(l=>`<span><i style="--lv:${LC[l]}"></i>${LV[l]}</span>`).join('')}<span><i class="o"></i>Por jugar</span>${all.some(g=>g.live)?'<span><i style="--lv:var(--red)"></i>En juego</span>':''}</div>`;
   const ct=CC[(sg.iso||'').toLowerCase()];
   const st=t=>{if(t.hidden)return '<span class="sub">Resultados fuera del plan gratuito</span>';if(t.status==='pending')return `<span class="sub">${t===nt?'Próximo torneo':'Por jugar'}</span>`;if(t.status==='live')return '<span class="sub" style="color:var(--ink)"><span class="dot"></span>En juego</span>';const fm=M.find(m=>m.t===t.id&&inCat(m)&&m.round===1&&m.w!=null);return fm?`<span class="sub" style="color:var(--ink)">${IC.trophy} ${pl(fm.w?fm.b:fm.a)}</span>`:''};
-  const panel=`<div class="card mpanel" ${lvs(sg.main)}><div class="mph"><span class="mflag">${flag(sg.iso)||'📍'}</span><div><div class="big">${sg.name}</div><span class="sub">${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
+  const panel=`<div class="card mpanel" ${lvs(sg.main)}>${tban(sg.main,'in')}<div class="mph"><span class="mflag">${flag(sg.iso)||'📍'}</span><div><div class="big">${sg.name}</div><span class="sub">${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
     ${sg.ts.map(t=>{const inner=`<span class="tx"><b>${t.name}</b> ${lvp(t)}<span>${tdates(t)}</span>${st(t)}</span>`;return t.hidden||t.status==='pending'?`<div class="tres">${inner}</div>`:`<a class="tres" href="#torneo-${t.id}">${inner}<span class="back">Cuadro ›</span></a>`}).join('')}</div>`;
   return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
@@ -541,6 +560,21 @@ function installCard(){if(standalone()||instHide||(!instEv&&!isIOS))return '';
   const how=instEv?'Tenla en tu pantalla de inicio como una app y consúltala aunque no tengas cobertura.':'En Safari, toca <b style="display:inline;font:inherit;font-weight:700">Compartir</b> y luego <b style="display:inline;font:inherit;font-weight:700">Añadir a pantalla de inicio</b>.';
   return `<div class="card inst"><img src="icon-192.png" alt=""><div><b>Instala Víbora</b><span class="sub">${how}</span></div><div class="row2">${instEv?'<button type="button" class="btn pri" data-inst="go">Instalar</button>':''}<button type="button" class="btn" data-inst="no">${instEv?'Ahora no':'Entendido'}</button></div></div>`}
 
+/* ---------- Orden de juego: horas en la zona del que mira ---------- */
+const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const hhmm=d=>d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+const dayName=k=>new Date(k+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+function oopDays(tid){const d={};M.filter(m=>m.t===tid&&m.at&&inCat(m)&&(m.a.length||m.b.length)).forEach(m=>(d[dayKey(m.at)]??=[]).push(m));return d}
+function oopDay(tid){const d=oopDays(tid),ks=Object.keys(d).sort();if(!ks.length)return null;const hoy=dayKey(new Date());
+  const k=ks.includes(hoy)?hoy:ks.find(x=>d[x].some(m=>m.st===3))||ks[ks.length-1];return{k,ms:d[k]}}
+const isFav=m=>[...m.a,...m.b].some(i=>favs.has(i));
+function oopRow(m){const t=tb(m.t);
+  return `<a class="oop${isFav(m)?' fav':''}" ${lvs(t)} href="#partido-${m.id}"><span class="oopt">${m.approx?'<small>aprox.</small>':''}<b>${hhmm(m.at)}</b></span><span class="oopm"><span class="mc-meta">${pill(m)}<span>${RN[m.round]||''}${m.court?' · '+m.court:''}</span>${isFav(m)?'<span class="fv">★ Favorito</span>':''}</span>${rows(m)}</span></a>`}
+function oopCourts(ms){const by={};ms.forEach(m=>(by[m.court||'Pista']??=[]).push(m));
+  return Object.entries(by).sort((x,y)=>Math.min(...x[1].map(m=>m.at))-Math.min(...y[1].map(m=>m.at)))
+    .map(([c,l])=>`<div class="oopc"><h2>${c}</h2><div class="list">${l.sort((x,y)=>(x.ord??99)-(y.ord??99)||x.at-y.at).map(oopRow).join('')}</div></div>`).join('')}
+const OOPNOTE='<p class="sub" style="font-size:12px">Horas en tu zona horaria. «Aprox.»: hora estimada, depende de cuánto duren los partidos anteriores.</p>';
+
 /* ---------- Vistas ---------- */
 let cat='men',rankTab='ofi',hA=null,hB=null,tView='br',brStart=0,duelTab='jug',sim=[];
 const inCat=m=>m.cat===cat;
@@ -548,10 +582,11 @@ function nextT(){return T.filter(t=>t.status==='pending').sort((a,b)=>a.start<b.
 function cdText(){const t=nextT();if(!t)return '';let s=Math.max(0,Math.floor((new Date(t.start+'T00:00:00')-Date.now())/1000));const d=Math.floor(s/86400);s-=d*86400;const h=Math.floor(s/3600);s-=h*3600;const m=Math.floor(s/60);s-=m*60;const z=n=>String(n).padStart(2,'0');return `${d}d ${z(h)}:${z(m)}:${z(s)}`}
 const V={
 inicio(){const nt=nextT(),last=lastPremier();
-  const count=nt?`<div class="count" ${lvs(nt)}><h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
+  const count=nt?`<div class="count${nt.photo?' wph':''}" ${lvs(nt)}>${nt.photo?`<img class="cbg" src="${nt.photo}" alt="" onerror="this.parentNode.classList.remove('wph');this.remove()">`:''}<h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
   const live=T.filter(t=>t.status==='live').map(t=>{const tot=Math.round((new Date(t.end)-new Date(t.start))/864e5)+1,day=Math.min(tot,Math.max(1,Math.round((new Date(D.snap)-new Date(t.start))/864e5)+1));
-    const nx=M.filter(m=>m.t===t.id&&inCat(m)&&m.st===3&&m.a.length&&m.b.length).sort(chrono).slice(0,3);
-    return `<section><a class="livecard" ${lvs(t)} href="#torneo-${t.id}"><h2><span class="dot"></span>En juego ${lvp(t)}</h2><div class="big">${t.name}</div><p class="sub">${tinfo(t)} · Día ${day} de ${tot}</p><div class="track"><i style="width:${Math.round(100*day/tot)}%"></i></div></a>${nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:''}</section>`}).join('');
+    const nx=M.filter(m=>m.t===t.id&&inCat(m)&&m.st===3&&m.a.length&&m.b.length).sort(chrono).slice(0,3),od=oopDay(t.id);
+    const oop=od?`<div class="card"><h2>Orden de juego · ${dayName(od.k)}</h2><div class="list" style="margin-top:10px">${od.ms.sort((x,y)=>x.at-y.at).slice(0,6).map(oopRow).join('')}</div>${od.ms.length>6?`<p class="sub" style="margin-top:8px">Y ${od.ms.length-6} partidos más</p>`:''}<a class="back" style="display:inline-block;margin-top:10px" href="#torneo-${t.id}" data-tv="hr">Ver todos los horarios ›</a>${OOPNOTE}</div>`:(nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:'');
+    return `<section><a class="livecard" ${lvs(t)} href="#torneo-${t.id}"><h2><span class="dot"></span>En juego ${lvp(t)}</h2><div class="big">${t.name}</div><p class="sub">${tinfo(t)} · Día ${day} de ${tot}</p><div class="track"><i style="width:${Math.round(100*day/tot)}%"></i></div></a>${oop}</section>`}).join('');
   const fin=c=>M.find(m=>m.t===last.id&&m.cat===c&&m.round===1);
   const lastCard=`<section><div class="card"><h2>${IC.trophy} Último torneo ${lvp(last)}</h2><a href="#torneo-${last.id}"><h1 style="font-size:28px;margin:6px 0 10px">${last.name}</h1></a>${['men','women'].map(c=>{const m=fin(c);return m?`<a href="#partido-${m.id}" style="display:block;padding:8px 0;border-top:1px solid var(--line)"><h2>${c==='men'?'Masculino':'Femenino'}</h2>${rows(m)}</a>`:''}).join('')}</div></section>`;
   /* títulos por pareja */
@@ -584,15 +619,16 @@ torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div cl
   return `<a class="trow" ${lvs(t)} href="#torneo-${t.id}"><span>${head}<span class="sub" style="color:var(--ink)">${st}</span></span><span class="back">Cuadro ›</span></a>`}).join('')}</div>${NOTE}`},
 torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter(m=>m.t===id&&inCat(m));
   const rs=[...new Set(ms.map(m=>m.round))].sort((a,b)=>a-b);
-  const head=`<a class="back" href="#torneos">‹ Temporada</a><div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div>`;
+  const head=`<a class="back" href="#torneos">‹ Temporada</a>${tban(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div>`;
   if(!rs.length)return head+'<p class="sub">No hay partidos de esta categoría en el torneo.</p>'+NOTE;
   const sched=ms.filter(m=>m.st===3),fm=ms.find(m=>m.round===1&&m.w!=null);
-  const tabsL=[['br','Cuadro'],['li','Lista']];if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
+  const od=oopDays(id),tabsL=[['br','Cuadro'],['li','Lista']];if(Object.keys(od).length)tabsL.push(['hr','Horarios']);if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
   const tv=tabsL.some(x=>x[0]===tView)?tView:'br';
   const views=`<div class="seg">${tabsL.map(([k,l])=>`<button type="button" data-tv="${k}" aria-pressed="${tv===k}">${l}</button>`).join('')}</div>`;
   const maxR=rs[rs.length-1],find=(r,i)=>ms.find(x=>x.round===r&&x.idx===i);
   const grid=(start,body)=>{const cols=[];for(let r=start;r>=1;r/=2)cols.push(r);
     return `<div class="brwrap"><div class="br" style="--n:${start}">${cols.map((r,c)=>`<div class="bh" style="grid-column:${c+1}">${RN[r]}</div>`+Array.from({length:r},(_,i)=>`<div class="bc ${c<cols.length-1&&i%2===0?'top':''} ${c?'in':''}" style="grid-column:${c+1};grid-row:${i*(start/r)+2}/span ${start/r}">${body(r,i)}</div>`).join('')).join('')}</div></div>`};
+  if(tv==='hr')return `${head}${views}${OOPNOTE}${Object.keys(od).sort().map(k=>`<section><h2 style="font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">${dayName(k)}</h2>${oopCourts(od[k])}</section>`).join('')}${NOTE}`;
   if(tv==='li')return `${head}${views}${rs.map(r=>`<section><h2>${RN[r]}</h2><div class="list">${ms.filter(m=>m.round===r).sort(ord).map(m=>mc(m,m.court||RN[r])).join('')}</div></section>`).join('')}${NOTE}`;
   if(tv==='cm'){const pr=fm.w?fm.b:fm.a,k=key(pr),path=ms.filter(m=>key(m.a)===k||key(m.b)===k).sort((x,y)=>y.round-x.round);
     return `${head}${views}<div class="card" style="display:flex;gap:14px;align-items:center">${duo(pr,'lg')}<div><h2>${IC.trophy} Campeones</h2><a href="#pareja-${k}"><div class="big">${pl(pr)}</div></a><p class="sub">${path.length} partidos para levantar el título</p></div></div><div class="list">${path.map(m=>mc(m,RN[m.round])).join('')}</div>${NOTE}`}

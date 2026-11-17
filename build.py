@@ -90,7 +90,8 @@ for m in raw.values():
     w = {'team_1': 0, 'team_2': 1}.get(m['winner'])
     M.append([m['id'], m['_t'], 1 if m['category'] == 'women' else 0, m['round'], m['index'], m['played_at'],
               (m['court'] or '').strip() or None, ST[m['status']], teams[0], teams[1],
-              m['seeds']['team_1'], m['seeds']['team_2'], sets, w])
+              m['seeds']['team_1'], m['seeds']['team_2'], sets, w,
+              m.get('scheduled_at'), 1 if str(m.get('schedule_label') or '').lower().startswith('estimated') else 0, m.get('court_order')])
 
 tids = {m['_t'] for m in raw.values()} | set(tmeta)
 T = []
@@ -98,7 +99,7 @@ for i in sorted(tids):
     t = tmeta.get(i)
     if not t:
         continue
-    T.append([i, t['name'], t['level'], t['location'], t['country'], t['start_date'], t['end_date'], t['court_type'], t['status'], 1 if i in hidden_t else 0])
+    T.append([i, t['name'], t['level'], t['location'], t['country'], t['start_date'], t['end_date'], t['court_type'], t['status'], 1 if i in hidden_t else 0, t.get('photo_url')])
 
 has={m[1] for m in M}
 T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
