@@ -278,9 +278,48 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 .palaic .foto{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#f4f5ff;padding:2px}
 .palaic svg{width:24px;height:24px;fill:currentColor}
 .pala .tx{flex:1;min-width:0}.pala .tx b{display:block;font-weight:700;font-size:16px;overflow-wrap:anywhere;margin-top:2px}.pala .tx span{font-size:11px;color:var(--muted)}
+
+/* ---------- Animación de entrada ---------- */
+#intro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(600px 420px at 50% 42%,rgba(155,107,255,.28),transparent 70%),radial-gradient(rgba(185,198,255,.07) 1px,transparent 1.5px);background-size:auto,22px 22px;cursor:pointer}
+#intro .in-g{position:relative;display:flex;align-items:center;gap:14px;visibility:hidden}
+#intro.play .in-g{visibility:visible}
+#intro .in-ball{width:40px;height:40px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 30%,#fff7a8,#d9e021 60%,#9aa800);box-shadow:0 0 22px rgba(217,224,33,.75);transform:translate(var(--dx,0),-60vh)}
+#intro .in-shadow{position:absolute;left:0;top:44px;width:40px;height:8px;border-radius:50%;background:rgba(0,0,0,.55);filter:blur(3px);transform:translateX(var(--dx,0)) scale(.2);opacity:0}
+#intro .in-word{font-family:var(--display);font-style:italic;font-weight:700;font-size:64px;line-height:1;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,#fff,#b9c6ff);-webkit-background-clip:text;background-clip:text;color:transparent;clip-path:inset(0 100% 0 0);padding-right:6px}
+#intro .in-line{position:absolute;left:54px;right:0;bottom:-14px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--violet),var(--orange));transform:scaleX(0);transform-origin:left}
+#intro.play .in-ball{animation:inBall 1.25s forwards,inGlow 1.25s forwards}
+#intro.play .in-shadow{animation:inShadow 1.25s forwards}
+#intro.play .in-word{animation:inWord 1.25s forwards}
+#intro.play .in-line{animation:inLine 1.6s forwards}
+#intro.out{animation:inOut .4s ease-in forwards;pointer-events:none}
+@keyframes inBall{
+  0%{transform:translate(var(--dx),-60vh);animation-timing-function:cubic-bezier(.55,0,1,.45)}
+  34%{transform:translate(var(--dx),0) scale(1.28,.72);animation-timing-function:cubic-bezier(.2,.6,.4,1)}
+  48%{transform:translate(var(--dx),-64px) scale(.94,1.06);animation-timing-function:cubic-bezier(.55,0,1,.45)}
+  60%{transform:translate(var(--dx),0) scale(1.12,.88);animation-timing-function:ease-out}
+  66%{transform:translate(var(--dx),0) scale(1);animation-timing-function:cubic-bezier(.6,0,.2,1)}
+  88%,100%{transform:translate(0,0)}}
+@keyframes inShadow{0%{opacity:0;transform:translateX(var(--dx)) scale(.2)}34%{opacity:1;transform:translateX(var(--dx)) scale(1.2)}48%{opacity:.4;transform:translateX(var(--dx)) scale(.6)}60%,66%{opacity:1;transform:translateX(var(--dx)) scale(1)}88%,100%{opacity:0;transform:translateX(0) scale(1)}}
+@keyframes inWord{0%,66%{clip-path:inset(0 100% 0 0)}88%,100%{clip-path:inset(0 0 0 0)}}
+@keyframes inGlow{0%,30%{box-shadow:0 0 22px rgba(217,224,33,.75)}36%{box-shadow:0 0 60px 14px rgba(217,224,33,.9)}60%{box-shadow:0 0 30px rgba(217,224,33,.8)}64%{box-shadow:0 0 50px 10px rgba(217,224,33,.9)}100%{box-shadow:0 0 22px rgba(217,224,33,.75)}}
+@keyframes inLine{0%,62%{transform:scaleX(0)}85%,100%{transform:scaleX(1)}}
+@keyframes inOut{to{opacity:0;transform:scale(1.06)}}
 </style>
 </head>
 <body>
+<div id="intro" aria-hidden="true"><div class="in-g"><i class="in-ball"></i><span class="in-shadow"></span><span class="in-word">Víbora</span><span class="in-line"></span></div></div>
+<script>
+/* Animación de entrada: una vez por visita, se salta con un toque y no sale con «reducir movimiento». */
+(function(){var el=document.getElementById('intro'),seen=false;
+  try{seen=sessionStorage.getItem('vibora-intro')==='1';sessionStorage.setItem('vibora-intro','1')}catch(e){}
+  if(seen||matchMedia('(prefers-reduced-motion: reduce)').matches){el.remove();return}
+  var done=false,end=function(){if(done)return;done=true;el.classList.add('out');setTimeout(function(){el.remove()},420)};
+  el.addEventListener('click',end);
+  var start=function(){if(el.classList.contains('play'))return;var g=el.querySelector('.in-g'),b=el.querySelector('.in-ball');
+    g.style.setProperty('--dx',(g.offsetWidth/2-b.offsetWidth/2)+'px');el.classList.add('play');setTimeout(end,1900)};
+  (document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(function(r){setTimeout(r,350)})]):Promise.resolve()).then(start);
+  setTimeout(end,4000)})();
+</script>
 <div class="shell">
   <header class="top">
     <a class="brand" href="#inicio"><i></i>Víbora</a>
