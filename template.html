@@ -175,7 +175,8 @@ td a{font-weight:600}
 .bc.in::before{content:"";position:absolute;left:-13px;top:50%;width:13px;border-top:2px solid var(--line)}
 .hbtn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
 .hbtn .ic{width:20px;height:20px}
-.star{font:inherit;font-size:22px;line-height:1;width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;flex:none}
+.star{font:inherit;font-size:22px;line-height:1;width:44px;height:44px;padding:0;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;flex:none;display:inline-flex;align-items:center;justify-content:center}
+.star .ic{width:22px;height:22px}
 .star.bell{display:flex;align-items:center;justify-content:center}.star.bell .ic{width:22px;height:22px}
 .star.bell[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);background:rgba(61,214,245,.12)}
 #toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);max-width:min(440px,calc(100vw - 32px));background:#1c2040;color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:14px;box-shadow:0 14px 40px -10px rgba(0,0,0,.9);opacity:0;pointer-events:none;transition:.25s;z-index:60}
@@ -297,14 +298,40 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 .oopt small{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .oopm{flex:1;min-width:0}
 .oopc{display:flex;flex-direction:column;gap:8px;margin-top:6px}
-.tban{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:16/7;background:var(--surface2);border:1px solid var(--line)}
-.tban img{width:100%;height:100%;object-fit:cover;display:block}
-.tban::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(10,12,28,.7))}
-.tban.in{margin:-16px -16px 12px;border-radius:20px 20px 0 0;border:0;aspect-ratio:16/6}
+.poster{flex:none;padding:0;border:0;background:var(--surface2);border-radius:12px;overflow:hidden;cursor:zoom-in;aspect-ratio:1131/1600;width:104px;box-shadow:0 12px 26px -12px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.08)}
+.poster img{width:100%;height:100%;object-fit:cover;display:block}
+.poster.sm{width:60px;border-radius:9px}
+.thead{display:flex;gap:14px;align-items:flex-end}
+.thead>div{min-width:0;flex:1}
+#lb{position:fixed;inset:0;z-index:90;background:rgba(5,6,15,.92);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out;animation:rise .2s both}
+#lb img{max-width:100%;max-height:100%;border-radius:14px;box-shadow:0 30px 80px -20px #000}
 .count{position:relative;overflow:hidden;isolation:isolate}
 .count>*{position:relative;z-index:2}
-.count .cbg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;z-index:0}
-.count.wph::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(10,12,28,.94),rgba(10,12,28,.5))}
+.count .cbg{position:absolute;top:0;right:0;height:100%;width:auto;max-width:55%;object-fit:cover;object-position:top;z-index:0;opacity:.85;-webkit-mask-image:linear-gradient(90deg,transparent,#000 55%);mask-image:linear-gradient(90deg,transparent,#000 55%)}
+
+/* ---------- Fantasy ---------- */
+nav.bot a[hidden]{display:none}
+.fxform{display:flex;flex-direction:column;gap:10px}
+.fxform label{font-weight:600}
+.fxform input{font:inherit;width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.fxmsg{margin:0;padding:12px 14px;border-radius:14px;background:rgba(255,93,108,.14);color:#ffb3ba;font-size:14px}
+.fxmsg.ok{background:rgba(61,220,151,.14);color:#a8f0cc}
+.fxreg summary{cursor:pointer;list-style:none}.fxreg summary::after{content:" ›";color:var(--muted)}
+.fxreg ul{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:6px}.fxreg li b{color:var(--ink)}
+.fxlock{border-color:rgba(255,197,61,.45);background:linear-gradient(135deg,rgba(255,197,61,.14),var(--surface) 60%)}
+.fxpres{display:flex;flex-direction:column;gap:2px}.fxpres span{margin-left:6px}.fxpres b{font-family:var(--display);font-size:30px}.fxpres span{font-size:12px;color:var(--muted)}
+.fxslot{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--surface2);border:1px solid var(--line)}
+.fxslot.vacio{border-style:dashed;background:transparent;color:var(--muted)}
+.fxslot.cap{border-color:var(--gold);background:linear-gradient(90deg,rgba(255,197,61,.14),var(--surface2) 60%)}
+.fxslot .tx{flex:1;min-width:0}.fxslot .tx b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fxslot .tx span{font-size:12px;color:var(--muted)}
+.fxcap,.fxquit{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.fxcap[aria-pressed="true"]{background:var(--gold);color:#1a1300;border-color:var(--gold)}
+.fxquit{font-size:20px}
+.fxfich{padding:7px 10px;font-size:13px;flex:none}
+.fxliga{display:flex;flex-direction:column;gap:10px}.fxliga .sub{display:block;font-size:13px}
+.fxcod{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surface2);border-radius:12px;padding:8px 10px}.fxcod b{font-family:var(--display);font-size:22px;letter-spacing:2px}
+.rk .fxyo{outline:2px solid var(--cyan);outline-offset:-2px}
 /* ---------- Animación de entrada ---------- */
 #intro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(600px 420px at 50% 42%,rgba(155,107,255,.28),transparent 70%),radial-gradient(rgba(185,198,255,.07) 1px,transparent 1.5px);background-size:auto,22px 22px;cursor:pointer}
 #intro .in-g{position:relative;display:flex;align-items:center;gap:14px;visibility:hidden}
@@ -358,11 +385,13 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
     <a href="#ranking" data-tab="ranking"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h3v8H5v-8Zm5.5-8h3v16h-3V4ZM16 9h3v11h-3V9Z"/></svg>Ranking</a>
     <a href="#h2h" data-tab="h2h"><svg class="ic" viewBox="0 0 24 24"><circle cx="8" cy="12" r="5"/><circle cx="16" cy="12" r="5" opacity=".55"/></svg>Duelos</a>
     <a href="#records" data-tab="records"><svg class="ic" viewBox="0 0 24 24"><path d="m12 2 2.9 6.300 6.900.800-5.100 4.700 1.400 6.800L12 17.200 5.900 20.600l1.400-6.800L2.200 9.100l6.900-.8L12 2Z"/></svg>Récords</a>
+    <a href="#fantasy" data-tab="fantasy" id="navfx" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M8 3 4 5.5 2 10l3 1.5V21h14v-9.5l3-1.5-2-4.5L16 3h-2.2a1.8 1.8 0 0 1-3.6 0H8Z"/></svg>Fantasy</a>
   </nav>
 </div>
 <script>
 const D=/*DATA*/null;
-const PUSH_APP=/*PUSH*/""; /* App ID de OneSignal (lo pone build.py); vacío = sin avisos */
+const PUSH_APP=/*PUSH*/"";
+const SUPA=/*SUPA*/null; /* {url,key} de Supabase para el fantasy (lo pone build.py); null = sin fantasy */ /* App ID de OneSignal (lo pone build.py); vacío = sin avisos */
 
 /* ---------- Carga de datos reales (Padel API) ---------- */
 const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^https:\/\/[^\s"'<>]+$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
@@ -452,7 +481,10 @@ function donut(parts,total){const C=2*Math.PI*42;let off=0;
   <text x="55" y="56" text-anchor="middle" font-family="Barlow Condensed,Arial" font-weight="700" font-size="26" fill="var(--ink)">${total}</text><text x="55" y="70" text-anchor="middle" font-size="8" letter-spacing="1" fill="var(--muted)">TORNEOS</text></svg>`}
 const tdates=t=>t.start.slice(5,7)===t.end.slice(5,7)?`${+t.start.slice(8)}–${fd(t.end)}`:`${fd(t.start)} – ${fd(t.end)}`;
 const tinfo=t=>`${t.loc} · ${tdates(t)}${t.court?' · '+(t.court==='indoor'?'Indoor':'Outdoor'):''}`;
-const tban=(t,cls='')=>t&&t.photo?`<div class="tban ${cls}"><img src="${t.photo}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>`:'';
+const poster=(t,cls='')=>t&&t.photo?`<button type="button" class="poster ${cls}" data-poster="${t.id}" aria-label="Ver el cartel de ${t.name}"><img src="${t.photo}" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>`:'';
+function showPoster(id){const t=tb(id);if(!t||!t.photo)return;const d=document.createElement('div');d.id='lb';d.setAttribute('role','dialog');d.setAttribute('aria-label','Cartel de '+t.name);
+  d.innerHTML=`<img src="${t.photo}" alt="Cartel de ${t.name}">`;const close=()=>{d.remove();document.removeEventListener('keydown',esc)},esc=e=>{if(e.key==='Escape')close()};
+  d.addEventListener('click',close);document.addEventListener('keydown',esc);document.body.appendChild(d)}
 const lvp=t=>`<span class="pill lv" ${lvs(t)}>${LV[t.level]||t.level}</span>`;
 const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel y los torneos FIP Platinum y Gold recientes; Elo, rankings y récords solo cuentan Premier Padel. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.${PUSH_APP?' Los avisos al móvil los envía OneSignal solo si los activas.':''}</p>`;
 const ord=(x,y)=>x.round-y.round||x.idx-y.idx;
@@ -485,7 +517,10 @@ function geoOf(t){if(t.id in GEO)return GEO[t.id];const c=ctryOf(t.country),iso=
   if(!r&&c)r={lat:c[1],lon:c[2],iso,approx:true};
   return GEO[t.id]=r}
 const ckey=t=>{const g=geoOf(t);return g?g.lat.toFixed(1)+'_'+g.lon.toFixed(1):null};
-function mapGroups(){const gs={};T.forEach(t=>{const g=geoOf(t);if(!g)return;const k=ckey(t);(gs[k]??={k,lat:g.lat,lon:g.lon,iso:g.iso,name:t.loc||(CC[g.iso.toLowerCase()]||[])[3]||'',ts:[]}).ts.push(t)});
+/* Circuito elegido en la pestaña Torneos */
+let circ='premier';
+const TC=()=>T.filter(t=>isFipT(t)===(circ==='fip'));
+function mapGroups(){const gs={};TC().forEach(t=>{const g=geoOf(t);if(!g)return;const k=ckey(t);(gs[k]??={k,lat:g.lat,lon:g.lon,iso:g.iso,name:t.loc||(CC[g.iso.toLowerCase()]||[])[3]||'',ts:[]}).ts.push(t)});
   const nt=nextT();return Object.values(gs).map(g=>{g.ts.sort((a,b)=>a.start<b.start?-1:1);
     const live=g.ts.find(t=>t.status==='live'),nx=nt&&g.ts.includes(nt)?nt:null,done=g.ts.filter(t=>t.status==='finished');
     g.main=live||nx||done[done.length-1]||g.ts[0];g.live=!!live;g.next=!!nx;g.pend=g.ts.every(t=>t.status==='pending');return g})}
@@ -501,11 +536,11 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   const [vx,vy,vw,vh]=mapBox(gs.length?gs:all,reg[3]),u=vw/100,f=n=>n.toFixed(2);
   const pool=gs.length?gs:all;if(!pool.some(g=>g.k===mapSel)){const d=pool.find(g=>g.live)||pool.find(g=>g.next)||pool.slice().sort((a,b)=>a.main.start<b.main.start?1:-1)[0];mapSel=d.k}
   /* ruta de la temporada en orden de fechas */
-  const seq=[];T.slice().sort((a,b)=>a.start<b.start?-1:1).forEach(t=>{const k=ckey(t);if(k&&seq[seq.length-1]!==k)seq.push(k)});
-  const GK={};all.forEach(g=>GK[g.k]=g);const nt=nextT(),cur=T.filter(t=>t.status!=='pending'&&!!ckey(t)).sort((a,b)=>a.start<b.start?1:-1)[0];
+  const seq=[];TC().sort((a,b)=>a.start<b.start?-1:1).forEach(t=>{const k=ckey(t);if(k&&seq[seq.length-1]!==k)seq.push(k)});
+  const GK={};all.forEach(g=>GK[g.k]=g);const nt=nextT(),cur=TC().filter(t=>t.status!=='pending'&&!!ckey(t)).sort((a,b)=>a.start<b.start?1:-1)[0];
   const arc=(a,b,cls)=>{const x1=mx(a.lon),y1=my(a.lat),x2=mx(b.lon),y2=my(b.lat),dx=x2-x1,dy=y2-y1,d=Math.hypot(dx,dy);if(d<0.01)return '';const bend=Math.min(d*0.22,vw*0.12);const cx=(x1+x2)/2+dy/d*bend*(dx<0?-1:1),cy=(y1+y2)/2-Math.abs(dx/d)*bend;return `<path class="${cls}" d="M${f(x1)} ${f(y1)}Q${f(cx)} ${f(cy)} ${f(x2)} ${f(y2)}"/>`};
   const route=seq.slice(1).map((k,i)=>arc(GK[seq[i]],GK[k],'route')).join('');
-  const leg=nt&&cur&&ckey(nt)!==ckey(cur)?arc(GK[ckey(cur)],GK[ckey(nt)],'route nx'):'';
+  const leg=nt&&cur&&GK[ckey(nt)]&&GK[ckey(cur)]&&ckey(nt)!==ckey(cur)?arc(GK[ckey(cur)],GK[ckey(nt)],'route nx'):'';
   const grat=[...Array.from({length:11},(_,i)=>`M${f(mx(-150+i*30))} 0V500`),...Array.from({length:5},(_,i)=>`M0 ${f(my(60-i*30))}H1000`)].join('');
   const r=u*1.6;
   const pins=all.slice().sort((a,b)=>(a.k===mapSel)-(b.k===mapSel)).map(g=>{const x=f(mx(g.lon)),y=f(my(g.lat)),sel=g.k===mapSel;
@@ -521,12 +556,12 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
     <g class="routes">${route}${leg}</g>${pins}${label}</svg>`;
   const seg=regs.length>1?`<div class="seg">${regs.map(x=>`<button type="button" data-mz="${x[0]}" aria-pressed="${x===reg}">${x[1]}</button>`).join('')}</div>`:'';
   const nC=new Set(all.map(g=>g.iso)).size;
-  const leg2=`<div class="mleg">${[...new Set(T.map(t=>t.level))].filter(l=>LV[l]).map(l=>`<span><i style="--lv:${LC[l]}"></i>${LV[l]}</span>`).join('')}<span><i class="o"></i>Por jugar</span>${all.some(g=>g.live)?'<span><i style="--lv:var(--red)"></i>En juego</span>':''}</div>`;
+  const leg2=`<div class="mleg">${[...new Set(TC().map(t=>t.level))].filter(l=>LV[l]).map(l=>`<span><i style="--lv:${LC[l]}"></i>${LV[l]}</span>`).join('')}<span><i class="o"></i>Por jugar</span>${all.some(g=>g.live)?'<span><i style="--lv:var(--red)"></i>En juego</span>':''}</div>`;
   const ct=CC[(sg.iso||'').toLowerCase()];
   const st=t=>{if(t.hidden)return '<span class="sub">Resultados fuera del plan gratuito</span>';if(t.status==='pending')return `<span class="sub">${t===nt?'Próximo torneo':'Por jugar'}</span>`;if(t.status==='live')return '<span class="sub" style="color:var(--ink)"><span class="dot"></span>En juego</span>';const fm=M.find(m=>m.t===t.id&&inCat(m)&&m.round===1&&m.w!=null);return fm?`<span class="sub" style="color:var(--ink)">${IC.trophy} ${pl(fm.w?fm.b:fm.a)}</span>`:''};
-  const panel=`<div class="card mpanel" ${lvs(sg.main)}>${tban(sg.main,'in')}<div class="mph"><span class="mflag">${flag(sg.iso)||'📍'}</span><div><div class="big">${sg.name}</div><span class="sub">${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
+  const panel=`<div class="card mpanel" ${lvs(sg.main)}><div class="mph">${poster(sg.main,'sm')||`<span class="mflag">${flag(sg.iso)||'📍'}</span>`}<div><div class="big">${sg.name}</div><span class="sub">${sg.main.photo&&flag(sg.iso)?flag(sg.iso)+' ':''}${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
     ${sg.ts.map(t=>{const inner=`<span class="tx"><b>${t.name}</b> ${lvp(t)}<span>${tdates(t)}</span>${st(t)}</span>`;return t.hidden||t.status==='pending'?`<div class="tres">${inner}</div>`:`<a class="tres" href="#torneo-${t.id}">${inner}<span class="back">Cuadro ›</span></a>`}).join('')}</div>`;
-  return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
+  return `<section><div class="kpis"><div class="kpi a"><b>${TC().length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
 
 /* ---------- Pala de cada jugador. Fuente: PadelAddict, palas de la temporada 2026 (marzo de 2026); pueden cambiar durante el año.
@@ -625,7 +660,7 @@ function nextT(){return T.filter(t=>t.status==='pending').sort((a,b)=>a.start<b.
 function cdText(){const t=nextT();if(!t)return '';let s=Math.max(0,Math.floor((new Date(t.start+'T00:00:00')-Date.now())/1000));const d=Math.floor(s/86400);s-=d*86400;const h=Math.floor(s/3600);s-=h*3600;const m=Math.floor(s/60);s-=m*60;const z=n=>String(n).padStart(2,'0');return `${d}d ${z(h)}:${z(m)}:${z(s)}`}
 const V={
 inicio(){const nt=nextT(),last=lastPremier();
-  const count=nt?`<div class="count${nt.photo?' wph':''}" ${lvs(nt)}>${nt.photo?`<img class="cbg" src="${nt.photo}" alt="" onerror="this.parentNode.classList.remove('wph');this.remove()">`:''}<h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
+  const count=nt?`<div class="count" ${lvs(nt)}>${nt.photo?`<img class="cbg" src="${nt.photo}" alt="" onerror="this.remove()">`:''}<h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
   const live=T.filter(t=>t.status==='live').map(t=>{const tot=Math.round((new Date(t.end)-new Date(t.start))/864e5)+1,day=Math.min(tot,Math.max(1,Math.round((new Date(D.snap)-new Date(t.start))/864e5)+1));
     const nx=M.filter(m=>m.t===t.id&&inCat(m)&&m.st===3&&m.a.length&&m.b.length).sort(chrono).slice(0,3),od=oopDay(t.id);
     const oop=od?`<div class="card"><h2>Orden de juego · ${dayName(od.k)}</h2><div class="list" style="margin-top:10px">${od.ms.sort((x,y)=>x.at-y.at).slice(0,6).map(oopRow).join('')}</div>${od.ms.length>6?`<p class="sub" style="margin-top:8px">Y ${od.ms.length-6} partidos más</p>`:''}<a class="back" style="display:inline-block;margin-top:10px" href="#torneo-${t.id}" data-tv="hr">Ver todos los horarios ›</a>${OOPNOTE}</div>`:(nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:'');
@@ -653,7 +688,9 @@ inicio(){const nt=nextT(),last=lastPremier();
   const lt=T.find(t=>t.status==='live'&&M.some(m=>m.t===t.id&&inCat(m)&&m.st===3));
   const links=`<div class="links"><a href="#records">Récords y curiosidades<span>Remontadas, tie-breaks, matagigantes</span></a>${lt?`<a href="#torneo-${lt.id}" data-tv="qn">Quiniela<span>Rellena el cuadro de ${lt.loc}</span></a>`:`<a href="#h2h" data-duel="sim">Simulador<span>¿Quién ganaría?</span></a>`}</div>`;
   return `${count}${installCard()}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${NOTE}`},
-torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div class="list">${T.slice().sort((a,b)=>a.start<b.start?1:-1).map(t=>{
+torneos(){const hayFip=T.some(isFipT);if(!hayFip)circ='premier';
+  const sw=hayFip?`<div class="seg">${[['premier','Premier Padel'],['fip','FIP']].map(([k,l])=>`<button type="button" data-circ="${k}" aria-pressed="${circ===k}">${l}</button>`).join('')}</div>${circ==='fip'?'<p class="sub">Torneos FIP Platinum y Gold: en juego, por jugar y de las últimas semanas.</p>':''}`:'';
+  return `<h1>Temporada 2026</h1>${sw}${worldMap()}<h2>Calendario</h2><div class="list">${TC().sort((a,b)=>a.start<b.start?1:-1).map(t=>{
   const fl=flag(isoOf(t.country)||(geoOf(t)||{}).iso),head=`<b>${fl?fl+' ':''}${t.name}</b><span class="sub">${lvp(t)} ${tinfo(t)}</span>`;
   if(t.hidden)return `<div class="trow off" ${lvs(t)}><span>${head}<span class="sub">Resultados fuera del plan gratuito de datos</span></span></div>`;
   if(t.status==='pending')return `<div class="trow" ${lvs(t)}><span>${head}<span class="sub">Por jugar</span></span></div>`;
@@ -662,7 +699,7 @@ torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div cl
   return `<a class="trow" ${lvs(t)} href="#torneo-${t.id}"><span>${head}<span class="sub" style="color:var(--ink)">${st}</span></span><span class="back">Cuadro ›</span></a>`}).join('')}</div>${NOTE}`},
 torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter(m=>m.t===id&&inCat(m));
   const rs=[...new Set(ms.map(m=>m.round))].sort((a,b)=>a-b);
-  const head=`<a class="back" href="#torneos">‹ Temporada</a>${tban(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div>`;
+  circ=isFipT(t)?'fip':'premier';const head=`<a class="back" href="#torneos">‹ ${isFipT(t)?'Torneos FIP':'Temporada'}</a><div class="thead">${poster(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div></div>`;
   if(!rs.length)return head+'<p class="sub">No hay partidos de esta categoría en el torneo.</p>'+NOTE;
   const sched=ms.filter(m=>m.st===3),fm=ms.find(m=>m.round===1&&m.w!=null);
   const od=oopDays(id),tabsL=[['br','Cuadro'],['li','Lista']];if(Object.keys(od).length)tabsL.push(['hr','Horarios']);if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
@@ -730,7 +767,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   const rcard=(x,t,c)=>x?`<a href="#jugador-${x.q}"><h2 style="color:${c}">${t}</h2><span style="display:flex;gap:8px;align-items:center">${av(x.q)}<b>${P[x.q].sn}</b></span><span class="sub">${x.w} victorias · ${x.l} derrotas</span></a>`:'';
   const rivS=bn||vf?`<section><div class="duel">${rcard(bn,'Bestia negra','var(--red)')}${rcard(vf,'Víctima favorita','var(--mint)')}</div></section>`:'';
   return `<a class="back" href="#ranking">‹ Ranking</a>
-  <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><span style="display:flex;flex-direction:column;gap:8px"><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button>${PUSH_APP?`<button type="button" class="star bell" data-push="${id}" aria-pressed="${pushOn.has(id)}" aria-label="${pushOn.has(id)?'Quitar avisos':'Recibir avisos de este jugador'}">${BELL}</button>`:''}</span></div>
+  <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><span style="display:flex;flex-direction:column;gap:8px"><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.5 2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8L12 2.5Z"/></svg></button>${PUSH_APP?`<button type="button" class="star bell" data-push="${id}" aria-pressed="${pushOn.has(id)}" aria-label="${pushOn.has(id)?'Quitar avisos':'Recibir avisos de este jugador'}">${BELL}</button>`:''}</span></div>
   ${palaCard(p)}<div class="kpis"><div class="kpi a"><b>${Math.round(p.elo)}</b><span>Elo${pos?' · n.º '+pos:''}</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Victorias-derrotas</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos</span></div></div>
   ${wrapS}${rivS}
   ${tl.length?`<section><div class="card"><h2>Parejas desde junio</h2><div class="tl" style="margin-top:10px">${tl.map((x,i)=>`${i?'<span class="sub">→</span>':''}<a class="st" href="#pareja-${key([id,x.q])}">${av(x.q,'sm')}<span>${P[x.q].sn}</span><small>${fd(x.d)}</small></a>`).join('')}</div></div></section>`:''}
@@ -795,9 +832,137 @@ function searchRes(q){const n=norm(q.trim());let rs=Object.values(P).filter(p=>p
   else rs=[...[...favs].filter(i=>P[i]).map(i=>P[i]),...byElo(cat).filter(p=>!favs.has(p.id)).slice(0,8)];
   return `<h2 style="margin:14px 0 4px">${n?rs.length+' resultados':'Favoritos y destacados'}</h2><div class="card" style="padding:4px 14px">${rs.map(p=>{const lp=lastPair(p.id);return pline(p.id,p.rank?`<span class="big">#${p.rank}</span>`:'',`${flag(p.nat)} ${p.nat||''} · ${p.cat==='men'?'Masculino':'Femenino'}${lp?' · con '+P[lp.find(i=>i!==p.id)].sn:''}`)}).join('')||'<p class="sub" style="padding:12px 0">Nadie con ese nombre en los cuadros desde junio.</p>'}</div>`}
 
+/* ---------- Fantasy Víbora (Supabase) ---------- */
+const FX=D.fx||{precios:{},ultimo:{}};
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PRESU=100,PUBLICA='00000000-0000-0000-0000-000000000001';
+const fx={sb:null,cargando:false,ses:null,perfil:undefined,equipo:null,borr:null,cap:null,estado:null,ligas:null,ligaSel:PUBLICA,clas:null,tab:'eq',filtro:'all',q:'',msg:null,email:'',enviado:false};
+const precioDe=id=>FX.precios[id]!=null?+FX.precios[id]:null;
+const ptsUlt=id=>(FX.ultimo&&FX.ultimo.puntos||{})[id];
+const fxM=n=>(Math.round(n*10)/10).toLocaleString('es-ES')+' M';
+function fxMsg(t,ok){fx.msg={t,ok};rerender()}
+function rerender(){if(route().v==='fantasy'){document.getElementById('app').className='noanim';render()}}
+function cargarSB(){return new Promise((res,rej)=>{if(window.supabase)return res();const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';s.onload=res;s.onerror=()=>rej(new Error('sdk'));document.head.appendChild(s)})}
+async function fxInit(){if(fx.sb||fx.cargando||!SUPA)return;fx.cargando=true;
+  try{await cargarSB();fx.sb=window.supabase.createClient(SUPA.url,SUPA.key,{auth:{persistSession:true,detectSessionInUrl:true,flowType:'implicit'}});
+    const {data}=await fx.sb.auth.getSession();fx.ses=data.session;
+    fx.sb.auth.onAuthStateChange((ev,s)=>{fx.ses=s;if(ev==='SIGNED_IN'||ev==='SIGNED_OUT'){fx.perfil=undefined;fx.equipo=null;fx.ligas=null;fx.clas=null;fxCargar()}});
+    await fxCargar()}catch(e){fx.msg={t:'No se ha podido conectar con el fantasy. Prueba en un rato.'}}
+  fx.cargando=false;rerender()}
+async function fxCargar(){if(!fx.sb)return;
+  const est=await fx.sb.from('estado').select('*').eq('id',1).maybeSingle();fx.estado=est.data||{abierto:true};
+  if(!fx.ses){fx.perfil=null;rerender();return}
+  const uid=fx.ses.user.id;
+  const [pf,eq]=await Promise.all([fx.sb.from('perfiles').select('*').eq('id',uid).maybeSingle(),fx.sb.from('equipos').select('*').eq('user_id',uid).maybeSingle()]);
+  fx.perfil=pf.data||null;fx.equipo=eq.data||null;
+  if(fx.equipo&&!fx.borr){fx.borr=[...fx.equipo.jugadores];fx.cap=fx.equipo.capitan}
+  if(!fx.borr){fx.borr=[];fx.cap=null}
+  if(fx.perfil){const l=await fx.sb.rpc('mis_ligas');fx.ligas=l.data||[];await fxClas()}
+  rerender()}
+async function fxClas(){if(!fx.sb)return;const r=await fx.sb.rpc('clasificacion',{p_liga:fx.ligaSel});fx.clas=r.data||[]}
+/* Si se vuelve del enlace del correo (#access_token=...), se abre el fantasy */
+if(SUPA&&/access_token=|error_description=/.test(location.hash)){fxInit().then(()=>{history.replaceState(null,'',location.pathname+'#fantasy');render()})}
+
+function fxView(){
+  if(!SUPA)return `<h1>Fantasy</h1><p class="sub">Muy pronto.</p>${NOTE}`;
+  if(!fx.sb){fxInit();return `<h1>Fantasy</h1><p class="sub">Cargando…</p>`}
+  const msg=fx.msg?`<p class="fxmsg${fx.msg.ok?' ok':''}" role="status">${esc(fx.msg.t)}</p>`:'';
+  const reglas=`<details class="card fxreg"><summary><b>Cómo se juega</b></summary><ul>
+    <li>Ficha <b>5 jugadores o jugadoras</b> con <b>${PRESU} M</b>. El precio depende de su ranking.</li>
+    <li>Elige un <b>capitán</b>: sus puntos cuentan <b>doble</b>.</li>
+    <li>Cuando empieza un torneo Premier tu equipo se bloquea. Al acabar puedes hacer <b>2 cambios</b>.</li>
+    <li>Puntos por partido: victoria hasta octavos <b>+3</b>, en cuartos <b>+5</b>, en semis <b>+8</b>, la final <b>+12</b>, y <b>+1</b> por cada set ganado.</li>
+    <li>Compites en la <b>Liga Víbora</b> con todos y en ligas privadas con tus amigos.</li></ul></details>`;
+  if(!fx.ses){
+    return `<h1>Fantasy</h1><p class="sub">Monta tu equipo de pádel y compite con tus amigos.</p>${msg}
+    <form class="card fxform" data-fx="login"><label for="fxmail">Tu correo</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(fx.email)}">
+    <button class="btn pri" type="submit">${fx.enviado?'Volver a enviar':'Entrar sin contraseña'}</button><p class="sub" style="font-size:12px">Te llega un correo para entrar. No hace falta contraseña.</p></form>
+    ${fx.enviado?`<form class="card fxform" data-fx="codigo"><label for="fxcod">¿Usas la app instalada? Escribe el código del correo</label><input id="fxcod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456" required><button class="btn" type="submit">Entrar con el código</button></form>`:''}
+    ${reglas}${NOTE}`}
+  if(fx.perfil===undefined)return `<h1>Fantasy</h1><p class="sub">Cargando tu equipo…</p>`;
+  if(!fx.perfil)return `<h1>Fantasy</h1>${msg}<form class="card fxform" data-fx="perfil"><label for="fxnom">Elige tu nombre de mánager</label><input id="fxnom" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid"><button class="btn pri" type="submit">Empezar</button><p class="sub" style="font-size:12px">Es el nombre que verán los demás en las clasificaciones.</p></form>${reglas}`;
+  const tabs=`<div class="seg">${[['eq','Mi equipo'],['ligas','Ligas'],['clas','Clasificación']].map(([k,l])=>`<button type="button" data-fxtab="${k}" aria-pressed="${fx.tab===k}">${l}</button>`).join('')}</div>`;
+  const head=`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h1>Fantasy</h1><span class="sub">${esc(fx.perfil.nombre)} · <a class="back" href="#fantasy" data-fx="salir">Salir</a></span></div>`;
+  let body='';
+  if(fx.tab==='eq')body=fxEquipo();else if(fx.tab==='ligas')body=fxLigas();else body=fxClasif();
+  return `${head}${tabs}${msg}${body}${reglas}${NOTE}`}
+
+function fxEquipo(){const ab=!fx.estado||fx.estado.abierto,b=fx.borr,gast=b.reduce((n,i)=>n+(precioDe(i)||0),0),queda=PRESU-gast;
+  const prev=fx.equipo?fx.equipo.jugadores:null,cambios=prev?b.filter(i=>!prev.includes(i)).length:0;
+  const sucio=!fx.equipo||b.length!==5||b.some((x,i)=>x!==fx.equipo.jugadores[i])||fx.cap!==fx.equipo.capitan;
+  const ok=ab&&b.length===5&&queda>=0&&fx.cap&&b.includes(fx.cap)&&sucio;
+  const est=ab?'':`<div class="card fxlock">🔒 Equipo bloqueado: se está jugando el <b>${esc(fx.estado.torneo_nombre||'torneo')}</b>. Podrás hacer cambios cuando termine.</div>`;
+  const slot=i=>{const id=b[i];if(!id)return `<div class="fxslot vacio"><span class="av" style="--h:230">+</span><span class="tx"><b>Hueco libre</b><span>Ficha un jugador abajo</span></span></div>`;
+    const p=P[id],pu=ptsUlt(id),cap=fx.cap===id;
+    return `<div class="fxslot${cap?' cap':''}">${av(id)}<span class="tx"><b>${p?p.name:'Jugador '+id}</b><span>${fxM(precioDe(id)||0)}${pu!=null?` · ${pu} pts en ${esc(FX.ultimo.nombre||'')}`:''}</span></span>
+      ${ab?`<button type="button" class="fxcap" data-fxcap="${id}" aria-pressed="${cap}" aria-label="Capitán">C</button><button type="button" class="fxquit" data-fxquit="${id}" aria-label="Quitar">×</button>`:(cap?'<span class="fxcap" aria-pressed="true">C</span>':'')}</div>`};
+  const barra=`<div class="fxpres"><div><b class="${queda<0?'down':''}">${fxM(queda)}</b><span>libres de ${PRESU} M</span></div><div class="track"><i style="width:${Math.min(100,Math.round(100*gast/PRESU))}%;background:${queda<0?'var(--red)':'var(--mint)'}"></i></div></div>`;
+  const aviso=prev&&ab&&cambios>2?`<p class="sub down">Llevas ${cambios} cambios: como mucho puedes hacer 2 respecto al último torneo.</p>`:'';
+  const guardar=ab?`<button type="button" class="btn pri" data-fx="guardar" ${ok?'':'disabled'}>Guardar equipo</button>${!fx.cap&&b.length?'<span class="sub"> · Elige un capitán (C)</span>':''}`:'';
+  return `${est}<section><div class="card">${barra}<div class="list" style="margin-top:12px">${[0,1,2,3,4].map(slot).join('')}</div>${aviso}<div style="margin-top:12px">${guardar}</div></div></section>${ab?fxMercado(queda):''}`}
+
+function fxMercado(queda){const b=fx.borr,n=norm(fx.q.trim());
+  let ls=Object.keys(FX.precios).map(Number).filter(id=>P[id]&&(fx.filtro==='all'||P[id].cat===fx.filtro)&&(!n||norm(P[id].name).includes(n)));
+  ls.sort((x,y)=>precioDe(y)-precioDe(x)||P[x].name.localeCompare(P[y].name));const tot=ls.length;ls=ls.slice(0,60);
+  const filt=`<div class="seg">${[['all','Todos'],['men','Masculino'],['women','Femenino']].map(([k,l])=>`<button type="button" data-fxfil="${k}" aria-pressed="${fx.filtro===k}">${l}</button>`).join('')}</div>`;
+  return `<section><h2>Mercado</h2>${filt}<input type="search" id="fxq" placeholder="Buscar jugador" value="${esc(fx.q)}" autocomplete="off" aria-label="Buscar jugador en el mercado">
+  <div class="card" style="padding:4px 14px" id="fxlist">${ls.map(id=>{const p=P[id],pr=precioDe(id),ya=b.includes(id),cabe=!ya&&b.length<5&&pr<=queda,pu=ptsUlt(id);
+    return `<div class="prow">${av(id)}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.rank?'#'+p.rank+' · ':''}${pu!=null?pu+' pts último torneo':'Sin puntos aún'}</span></span><span class="big" style="font-size:18px">${fxM(pr)}</span>
+    <button type="button" class="btn fxfich" data-fxfich="${id}" ${cabe?'':'disabled'}>${ya?'En tu equipo':b.length>=5?'Lleno':pr>queda?'Sin dinero':'Fichar'}</button></div>`}).join('')||'<p class="sub" style="padding:12px 0">Nadie con ese nombre.</p>'}</div>
+  ${tot>60?`<p class="sub">Mostrando los 60 más caros de ${tot}. Busca por nombre para ver el resto.</p>`:''}</section>`}
+
+function fxLigas(){const ls=fx.ligas||[];
+  return `<section><div class="list">${ls.map(l=>`<div class="card fxliga"><div><b>${esc(l.nombre)}</b><span class="sub">${l.miembros} ${l.miembros===1?'mánager':'mánagers'}${l.publica?' · Liga de todos':''}</span></div>
+    ${l.codigo?`<div class="fxcod"><span>Código <b>${esc(l.codigo)}</b></span><button type="button" class="btn" data-fxshare="${esc(l.codigo)}" data-fxnom="${esc(l.nombre)}">Invitar</button></div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-fxver="${l.id}">Ver clasificación</button>${l.publica?'':`<button type="button" class="btn" data-fxsalir="${l.id}">Salir</button>`}</div></div>`).join('')}</div></section>
+  <section><form class="card fxform" data-fx="crear"><label for="fxliga">Crear liga privada</label><input id="fxliga" required minlength="3" maxlength="30" placeholder="Ej.: Los del jueves"><button class="btn pri" type="submit">Crear</button><p class="sub" style="font-size:12px">Te daremos un código para que se unan tus amigos.</p></form>
+  <form class="card fxform" data-fx="unirse"><label for="fxjoin">Unirme con un código</label><input id="fxjoin" required minlength="6" maxlength="6" placeholder="ABC123" style="text-transform:uppercase" autocapitalize="characters"><button class="btn" type="submit">Unirme</button></form></section>`}
+
+function fxClasif(){const ls=fx.ligas||[],c=fx.clas;
+  const sel=`<select id="fxligasel" aria-label="Liga">${ls.map(l=>`<option value="${l.id}"${l.id===fx.ligaSel?' selected':''}>${esc(l.nombre)}</option>`).join('')}</select>`;
+  const ult=FX.ultimo&&FX.ultimo.nombre?`Último: ${esc(FX.ultimo.nombre)}`:'Último torneo';
+  return `<section>${sel}<div class="rk">${c==null?'<div class="r"><span class="sub">Cargando…</span></div>':c.length?c.map((r,i)=>`<div class="r ${r.soy_yo?'fxyo':''} ${i<1?'t1':i<3?'t2':''}"><span class="n">${r.posicion}</span><span class="tx"><b>${esc(r.nombre)}${r.soy_yo?' (tú)':''}</b><span>${ult}: ${r.ultimo} pts</span></span><span class="big">${r.total}</span></div>`).join(''):'<div class="r"><span class="sub">Todavía no hay puntos. Se reparten cuando empieza el próximo torneo Premier.</span></div>'}</div></section>`}
+
+async function fxAccion(a,el){const sb=fx.sb;if(!sb)return;fx.msg=null;
+  const err=e=>fxMsg((e&&e.message)||'Algo ha fallado. Prueba de nuevo.');
+  try{
+  if(a==='login'){fx.email=document.getElementById('fxmail').value.trim();
+    const {error}=await sb.auth.signInWithOtp({email:fx.email,options:{emailRedirectTo:location.origin+location.pathname}});
+    if(error)return err(error);fx.enviado=true;fxMsg('Te hemos enviado un correo a '+fx.email+'. Abre el enlace o escribe el código.',true)}
+  else if(a==='codigo'){const {error}=await sb.auth.verifyOtp({email:fx.email,token:document.getElementById('fxcod').value.trim(),type:'email'});if(error)return err(error)}
+  else if(a==='perfil'){const nombre=document.getElementById('fxnom').value.trim();
+    const {error}=await sb.from('perfiles').insert({id:fx.ses.user.id,nombre});if(error)return err(error.code==='23505'?{message:'Ese nombre ya lo tiene otro mánager.'}:error);
+    gcEvent('fantasy/registro','Fantasy: registro');await fxCargar()}
+  else if(a==='guardar'){const {data,error}=await sb.from('equipos').upsert({user_id:fx.ses.user.id,jugadores:fx.borr,capitan:fx.cap}).select().maybeSingle();
+    if(error)return err(error);fx.equipo=data;gcEvent('fantasy/equipo','Fantasy: guarda equipo');fxMsg('¡Equipo guardado!',true)}
+  else if(a==='crear'){const {data,error}=await sb.rpc('crear_liga',{p_nombre:document.getElementById('fxliga').value.trim()});if(error)return err(error);
+    gcEvent('fantasy/liga','Fantasy: crea liga');const l=await sb.rpc('mis_ligas');fx.ligas=l.data||[];fxMsg('Liga creada. Comparte el código '+data+' con tus amigos.',true)}
+  else if(a==='unirse'){const {data,error}=await sb.rpc('unirse_liga',{p_codigo:document.getElementById('fxjoin').value.trim()});if(error)return err(error);
+    const l=await sb.rpc('mis_ligas');fx.ligas=l.data||[];fx.ligaSel=data;fx.tab='clas';fx.clas=null;rerender();await fxClas();fxMsg('¡Ya estás dentro!',true)}
+  else if(a==='salir'){await sb.auth.signOut();fx.borr=null;fx.enviado=false;rerender()}
+  }catch(e){err(e)}}
+
+document.addEventListener('submit',e=>{const f=e.target.closest('[data-fx]');if(f){e.preventDefault();fxAccion(f.dataset.fx,f)}});
+document.addEventListener('click',e=>{if(route().v!=='fantasy')return;const t=e.target;let x;
+  if((x=t.closest('[data-fx="guardar"],[data-fx="salir"]'))){e.preventDefault();fxAccion(x.dataset.fx,x);return}
+  if((x=t.closest('[data-fxtab]'))){fx.tab=x.dataset.fxtab;fx.msg=null;if(fx.tab==='clas'&&!fx.clas)fxClas().then(rerender);rerender();return}
+  if((x=t.closest('[data-fxfil]'))){fx.filtro=x.dataset.fxfil;rerender();return}
+  if((x=t.closest('[data-fxfich]'))){const id=+x.dataset.fxfich;if(fx.borr.length<5&&!fx.borr.includes(id)){fx.borr.push(id);if(!fx.cap)fx.cap=id}rerender();return}
+  if((x=t.closest('[data-fxquit]'))){const id=+x.dataset.fxquit;fx.borr=fx.borr.filter(i=>i!==id);if(fx.cap===id)fx.cap=fx.borr[0]||null;rerender();return}
+  if((x=t.closest('[data-fxcap]'))&&x.tagName==='BUTTON'){fx.cap=+x.dataset.fxcap;rerender();return}
+  if((x=t.closest('[data-fxver]'))){fx.msg=null;fx.ligaSel=x.dataset.fxver;fx.tab='clas';fx.clas=null;rerender();fxClas().then(rerender);return}
+  if((x=t.closest('[data-fxsalir]'))){if(confirm('¿Salir de esta liga?'))fx.sb.rpc('salir_liga',{p_liga:x.dataset.fxsalir}).then(()=>fx.sb.rpc('mis_ligas')).then(l=>{fx.ligas=l.data||[];rerender()});return}
+  if((x=t.closest('[data-fxshare]'))){const cod=x.dataset.fxshare,txt=`Únete a mi liga «${x.dataset.fxnom}» en el fantasy de Víbora con el código ${cod}: ${location.origin+location.pathname}#fantasy`;
+    if(navigator.share)navigator.share({text:txt}).catch(()=>{});else navigator.clipboard?.writeText(txt).then(()=>toast('Invitación copiada. Pégala en WhatsApp.'),()=>toast(txt));return}});
+document.addEventListener('input',e=>{if(e.target.id==='fxq'){fx.q=e.target.value;const l=document.getElementById('fxlist');if(l){const tmp=document.createElement('div');tmp.innerHTML=fxMercado(PRESU-fx.borr.reduce((n,i)=>n+(precioDe(i)||0),0));l.innerHTML=tmp.querySelector('#fxlist').innerHTML}}});
+document.addEventListener('change',e=>{if(e.target.id==='fxligasel'){fx.ligaSel=e.target.value;fx.clas=null;rerender();fxClas().then(rerender)}});
+V.fantasy=()=>fxView();
+if(SUPA){const n=document.getElementById('navfx');if(n)n.hidden=false;document.querySelector('nav.bot').style.gridTemplateColumns='repeat(6,1fr)'}
+
 /* ---------- Rutas: solo #nombre con letras, cifras y guiones ---------- */
 function route(){const h=(location.hash||'#inicio').slice(1).split('-');return{v:V[h[0]]?h[0]:'inicio',args:h.slice(1).map(Number)}}
-const TAB={inicio:'inicio',partido:'inicio',torneos:'torneos',torneo:'torneos',ranking:'ranking',jugador:'ranking',pareja:'ranking',h2h:'h2h',buscar:'',records:'records'};
+const TAB={inicio:'inicio',partido:'inicio',torneos:'torneos',torneo:'torneos',ranking:'ranking',jugador:'ranking',pareja:'ranking',h2h:'h2h',buscar:'',records:'records',fantasy:'fantasy'};
 function render(){const r=route();
   if(r.v==='jugador'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='pareja'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='partido'&&MM[r.args[0]])cat=MM[r.args[0]].cat;
   document.getElementById('app').innerHTML=V[r.v](r.args);
@@ -811,6 +976,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
   const yb=e.target.closest('[data-yt]');if(yb)gcEvent('youtube/'+yb.dataset.yt,'YouTube: '+yb.dataset.yt);
+  const ci=e.target.closest('[data-circ]');if(ci){circ=ci.dataset.circ;mapZ='mundo';mapSel=null;document.getElementById('app').className='noanim';render();return}
+  const po=e.target.closest('[data-poster]');if(po){showPoster(+po.dataset.poster);return}
   const pu=e.target.closest('[data-push]');if(pu){togglePush(+pu.dataset.push);return}
   const ins=e.target.closest('[data-inst]');if(ins){if(ins.dataset.inst==='go'&&instEv){const ev=instEv;ev.prompt();ev.userChoice.then(c=>{instEv=null;if(c.outcome!=='accepted'){instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}}render()})}else{instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}render()}return}
   const pn=e.target.closest('[data-pin]');if(pn){mapSel=pn.dataset.pin;document.getElementById('app').className='noanim';render();const q=document.querySelector(`[data-pin="${mapSel}"]`);if(q&&e.detail===0)q.focus();return}

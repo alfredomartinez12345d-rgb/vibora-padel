@@ -87,3 +87,9 @@ Para activarlo, crea una clave de la **YouTube Data API v3** en Google Cloud y g
 
 ## Torneos FIP
 Además de la temporada de Premier Padel entran los **FIP Platinum y Gold** de la temporada FIP activa que estén en juego, por jugar o que empezaran hace como mucho 45 días (`fip.py`; los Silver se dejan fuera porque son decenas). Sus partidos salen en el calendario, el mapa, los cuadros, los horarios y con botón de YouTube, pero **el Elo, los rankings, las rachas y los récords solo cuentan Premier Padel**.
+
+## Fantasy (Supabase)
+Pestaña **Fantasy**: equipo de 5 jugadores con 100 M y capitán (puntos x2), bloqueo durante cada torneo Premier y 2 cambios entre torneos; Liga Víbora pública y ligas privadas con código.
+- `supabase/fantasy.sql`: tablas, reglas (presupuesto, cambios, bloqueo) y seguridad. Se pega en Supabase → SQL Editor → Run.
+- `fantasy.py`: en cada actualización sube los precios (5–30 M según el ranking), bloquea o abre los equipos según haya torneo Premier en juego y calcula los puntos (victoria hasta octavos +3, cuartos +5, semis +8, final +12, +1 por set ganado; capitán x2).
+- En GitHub → Settings → Secrets and variables → Actions: **variables** `SUPABASE_URL` y `SUPABASE_ANON_KEY`; **secreto** `SUPABASE_SERVICE_KEY`. Sin ellas no aparece la pestaña.
