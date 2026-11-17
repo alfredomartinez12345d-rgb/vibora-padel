@@ -9,12 +9,22 @@ import json
 import os
 import sys
 
+
+def leer(f):
+    """Lee un JSON descargado; si está roto, avisa y devuelve vacío en vez de romperse."""
+    try:
+        with open(f, encoding='utf-8') as fh:
+            return json.load(fh)
+    except (OSError, ValueError) as e:
+        print(f'Aviso: no se puede leer {os.path.basename(f)} ({e}); se ignora.')
+        return {}
+
 datos, temporada = sys.argv[1], sys.argv[2]
 hoy = datetime.date.today()
 desde = (hoy - datetime.timedelta(days=45)).isoformat()
 ts = {}
 for f in glob.glob(os.path.join(datos, 'tournaments_*.json')):
-    for t in json.load(open(f)).get('data', []):
+    for t in leer(f).get('data', []):
         ts[t['id']] = t
 ids = [t['id'] for t in ts.values()
        if (t.get('connections') or {}).get('season') == f'/api/seasons/{temporada}'

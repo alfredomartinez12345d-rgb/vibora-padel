@@ -1,12 +1,22 @@
 import json, sys, glob, os, re, datetime
 
+
+def leer(f):
+    """Lee un JSON descargado; si está roto, avisa y devuelve vacío en vez de romperse."""
+    try:
+        with open(f, encoding='utf-8') as fh:
+            return json.load(fh)
+    except (OSError, ValueError) as e:
+        print(f'Aviso: no se puede leer {os.path.basename(f)} ({e}); se ignora.')
+        return {}
+
 d_matches, d_meta, tpl, out = sys.argv[1:5]
 
 # Torneos (metadatos de la primera descarga)
 tmeta = {}
 for f in sorted(glob.glob(os.path.join(d_meta, 'tournaments_*.json'))):
     try:
-        for t in json.load(open(f)).get('data', []):
+        for t in leer(f).get('data', []):
             tmeta[t['id']] = t
     except Exception:
         pass
@@ -23,7 +33,7 @@ if os.path.exists(sf):
 raw = {}
 for f in sorted(glob.glob(os.path.join(d_matches, 't*_matches_*.json'))):
     t = int(re.search(r't(\d+)_matches', f).group(1))
-    for m in json.load(open(f)).get('data', []):
+    for m in leer(f).get('data', []):
         m['_t'] = t
         raw[m['id']] = m
 
@@ -45,7 +55,7 @@ for f in glob.glob(os.path.join(d_matches, 't*_players_*.json')):
 for t in sorted(pf, key=lambda i: (tmeta.get(i) or {}).get('start_date') or ''):
     n = 0
     for f in pf[t]:
-        for p in json.load(open(f)).get('data', []):
+        for p in leer(f).get('data', []):
             r = val(p.get('ranking'), 'position', 'ranking', 'rank')
             pts = val(p.get('points'), 'points', 'value')
             if r is not None:
