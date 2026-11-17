@@ -1,6 +1,9 @@
 // Service worker de Víbora: la página se pide siempre a la red (los datos cambian a diario)
 // y, si no hay conexión, se sirve la última copia guardada. Iconos y fuentes se guardan en caché.
-const CACHE = 'vibora-v1';
+// Avisos en el móvil: OneSignal comparte este service worker (si no carga, la app sigue funcionando).
+try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
+
+const CACHE = 'vibora-v2';
 const BASE = ['./', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

@@ -176,6 +176,10 @@ td a{font-weight:600}
 .hbtn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
 .hbtn .ic{width:20px;height:20px}
 .star{font:inherit;font-size:22px;line-height:1;width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;flex:none}
+.star.bell{display:flex;align-items:center;justify-content:center}.star.bell .ic{width:22px;height:22px}
+.star.bell[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);background:rgba(61,214,245,.12)}
+#toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);max-width:min(440px,calc(100vw - 32px));background:#1c2040;color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:14px;box-shadow:0 14px 40px -10px rgba(0,0,0,.9);opacity:0;pointer-events:none;transition:.25s;z-index:60}
+#toast.on{opacity:1;transform:translate(-50%,0)}
 .star[aria-pressed="true"]{color:var(--gold);border-color:var(--gold);background:rgba(255,197,61,.12)}
 .fv{color:var(--gold);font-size:12px}
 .bm.q{padding:4px;display:flex;flex-direction:column;gap:3px;border-left-color:var(--cyan)}
@@ -353,6 +357,7 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 </div>
 <script>
 const D=/*DATA*/null;
+const PUSH_APP=/*PUSH*/""; /* App ID de OneSignal (lo pone build.py); vacío = sin avisos */
 
 /* ---------- Carga de datos reales (Padel API) ---------- */
 const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^https:\/\/[^\s"'<>]+$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
@@ -442,7 +447,7 @@ const tdates=t=>t.start.slice(5,7)===t.end.slice(5,7)?`${+t.start.slice(8)}–${
 const tinfo=t=>`${t.loc} · ${tdates(t)}${t.court?' · '+(t.court==='indoor'?'Indoor':'Outdoor'):''}`;
 const tban=(t,cls='')=>t&&t.photo?`<div class="tban ${cls}"><img src="${t.photo}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>`:'';
 const lvp=t=>`<span class="pill lv" ${lvs(t)}>${LV[t.level]||t.level}</span>`;
-const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel desde junio. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.</p>`;
+const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel desde junio. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.${PUSH_APP?' Los avisos al móvil los envía OneSignal solo si los activas.':''}</p>`;
 const ord=(x,y)=>x.round-y.round||x.idx-y.idx;
 const pline=(id,right,sub)=>{const p=P[id];return `<a class="prow" href="#jugador-${id}">${av(id)}<span class="tx"><b>${p.name}</b><span>${sub??(flag(p.nat)+' '+(p.nat||''))}</span></span>${right||''}</a>`};
 
@@ -559,6 +564,30 @@ window.addEventListener('appinstalled',()=>{gcEvent('app-instalada','App instala
 function installCard(){if(standalone()||instHide||(!instEv&&!isIOS))return '';
   const how=instEv?'Tenla en tu pantalla de inicio como una app y consúltala aunque no tengas cobertura.':'En Safari, toca <b style="display:inline;font:inherit;font-weight:700">Compartir</b> y luego <b style="display:inline;font:inherit;font-weight:700">Añadir a pantalla de inicio</b>.';
   return `<div class="card inst"><img src="icon-192.png" alt=""><div><b>Instala Víbora</b><span class="sub">${how}</span></div><div class="row2">${instEv?'<button type="button" class="btn pri" data-inst="go">Instalar</button>':''}<button type="button" class="btn" data-inst="no">${instEv?'Ahora no':'Entendido'}</button></div></div>`}
+
+/* ---------- Avisos en el móvil (OneSignal) ---------- */
+let pushOn=new Set();try{pushOn=new Set(JSON.parse(localStorage.getItem('vibora-push')||'[]'))}catch(e){}
+const savePush=()=>{try{localStorage.setItem('vibora-push',JSON.stringify([...pushOn]))}catch(e){}};
+let osReady=null;
+function loadOS(){if(osReady)return osReady;
+  osReady=new Promise((res,rej)=>{window.OneSignalDeferred=window.OneSignalDeferred||[];
+    OneSignalDeferred.push(async OS=>{try{await OS.init({appId:PUSH_APP,serviceWorkerPath:'sw.js',serviceWorkerUpdaterPath:'sw.js',serviceWorkerParam:{scope:'./'},promptOptions:{autoPrompt:false},notifyButton:{enable:false}});res(OS)}catch(e){rej(e)}});
+    const s=document.createElement('script');s.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';s.defer=true;s.onerror=()=>rej(new Error('sdk'));document.head.appendChild(s)});
+  osReady.catch(()=>{osReady=null});return osReady}
+function toast(msg){let el=document.getElementById('toast');if(!el){el=document.createElement('div');el.id='toast';el.setAttribute('role','status');document.body.appendChild(el)}
+  el.textContent=msg;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),4200)}
+async function togglePush(id){const p=P[id];if(!p)return;
+  if(isIOS&&!standalone()){toast('En iPhone, primero instala Víbora: en Safari, Compartir → «Añadir a pantalla de inicio». Después actívalos desde la app.');return}
+  if(!('Notification' in window)){toast('Este navegador no permite avisos.');return}
+  let OS;try{OS=await loadOS()}catch(e){toast('No se han podido cargar los avisos. Prueba de nuevo en un momento.');return}
+  try{if(pushOn.has(id)){await OS.User.removeTag('p'+id);pushOn.delete(id);toast('Ya no recibirás avisos de '+p.sn+'.')}
+    else{if(!OS.Notifications.permission)await OS.Notifications.requestPermission();
+      if(!OS.Notifications.permission){toast('Los avisos están bloqueados. Actívalos en los ajustes del navegador para esta web.');return}
+      await OS.User.PushSubscription.optIn();await OS.User.addTag('p'+id,'1');pushOn.add(id);toast('Te avisaremos cuando '+p.sn+' vaya a jugar y de sus resultados.');gcEvent('avisos/'+slug(p.name),'Avisos: '+p.name)}
+    savePush()}catch(e){toast('No se han podido cambiar los avisos.')}
+  document.getElementById('app').className='noanim';render()}
+if(PUSH_APP&&pushOn.size)setTimeout(()=>loadOS().catch(()=>{}),3000);
+const BELL='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 15.4A1 1 0 0 0 5.2 17h13.6a1 1 0 0 0 .9-1.6L18 12.6V9a6 6 0 0 0-6-6Zm-2 15a2 2 0 0 0 4 0h-4Z"/></svg>';
 
 /* ---------- Orden de juego: horas en la zona del que mira ---------- */
 const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -687,7 +716,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   const rcard=(x,t,c)=>x?`<a href="#jugador-${x.q}"><h2 style="color:${c}">${t}</h2><span style="display:flex;gap:8px;align-items:center">${av(x.q)}<b>${P[x.q].sn}</b></span><span class="sub">${x.w} victorias · ${x.l} derrotas</span></a>`:'';
   const rivS=bn||vf?`<section><div class="duel">${rcard(bn,'Bestia negra','var(--red)')}${rcard(vf,'Víctima favorita','var(--mint)')}</div></section>`:'';
   return `<a class="back" href="#ranking">‹ Ranking</a>
-  <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button></div>
+  <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><span style="display:flex;flex-direction:column;gap:8px"><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button>${PUSH_APP?`<button type="button" class="star bell" data-push="${id}" aria-pressed="${pushOn.has(id)}" aria-label="${pushOn.has(id)?'Quitar avisos':'Recibir avisos de este jugador'}">${BELL}</button>`:''}</span></div>
   ${palaCard(p)}<div class="kpis"><div class="kpi a"><b>${Math.round(p.elo)}</b><span>Elo${pos?' · n.º '+pos:''}</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Victorias-derrotas</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos</span></div></div>
   ${wrapS}${rivS}
   ${tl.length?`<section><div class="card"><h2>Parejas desde junio</h2><div class="tl" style="margin-top:10px">${tl.map((x,i)=>`${i?'<span class="sub">→</span>':''}<a class="st" href="#pareja-${key([id,x.q])}">${av(x.q,'sm')}<span>${P[x.q].sn}</span><small>${fd(x.d)}</small></a>`).join('')}</div></div></section>`:''}
@@ -767,6 +796,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if
   const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else{picks[mi]=sd;if(!window.gcQn){window.gcQn=1;gcEvent('quiniela','Rellena la quiniela')}}saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
+  const pu=e.target.closest('[data-push]');if(pu){togglePush(+pu.dataset.push);return}
   const ins=e.target.closest('[data-inst]');if(ins){if(ins.dataset.inst==='go'&&instEv){const ev=instEv;ev.prompt();ev.userChoice.then(c=>{instEv=null;if(c.outcome!=='accepted'){instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}}render()})}else{instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}render()}return}
   const pn=e.target.closest('[data-pin]');if(pn){mapSel=pn.dataset.pin;document.getElementById('app').className='noanim';render();const q=document.querySelector(`[data-pin="${mapSel}"]`);if(q&&e.detail===0)q.focus();return}
   const mz=e.target.closest('[data-mz]');if(mz){mapZ=mz.dataset.mz;document.getElementById('app').className='noanim';render();return}

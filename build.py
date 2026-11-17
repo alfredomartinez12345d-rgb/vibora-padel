@@ -106,7 +106,8 @@ T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
 data = {'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'P': P, 'T': T, 'M': M}
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 assert '</' not in js
-html = open(tpl, encoding='utf-8').read().replace('/*DATA*/null', js)
+push = re.sub(r'[^0-9a-fA-F-]', '', os.environ.get('ONESIGNAL_APP_ID', ''))
+html = open(tpl, encoding='utf-8').read().replace('/*DATA*/null', js).replace('/*PUSH*/""', json.dumps(push))
 open(out, 'w', encoding='utf-8').write(html)
 print('ranking de', rk_from, 'jugadores con ranking', sum(1 for p in P.values() if p[5] is not None))
 print('players', len(P), 'tournaments', len(T), 'matches', len(M), 'hidden tournaments', sorted(hidden_t), 'other statuses', other, 'bytes', len(html.encode()))

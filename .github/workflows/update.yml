@@ -47,9 +47,8 @@ jobs:
           echo "modo=$MODO" >> "$GITHUB_OUTPUT"
           echo "Modo: $MODO"
 
-      # Datos de la última ejecución (la rápida parte de ellos)
+      # Datos de la última ejecución (la rápida parte de ellos; la completa solo conserva el estado de los avisos)
       - name: Recuperar datos guardados
-        if: steps.modo.outputs.modo == 'rapida'
         uses: actions/cache/restore@v4
         with:
           path: datos
@@ -67,7 +66,11 @@ jobs:
         if: steps.modo.outputs.modo == 'completa'
         env:
           PADEL_API_TOKEN: ${{ secrets.PADEL_API_TOKEN }}
-        run: bash descargar.sh
+        run: |
+          mkdir -p previo && { mv datos/avisos.json previo/ 2>/dev/null || true; }
+          rm -rf datos
+          bash descargar.sh
+          mv previo/avisos.json datos/ 2>/dev/null || true
 
       - name: ¿Hay que publicar?
         id: pub
@@ -78,6 +81,14 @@ jobs:
             echo "Nada nuevo que publicar."
           fi
 
+      # Avisos al móvil (OneSignal); sin las claves no hace nada
+      - name: Enviar avisos
+        if: steps.pub.outputs.si == '1'
+        env:
+          ONESIGNAL_APP_ID: ${{ vars.ONESIGNAL_APP_ID }}
+          ONESIGNAL_REST_KEY: ${{ secrets.ONESIGNAL_REST_KEY }}
+        run: python3 -I avisos.py datos "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+
       - name: Guardar datos para la próxima ejecución
         if: steps.pub.outputs.si == '1'
         uses: actions/cache/save@v4
@@ -87,6 +98,8 @@ jobs:
 
       - name: Construir la web
         if: steps.pub.outputs.si == '1'
+        env:
+          ONESIGNAL_APP_ID: ${{ vars.ONESIGNAL_APP_ID }}
         run: |
           python3 -I build.py datos datos template.html index.html
           echo "Tamaño: $(wc -c < index.html) bytes"

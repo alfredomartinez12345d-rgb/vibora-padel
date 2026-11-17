@@ -67,3 +67,15 @@ GoatCounter (anónimo, sin cookies): https://viborapadel.goatcounter.com
 - Cada pantalla cuenta como una vista (`/inicio`, `/ranking`, `/torneos`, `/jugador/<nombre>`, `/torneo/<nombre>`…).
 - Eventos: `app-instalada`, `quiniela` (una vez por visita) y `favorito/<jugador>`.
 - No cuenta las visitas desde `localhost`.
+
+## Avisos en el móvil (OneSignal)
+En la ficha de cada jugador hay un botón 🔔: quien lo pulsa recibe avisos cuando ese jugador **va a empezar un partido** (unos 30–45 min antes) y con **su resultado** al terminar. Los envía `avisos.py` en cada actualización (la rápida, cada 30 min durante los torneos).
+
+Para activarlos:
+1. Crea una app en onesignal.com de tipo **Web**, con la URL del sitio `https://<usuario>.github.io` y la ruta `/vibora-padel/`.
+2. En GitHub → Settings → Secrets and variables → Actions:
+   - pestaña **Variables**: `ONESIGNAL_APP_ID` = el App ID de OneSignal.
+   - pestaña **Secrets**: `ONESIGNAL_REST_KEY` = la REST API Key de OneSignal.
+3. Lanza una actualización completa.
+
+Sin esas dos claves no aparece la campana ni se envía nada. En iPhone los avisos solo funcionan con la app instalada en la pantalla de inicio (iOS 16.4 o posterior).
