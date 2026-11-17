@@ -287,12 +287,10 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 #intro .in-shadow{position:absolute;left:0;top:44px;width:40px;height:8px;border-radius:50%;background:rgba(0,0,0,.55);filter:blur(3px);transform:translateX(var(--dx,0)) scale(.2);opacity:0}
 #intro .in-word{font-family:var(--display);font-style:italic;font-weight:700;font-size:64px;line-height:1;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,#fff,#b9c6ff);-webkit-background-clip:text;background-clip:text;color:transparent;clip-path:inset(0 100% 0 0);padding-right:6px}
 #intro .in-line{position:absolute;left:54px;right:0;bottom:-14px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--violet),var(--orange));transform:scaleX(0);transform-origin:left}
-#intro .in-sub{position:absolute;left:0;right:0;top:calc(100% + 30px);text-align:center;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);opacity:0;white-space:nowrap}
 #intro.play .in-ball{animation:inBall 1.25s forwards,inGlow 1.25s forwards}
 #intro.play .in-shadow{animation:inShadow 1.25s forwards}
 #intro.play .in-word{animation:inWord 1.25s forwards}
 #intro.play .in-line{animation:inLine 1.6s forwards}
-#intro.play .in-sub{animation:inSub 1.6s forwards}
 #intro.out{animation:inOut .4s ease-in forwards;pointer-events:none}
 @keyframes inBall{
   0%{transform:translate(var(--dx),-60vh);animation-timing-function:cubic-bezier(.55,0,1,.45)}
@@ -305,12 +303,11 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 @keyframes inWord{0%,66%{clip-path:inset(0 100% 0 0)}88%,100%{clip-path:inset(0 0 0 0)}}
 @keyframes inGlow{0%,30%{box-shadow:0 0 22px rgba(217,224,33,.75)}36%{box-shadow:0 0 60px 14px rgba(217,224,33,.9)}60%{box-shadow:0 0 30px rgba(217,224,33,.8)}64%{box-shadow:0 0 50px 10px rgba(217,224,33,.9)}100%{box-shadow:0 0 22px rgba(217,224,33,.75)}}
 @keyframes inLine{0%,62%{transform:scaleX(0)}85%,100%{transform:scaleX(1)}}
-@keyframes inSub{0%,70%{opacity:0;transform:translateY(6px)}90%,100%{opacity:1;transform:none}}
 @keyframes inOut{to{opacity:0;transform:scale(1.06)}}
 </style>
 </head>
 <body>
-<div id="intro" aria-hidden="true"><div class="in-g"><i class="in-ball"></i><span class="in-shadow"></span><span class="in-word">Víbora</span><span class="in-line"></span><span class="in-sub">Pádel profesional</span></div></div>
+<div id="intro" aria-hidden="true"><div class="in-g"><i class="in-ball"></i><span class="in-shadow"></span><span class="in-word">Víbora</span><span class="in-line"></span></div></div>
 <script>
 /* Animación de entrada: una vez por visita, se salta con un toque y no sale con «reducir movimiento». */
 (function(){var el=document.getElementById('intro'),seen=false;
