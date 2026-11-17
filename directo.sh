@@ -15,15 +15,29 @@ if [[ ! -f "$OUT/season.txt" ]]; then
   salida 0; exit 0
 fi
 SEASON_ID=$(cat "$OUT/season.txt")
+FIP_SEASON=$(cat "$OUT/fip_season.txt" 2>/dev/null || true)
 
 en_juego() {
   python3 -c "
 import json, glob, datetime
 hoy = datetime.date.today().isoformat()
+try:
+    fip = set(int(x) for x in open('$OUT/fip_ids.txt').read().split())
+except OSError:
+    fip = set()
 ts = {t['id']: t for f in glob.glob('$OUT/tournaments_*.json') for t in json.load(open(f)).get('data', [])}
-ids = [t['id'] for t in ts.values() if (t.get('connections') or {}).get('season') == '/api/seasons/$SEASON_ID'
+ids = [t['id'] for t in ts.values() if ((t.get('connections') or {}).get('season') == '/api/seasons/$SEASON_ID' or t['id'] in fip)
        and (t.get('status') == 'live' or (t.get('start_date') or '9') <= hoy <= (t.get('end_date') or ''))]
 print(' '.join(map(str, sorted(ids))))"
+}
+
+# Refresca el calendario de una temporada: refrescar ID PREFIJO
+refrescar() {
+  mkdir -p "$OUT/nuevo"
+  if get_all "$BASE/seasons/$1/tournaments" "$OUT/nuevo/$2"; then
+    rm -f "$OUT"/"$2"_[0-9]*.json && mv "$OUT"/nuevo/"$2"_*.json "$OUT/"
+  fi
+  rm -rf "$OUT/nuevo"
 }
 
 # Mirada rápida con el calendario guardado: si hoy no hay torneo, no se gasta ninguna petición.
@@ -32,12 +46,18 @@ if [[ -z "$(en_juego)" ]]; then
   salida 0; exit 0
 fi
 
-echo "==> Actualizando calendario de la temporada $SEASON_ID..."
-mkdir -p "$OUT/nuevo"
-if get_all "$BASE/seasons/$SEASON_ID/tournaments" "$OUT/nuevo/tournaments"; then
-  rm -f "$OUT"/tournaments_*.json && mv "$OUT"/nuevo/tournaments_*.json "$OUT/"
-fi
-rm -rf "$OUT/nuevo"
+# Solo se refresca el calendario de las temporadas que tienen un torneo en juego
+EN_JUEGO=$(en_juego)
+TEMPS=$(python3 -c "
+import json, glob
+ids = set('$EN_JUEGO'.split())
+ts = {str(t['id']): t for f in glob.glob('$OUT/tournaments_*.json') for t in json.load(open(f)).get('data', [])}
+print(' '.join(sorted({(ts[i].get('connections') or {}).get('season', '').split('/')[-1] for i in ids if i in ts})))")
+for SID in $TEMPS; do
+  if [[ "$SID" == "$SEASON_ID" ]]; then echo "==> Calendario Premier ($SID)"; refrescar "$SID" tournaments
+  elif [[ -n "$FIP_SEASON" && "$SID" == "$FIP_SEASON" ]]; then echo "==> Calendario FIP ($SID)"; refrescar "$SID" tournaments_fip
+  fi
+done
 
 LIVE=$(en_juego)
 echo "Torneos en juego: ${LIVE:-ninguno}"

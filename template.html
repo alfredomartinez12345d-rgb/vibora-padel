@@ -176,6 +176,10 @@ td a{font-weight:600}
 .hbtn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
 .hbtn .ic{width:20px;height:20px}
 .star{font:inherit;font-size:22px;line-height:1;width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;flex:none}
+.star.bell{display:flex;align-items:center;justify-content:center}.star.bell .ic{width:22px;height:22px}
+.star.bell[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);background:rgba(61,214,245,.12)}
+#toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);max-width:min(440px,calc(100vw - 32px));background:#1c2040;color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:14px;box-shadow:0 14px 40px -10px rgba(0,0,0,.9);opacity:0;pointer-events:none;transition:.25s;z-index:60}
+#toast.on{opacity:1;transform:translate(-50%,0)}
 .star[aria-pressed="true"]{color:var(--gold);border-color:var(--gold);background:rgba(255,197,61,.12)}
 .fv{color:var(--gold);font-size:12px}
 .bm.q{padding:4px;display:flex;flex-direction:column;gap:3px;border-left-color:var(--cyan)}
@@ -279,6 +283,28 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 .palaic svg{width:24px;height:24px;fill:currentColor}
 .pala .tx{flex:1;min-width:0}.pala .tx b{display:block;font-weight:700;font-size:16px;overflow-wrap:anywhere;margin-top:2px}.pala .tx span{font-size:11px;color:var(--muted)}
 
+
+/* ---------- Orden de juego y fotos de torneos ---------- */
+.oopw{display:flex;flex-direction:column;gap:6px}
+.ytb{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-size:13px;font-weight:700;color:#fff;background:#d4232b;border-radius:10px;padding:7px 12px;box-shadow:0 6px 16px -8px rgba(212,35,43,.8)}
+.ytb .ic{width:18px;height:18px}
+.ytb.big{align-self:stretch;justify-content:center;font-size:15px;padding:12px 14px;border-radius:14px}
+.ytb:active{transform:scale(.98)}
+.oop{--lv:var(--blue);display:flex;gap:12px;align-items:stretch;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--lv);border-radius:16px;padding:10px 12px}
+.oop.fav{border-color:color-mix(in srgb,var(--gold) 55%,var(--line));border-left-color:var(--gold);background:linear-gradient(90deg,rgba(255,197,61,.1),transparent 55%),var(--surface)}
+.oopt{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:54px;border-right:1px solid var(--line);padding-right:10px}
+.oopt b{font-family:var(--display);font-size:24px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.oopt small{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.oopm{flex:1;min-width:0}
+.oopc{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.tban{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:16/7;background:var(--surface2);border:1px solid var(--line)}
+.tban img{width:100%;height:100%;object-fit:cover;display:block}
+.tban::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(10,12,28,.7))}
+.tban.in{margin:-16px -16px 12px;border-radius:20px 20px 0 0;border:0;aspect-ratio:16/6}
+.count{position:relative;overflow:hidden;isolation:isolate}
+.count>*{position:relative;z-index:2}
+.count .cbg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;z-index:0}
+.count.wph::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(10,12,28,.94),rgba(10,12,28,.5))}
 /* ---------- Animación de entrada ---------- */
 #intro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(600px 420px at 50% 42%,rgba(155,107,255,.28),transparent 70%),radial-gradient(rgba(185,198,255,.07) 1px,transparent 1.5px);background-size:auto,22px 22px;cursor:pointer}
 #intro .in-g{position:relative;display:flex;align-items:center;gap:14px;visibility:hidden}
@@ -336,15 +362,19 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 </div>
 <script>
 const D=/*DATA*/null;
+const PUSH_APP=/*PUSH*/""; /* App ID de OneSignal (lo pone build.py); vacío = sin avisos */
 
 /* ---------- Carga de datos reales (Padel API) ---------- */
 const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^https:\/\/[^\s"'<>]+$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
-const LV={major:'Major',p1:'P1',p2:'P2',finals:'Finals',fip_platinum:'FIP Platinum'};
-const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--violet)',fip_platinum:'var(--mint)'};
-const T=D.T.map(([id,name,level,loc,country,start,end,court,status,hidden])=>({id,name,level,loc,country,start,end,court,status,hidden:!!hidden}));
+const LV={major:'Major',p1:'P1',p2:'P2',finals:'Finals',fip_platinum:'FIP Platinum',fip_gold:'FIP Gold',fip_silver:'FIP Silver'};
+const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--violet)',fip_platinum:'var(--mint)',fip_gold:'#ff7eb6',fip_silver:'#9aa1c7'};
+const okUrl=u=>/^https:\/\/[^\s"'<>()]+$/.test(u||'')?u:null;
+const T=D.T.map(([id,name,level,loc,country,start,end,court,status,hidden,photo])=>({id,name,level,loc,country,start,end,court,status,hidden:!!hidden,photo:okUrl(photo)}));
 const TM={};T.forEach(t=>TM[t.id]=t);const tb=id=>TM[id];
-const M=D.M.map(a=>({id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],idx:a[4],date:a[5],court:a[6],st:a[7],a:a[8],b:a[9],sa:a[10],sb:a[11],sets:a[12],w:a[13]}));
+const M=D.M.map(a=>({yt:/^[A-Za-z0-9_-]{6,20}$/.test(a[17]||'')?a[17]:null,id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],idx:a[4],date:a[5],court:a[6],st:a[7],a:a[8],b:a[9],sa:a[10],sb:a[11],sets:a[12],w:a[13],at:a[14]&&!isNaN(Date.parse(a[14]))?new Date(a[14]):null,approx:!!a[15],ord:a[16]}));
 const MM={};M.forEach(m=>MM[m.id]=m);
+const isFipT=t=>!!t&&String(t.level||'').startsWith('fip');
+const prem=m=>!isFipT(TM[m.t]); /* las estadísticas solo cuentan Premier Padel */
 const RN={1:'Final',2:'Semifinales',4:'Cuartos',8:'Octavos',16:'Dieciseisavos',32:'Primera ronda'};
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const fd=s=>s?(+s.slice(8,10))+' '+MES[+s.slice(5,7)-1]:'';
@@ -356,7 +386,7 @@ const chrono=(x,y)=>x.date<y.date?-1:x.date>y.date?1:y.round-x.round||x.id-y.id;
 /* ---------- Elo propio: 1500 de partida, K=32, media de la pareja ---------- */
 const avg=pr=>(P[pr[0]].elo+P[pr[1]].elo)/2;
 const PK=new Set();
-M.filter(m=>m.a.length===2&&m.b.length===2).sort(chrono).forEach(m=>{
+M.filter(m=>m.a.length===2&&m.b.length===2&&prem(m)).sort(chrono).forEach(m=>{
   [...m.a,...m.b].forEach(i=>P[i].ms.push(m));PK.add(key(m.a));PK.add(key(m.b));
   if(!played(m))return;
   [...m.a,...m.b].forEach(i=>{const p=P[i];if(p.lastT!==null&&p.lastT!==m.t)p.hist.push(p.elo);p.lastT=m.t});
@@ -385,7 +415,7 @@ const winP=m=>m.w===0?m.pre:1-m.pre;
 const norm=x=>x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const lastPair=id=>{const m=P[id].ms[P[id].ms.length-1];return m?(sideOf(m,id)?m.b:m.a):null};
 const prob=(A,B)=>1/(1+Math.pow(10,(avg(B)-avg(A))/400));
-function pairStats(c){const ps={};M.filter(m=>m.cat===c&&played(m)).sort(chrono).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr),o=(ps[k]??={pr,n:0,w:0,come:0,tbw:0,tbl:0,three:0,up:0,cur:0,best:0}),won=m.w===s;o.n++;
+function pairStats(c){const ps={};M.filter(m=>m.cat===c&&played(m)&&prem(m)).sort(chrono).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr),o=(ps[k]??={pr,n:0,w:0,come:0,tbw:0,tbl:0,three:0,up:0,cur:0,best:0}),won=m.w===s;o.n++;
   if(won){o.w++;o.cur++;o.best=Math.max(o.best,o.cur)}else o.cur=0;
   if(m.st===0&&m.sets.length){if(won&&m.sets[0][s]<m.sets[0][1-s])o.come++;if(m.sets.length===3)o.three++;m.sets.forEach(z=>{if(z[2]!=null)(z[s]>z[1-s]?o.tbw++:o.tbl++)})}
   if(won&&m.pre!=null&&winP(m)<0.35)o.up++}));return Object.values(ps)}
@@ -422,8 +452,9 @@ function donut(parts,total){const C=2*Math.PI*42;let off=0;
   <text x="55" y="56" text-anchor="middle" font-family="Barlow Condensed,Arial" font-weight="700" font-size="26" fill="var(--ink)">${total}</text><text x="55" y="70" text-anchor="middle" font-size="8" letter-spacing="1" fill="var(--muted)">TORNEOS</text></svg>`}
 const tdates=t=>t.start.slice(5,7)===t.end.slice(5,7)?`${+t.start.slice(8)}–${fd(t.end)}`:`${fd(t.start)} – ${fd(t.end)}`;
 const tinfo=t=>`${t.loc} · ${tdates(t)}${t.court?' · '+(t.court==='indoor'?'Indoor':'Outdoor'):''}`;
+const tban=(t,cls='')=>t&&t.photo?`<div class="tban ${cls}"><img src="${t.photo}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>`:'';
 const lvp=t=>`<span class="pill lv" ${lvs(t)}>${LV[t.level]||t.level}</span>`;
-const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel desde junio. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.</p>`;
+const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel y los torneos FIP Platinum y Gold recientes; Elo, rankings y récords solo cuentan Premier Padel. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.${PUSH_APP?' Los avisos al móvil los envía OneSignal solo si los activas.':''}</p>`;
 const ord=(x,y)=>x.round-y.round||x.idx-y.idx;
 const pline=(id,right,sub)=>{const p=P[id];return `<a class="prow" href="#jugador-${id}">${av(id)}<span class="tx"><b>${p.name}</b><span>${sub??(flag(p.nat)+' '+(p.nat||''))}</span></span>${right||''}</a>`};
 
@@ -493,7 +524,7 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   const leg2=`<div class="mleg">${[...new Set(T.map(t=>t.level))].filter(l=>LV[l]).map(l=>`<span><i style="--lv:${LC[l]}"></i>${LV[l]}</span>`).join('')}<span><i class="o"></i>Por jugar</span>${all.some(g=>g.live)?'<span><i style="--lv:var(--red)"></i>En juego</span>':''}</div>`;
   const ct=CC[(sg.iso||'').toLowerCase()];
   const st=t=>{if(t.hidden)return '<span class="sub">Resultados fuera del plan gratuito</span>';if(t.status==='pending')return `<span class="sub">${t===nt?'Próximo torneo':'Por jugar'}</span>`;if(t.status==='live')return '<span class="sub" style="color:var(--ink)"><span class="dot"></span>En juego</span>';const fm=M.find(m=>m.t===t.id&&inCat(m)&&m.round===1&&m.w!=null);return fm?`<span class="sub" style="color:var(--ink)">${IC.trophy} ${pl(fm.w?fm.b:fm.a)}</span>`:''};
-  const panel=`<div class="card mpanel" ${lvs(sg.main)}><div class="mph"><span class="mflag">${flag(sg.iso)||'📍'}</span><div><div class="big">${sg.name}</div><span class="sub">${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
+  const panel=`<div class="card mpanel" ${lvs(sg.main)}>${tban(sg.main,'in')}<div class="mph"><span class="mflag">${flag(sg.iso)||'📍'}</span><div><div class="big">${sg.name}</div><span class="sub">${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
     ${sg.ts.map(t=>{const inner=`<span class="tx"><b>${t.name}</b> ${lvp(t)}<span>${tdates(t)}</span>${st(t)}</span>`;return t.hidden||t.status==='pending'?`<div class="tres">${inner}</div>`:`<a class="tres" href="#torneo-${t.id}">${inner}<span class="back">Cuadro ›</span></a>`}).join('')}</div>`;
   return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
@@ -541,6 +572,52 @@ function installCard(){if(standalone()||instHide||(!instEv&&!isIOS))return '';
   const how=instEv?'Tenla en tu pantalla de inicio como una app y consúltala aunque no tengas cobertura.':'En Safari, toca <b style="display:inline;font:inherit;font-weight:700">Compartir</b> y luego <b style="display:inline;font:inherit;font-weight:700">Añadir a pantalla de inicio</b>.';
   return `<div class="card inst"><img src="icon-192.png" alt=""><div><b>Instala Víbora</b><span class="sub">${how}</span></div><div class="row2">${instEv?'<button type="button" class="btn pri" data-inst="go">Instalar</button>':''}<button type="button" class="btn" data-inst="no">${instEv?'Ahora no':'Entendido'}</button></div></div>`}
 
+/* ---------- Avisos en el móvil (OneSignal) ---------- */
+let pushOn=new Set();try{pushOn=new Set(JSON.parse(localStorage.getItem('vibora-push')||'[]'))}catch(e){}
+const savePush=()=>{try{localStorage.setItem('vibora-push',JSON.stringify([...pushOn]))}catch(e){}};
+let osReady=null;
+function loadOS(){if(osReady)return osReady;
+  osReady=new Promise((res,rej)=>{window.OneSignalDeferred=window.OneSignalDeferred||[];
+    OneSignalDeferred.push(async OS=>{try{await OS.init({appId:PUSH_APP,serviceWorkerPath:'sw.js',serviceWorkerUpdaterPath:'sw.js',serviceWorkerParam:{scope:'./'},promptOptions:{autoPrompt:false},notifyButton:{enable:false}});res(OS)}catch(e){rej(e)}});
+    const s=document.createElement('script');s.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';s.defer=true;s.onerror=()=>rej(new Error('sdk'));document.head.appendChild(s)});
+  osReady.catch(()=>{osReady=null});return osReady}
+function toast(msg){let el=document.getElementById('toast');if(!el){el=document.createElement('div');el.id='toast';el.setAttribute('role','status');document.body.appendChild(el)}
+  el.textContent=msg;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),4200)}
+async function togglePush(id){const p=P[id];if(!p)return;
+  if(isIOS&&!standalone()){toast('En iPhone, primero instala Víbora: en Safari, Compartir → «Añadir a pantalla de inicio». Después actívalos desde la app.');return}
+  if(!('Notification' in window)){toast('Este navegador no permite avisos.');return}
+  let OS;try{OS=await loadOS()}catch(e){toast('No se han podido cargar los avisos. Prueba de nuevo en un momento.');return}
+  try{if(pushOn.has(id)){await OS.User.removeTag('p'+id);pushOn.delete(id);toast('Ya no recibirás avisos de '+p.sn+'.')}
+    else{if(!OS.Notifications.permission)await OS.Notifications.requestPermission();
+      if(!OS.Notifications.permission){toast('Los avisos están bloqueados. Actívalos en los ajustes del navegador para esta web.');return}
+      await OS.User.PushSubscription.optIn();await OS.User.addTag('p'+id,'1');pushOn.add(id);toast('Te avisaremos cuando '+p.sn+' vaya a jugar y de sus resultados.');gcEvent('avisos/'+slug(p.name),'Avisos: '+p.name)}
+    savePush()}catch(e){toast('No se han podido cambiar los avisos.')}
+  document.getElementById('app').className='noanim';render()}
+if(PUSH_APP&&pushOn.size)setTimeout(()=>loadOS().catch(()=>{}),3000);
+const BELL='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 15.4A1 1 0 0 0 5.2 17h13.6a1 1 0 0 0 .9-1.6L18 12.6V9a6 6 0 0 0-6-6Zm-2 15a2 2 0 0 0 4 0h-4Z"/></svg>';
+
+/* ---------- Orden de juego: horas en la zona del que mira ---------- */
+const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const hhmm=d=>d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+const dayName=k=>new Date(k+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+function oopDays(tid){const d={};M.filter(m=>m.t===tid&&m.at&&inCat(m)&&(m.a.length||m.b.length)).forEach(m=>(d[dayKey(m.at)]??=[]).push(m));return d}
+function oopDay(tid){const d=oopDays(tid),ks=Object.keys(d).sort();if(!ks.length)return null;const hoy=dayKey(new Date());
+  const k=ks.includes(hoy)?hoy:ks.find(x=>d[x].some(m=>m.st===3))||ks[ks.length-1];return{k,ms:d[k]}}
+const isFav=m=>[...m.a,...m.b].some(i=>favs.has(i));
+function oopRow(m){const t=tb(m.t);
+  const card=`<a class="oop${isFav(m)?' fav':''}" ${lvs(t)} href="#partido-${m.id}"><span class="oopt">${m.approx?'<small>aprox.</small>':''}<b>${hhmm(m.at)}</b></span><span class="oopm"><span class="mc-meta">${pill(m)}<span>${RN[m.round]||''}${m.court?' · '+m.court:''}</span>${isFav(m)?'<span class="fv">★ Favorito</span>':''}</span>${rows(m)}</span></a>`;
+  const y=ytBtn(m);return y?`<div class="oopw">${card}${y}</div>`:card}
+function oopCourts(ms){const by={};ms.forEach(m=>(by[m.court||'Pista']??=[]).push(m));
+  return Object.entries(by).sort((x,y)=>Math.min(...x[1].map(m=>m.at))-Math.min(...y[1].map(m=>m.at)))
+    .map(([c,l])=>`<div class="oopc"><h2>${c}</h2><div class="list">${l.sort((x,y)=>(x.ord??99)-(y.ord??99)||x.at-y.at).map(oopRow).join('')}</div></div>`).join('')}
+/* Botón de YouTube: partidos sin jugar hasta cuartos de un torneo en juego */
+const YT_ICON='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8ZM10 15V9l5.2 3L10 15Z"/></svg>';
+const ytUrl=m=>{const t=tb(m.t);if(m.st!==3||m.round<4||!t||t.status!=='live')return null;
+  const ch=(D.yt||{})[isFipT(t)?'fip':'premier'],h=/^@[A-Za-z0-9_.-]+$/.test(ch||'')?ch:(isFipT(t)?'@padelfip':'@PremierPadelOfficial');
+  return m.yt?'https://www.youtube.com/watch?v='+m.yt:'https://www.youtube.com/'+h+'/streams'};
+const ytBtn=(m,big)=>{const u=ytUrl(m);return u?`<a class="ytb${big?' big':''}" href="${u}" target="_blank" rel="noopener" data-yt="${m.yt?'directo':'canal'}">${YT_ICON}<span>${m.yt?'Ver en YouTube':'Buscar en YouTube'}${m.court?' · '+m.court:''}</span></a>`:''};
+const OOPNOTE='<p class="sub" style="font-size:12px">Horas en tu zona horaria. «Aprox.»: hora estimada, depende de cuánto duren los partidos anteriores.</p>';
+
 /* ---------- Vistas ---------- */
 let cat='men',rankTab='ofi',hA=null,hB=null,tView='br',brStart=0,duelTab='jug',sim=[];
 const inCat=m=>m.cat===cat;
@@ -548,10 +625,11 @@ function nextT(){return T.filter(t=>t.status==='pending').sort((a,b)=>a.start<b.
 function cdText(){const t=nextT();if(!t)return '';let s=Math.max(0,Math.floor((new Date(t.start+'T00:00:00')-Date.now())/1000));const d=Math.floor(s/86400);s-=d*86400;const h=Math.floor(s/3600);s-=h*3600;const m=Math.floor(s/60);s-=m*60;const z=n=>String(n).padStart(2,'0');return `${d}d ${z(h)}:${z(m)}:${z(s)}`}
 const V={
 inicio(){const nt=nextT(),last=lastPremier();
-  const count=nt?`<div class="count" ${lvs(nt)}><h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
+  const count=nt?`<div class="count${nt.photo?' wph':''}" ${lvs(nt)}>${nt.photo?`<img class="cbg" src="${nt.photo}" alt="" onerror="this.parentNode.classList.remove('wph');this.remove()">`:''}<h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
   const live=T.filter(t=>t.status==='live').map(t=>{const tot=Math.round((new Date(t.end)-new Date(t.start))/864e5)+1,day=Math.min(tot,Math.max(1,Math.round((new Date(D.snap)-new Date(t.start))/864e5)+1));
-    const nx=M.filter(m=>m.t===t.id&&inCat(m)&&m.st===3&&m.a.length&&m.b.length).sort(chrono).slice(0,3);
-    return `<section><a class="livecard" ${lvs(t)} href="#torneo-${t.id}"><h2><span class="dot"></span>En juego ${lvp(t)}</h2><div class="big">${t.name}</div><p class="sub">${tinfo(t)} · Día ${day} de ${tot}</p><div class="track"><i style="width:${Math.round(100*day/tot)}%"></i></div></a>${nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:''}</section>`}).join('');
+    const nx=M.filter(m=>m.t===t.id&&inCat(m)&&m.st===3&&m.a.length&&m.b.length).sort(chrono).slice(0,3),od=oopDay(t.id);
+    const oop=od?`<div class="card"><h2>Orden de juego · ${dayName(od.k)}</h2><div class="list" style="margin-top:10px">${od.ms.sort((x,y)=>x.at-y.at).slice(0,6).map(oopRow).join('')}</div>${od.ms.length>6?`<p class="sub" style="margin-top:8px">Y ${od.ms.length-6} partidos más</p>`:''}<a class="back" style="display:inline-block;margin-top:10px" href="#torneo-${t.id}" data-tv="hr">Ver todos los horarios ›</a>${OOPNOTE}</div>`:(nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:'');
+    return `<section><a class="livecard" ${lvs(t)} href="#torneo-${t.id}"><h2><span class="dot"></span>En juego ${lvp(t)}</h2><div class="big">${t.name}</div><p class="sub">${tinfo(t)} · Día ${day} de ${tot}</p><div class="track"><i style="width:${Math.round(100*day/tot)}%"></i></div></a>${oop}</section>`}).join('');
   const fin=c=>M.find(m=>m.t===last.id&&m.cat===c&&m.round===1);
   const lastCard=`<section><div class="card"><h2>${IC.trophy} Último torneo ${lvp(last)}</h2><a href="#torneo-${last.id}"><h1 style="font-size:28px;margin:6px 0 10px">${last.name}</h1></a>${['men','women'].map(c=>{const m=fin(c);return m?`<a href="#partido-${m.id}" style="display:block;padding:8px 0;border-top:1px solid var(--line)"><h2>${c==='men'?'Masculino':'Femenino'}</h2>${rows(m)}</a>`:''}).join('')}</div></section>`;
   /* títulos por pareja */
@@ -559,7 +637,7 @@ inicio(){const nt=nextT(),last=lastPremier();
   const tl=Object.values(tp).sort((a,b)=>b.n-a.n).slice(0,5),mx=tl.length?tl[0].n:1;
   const tit=`<section><div class="card"><h2>${IC.trophy} Títulos por pareja · desde junio</h2><div class="list" style="gap:14px;margin-top:12px">${tl.map(x=>`<a class="tt" href="#pareja-${key(x.pr)}"><span class="hd"><span>${pl(x.pr)}</span><b>${x.n}</b></span><span class="tbar" style="width:${Math.max(30,Math.round(100*x.n/mx))}%">${['major','finals','p1','p2'].filter(l=>x.lv[l]).map(l=>`<span style="--lv:${LC[l]};flex:${x.lv[l]}">${x.lv[l]}<small>${LV[l].toUpperCase()}</small></span>`).join('')}</span></a>`).join('')}</div></div></section>`;
   /* rachas de parejas */
-  const ps={};M.filter(m=>inCat(m)&&played(m)).sort(chrono).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr),o=(ps[k]??={pr,st:0,t:0});o.st=m.w===s?o.st+1:0;o.t=m.t}));
+  const ps={};M.filter(m=>inCat(m)&&played(m)&&prem(m)).sort(chrono).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr),o=(ps[k]??={pr,st:0,t:0});o.st=m.w===s?o.st+1:0;o.t=m.t}));
   const recent=new Set(T.filter(t=>!t.hidden&&t.status!=='pending').sort((a,b)=>a.start<b.start?1:-1).slice(0,3).map(t=>t.id));
   const rach=Object.values(ps).filter(o=>o.st>=3&&recent.has(o.t)).sort((a,b)=>b.st-a.st).slice(0,4);
   const rachS=rach.length?`<section><div class="card"><h2>En racha</h2>${rach.map(o=>`<a class="prow" href="#pareja-${key(o.pr)}">${duo(o.pr)}<span class="tx"><b>${pl(o.pr)}</b><span>Victorias seguidas</span></span><span class="chip fire">${o.st}</span></a>`).join('')}</div></section>`:'';
@@ -584,15 +662,16 @@ torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div cl
   return `<a class="trow" ${lvs(t)} href="#torneo-${t.id}"><span>${head}<span class="sub" style="color:var(--ink)">${st}</span></span><span class="back">Cuadro ›</span></a>`}).join('')}</div>${NOTE}`},
 torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter(m=>m.t===id&&inCat(m));
   const rs=[...new Set(ms.map(m=>m.round))].sort((a,b)=>a-b);
-  const head=`<a class="back" href="#torneos">‹ Temporada</a><div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div>`;
+  const head=`<a class="back" href="#torneos">‹ Temporada</a>${tban(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div>`;
   if(!rs.length)return head+'<p class="sub">No hay partidos de esta categoría en el torneo.</p>'+NOTE;
   const sched=ms.filter(m=>m.st===3),fm=ms.find(m=>m.round===1&&m.w!=null);
-  const tabsL=[['br','Cuadro'],['li','Lista']];if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
+  const od=oopDays(id),tabsL=[['br','Cuadro'],['li','Lista']];if(Object.keys(od).length)tabsL.push(['hr','Horarios']);if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
   const tv=tabsL.some(x=>x[0]===tView)?tView:'br';
   const views=`<div class="seg">${tabsL.map(([k,l])=>`<button type="button" data-tv="${k}" aria-pressed="${tv===k}">${l}</button>`).join('')}</div>`;
   const maxR=rs[rs.length-1],find=(r,i)=>ms.find(x=>x.round===r&&x.idx===i);
   const grid=(start,body)=>{const cols=[];for(let r=start;r>=1;r/=2)cols.push(r);
     return `<div class="brwrap"><div class="br" style="--n:${start}">${cols.map((r,c)=>`<div class="bh" style="grid-column:${c+1}">${RN[r]}</div>`+Array.from({length:r},(_,i)=>`<div class="bc ${c<cols.length-1&&i%2===0?'top':''} ${c?'in':''}" style="grid-column:${c+1};grid-row:${i*(start/r)+2}/span ${start/r}">${body(r,i)}</div>`).join('')).join('')}</div></div>`};
+  if(tv==='hr')return `${head}${views}${OOPNOTE}${Object.keys(od).sort().map(k=>`<section><h2 style="font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">${dayName(k)}</h2>${oopCourts(od[k])}</section>`).join('')}${NOTE}`;
   if(tv==='li')return `${head}${views}${rs.map(r=>`<section><h2>${RN[r]}</h2><div class="list">${ms.filter(m=>m.round===r).sort(ord).map(m=>mc(m,m.court||RN[r])).join('')}</div></section>`).join('')}${NOTE}`;
   if(tv==='cm'){const pr=fm.w?fm.b:fm.a,k=key(pr),path=ms.filter(m=>key(m.a)===k||key(m.b)===k).sort((x,y)=>y.round-x.round);
     return `${head}${views}<div class="card" style="display:flex;gap:14px;align-items:center">${duo(pr,'lg')}<div><h2>${IC.trophy} Campeones</h2><a href="#pareja-${k}"><div class="big">${pl(pr)}</div></a><p class="sub">${path.length} partidos para levantar el título</p></div></div><div class="list">${path.map(m=>mc(m,RN[m.round])).join('')}</div>${NOTE}`}
@@ -622,7 +701,7 @@ ranking(){const tabs=`<div class="seg">${[['ofi','Oficial'],['elo','Elo Víbora'
   else if(rankTab==='elo'){const rs=byElo(cat).slice(0,60);
     expl='Elo calculado por Víbora con los partidos desde junio: sube o baja según a quién ganas o pierdes. La última columna es el cambio en su último torneo.';
     body=rs.map((p,i)=>{const d=eloDelta(p);return `<a class="${tint(i)}" href="#jugador-${p.id}"><span class="n">${i+1}</span>${av(p.id)}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.nat||''}</span></span><span class="big">${Math.round(p.elo)}</span><span class="dif ${d>0?'up':d<0?'down':''}">${d>0?'+':''}${d}</span></a>`}).join('')}
-  else{const pm={};M.filter(m=>inCat(m)&&played(m)).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr);(pm[k]??={pr,w:0,l:0})[m.w===s?'w':'l']++}));
+  else{const pm={};M.filter(m=>inCat(m)&&played(m)&&prem(m)).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr);(pm[k]??={pr,w:0,l:0})[m.w===s?'w':'l']++}));
     const rs=Object.values(pm).filter(x=>x.w+x.l>=6).sort((a,b)=>b.w/(b.w+b.l)-a.w/(a.w+a.l)||b.w-a.w).slice(0,40);
     expl='Parejas con al menos 6 partidos juntos desde junio, ordenadas por porcentaje de victorias.';
     body=rs.map((x,i)=>`<a class="${tint(i)}" href="#pareja-${key(x.pr)}"><span class="n">${i+1}</span>${duo(x.pr)}<span class="tx"><b>${pl(x.pr)}</b><span>${x.w} victorias · ${x.l} derrotas</span></span><span class="big">${pct(x)}</span></a>`).join('')}
@@ -651,7 +730,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   const rcard=(x,t,c)=>x?`<a href="#jugador-${x.q}"><h2 style="color:${c}">${t}</h2><span style="display:flex;gap:8px;align-items:center">${av(x.q)}<b>${P[x.q].sn}</b></span><span class="sub">${x.w} victorias · ${x.l} derrotas</span></a>`:'';
   const rivS=bn||vf?`<section><div class="duel">${rcard(bn,'Bestia negra','var(--red)')}${rcard(vf,'Víctima favorita','var(--mint)')}</div></section>`:'';
   return `<a class="back" href="#ranking">‹ Ranking</a>
-  <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button></div>
+  <div style="display:flex;gap:14px;align-items:center">${av(id,'xl')}<div style="flex:1;min-width:0"><h1>${p.name}</h1><p class="sub">${[flag(p.nat)+' '+(p.nat||''),side,p.rank?'N.º '+p.rank+' FIP':''].filter(x=>x.trim()).join(' · ')}</p>${ms.length?`<div class="form" style="margin-top:8px" aria-label="Últimos resultados">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div><span style="display:flex;flex-direction:column;gap:8px"><button type="button" class="star" data-fav="${id}" aria-pressed="${favs.has(id)}" aria-label="${favs.has(id)?'Quitar de favoritos':'Añadir a favoritos'}">★</button>${PUSH_APP?`<button type="button" class="star bell" data-push="${id}" aria-pressed="${pushOn.has(id)}" aria-label="${pushOn.has(id)?'Quitar avisos':'Recibir avisos de este jugador'}">${BELL}</button>`:''}</span></div>
   ${palaCard(p)}<div class="kpis"><div class="kpi a"><b>${Math.round(p.elo)}</b><span>Elo${pos?' · n.º '+pos:''}</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Victorias-derrotas</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos</span></div></div>
   ${wrapS}${rivS}
   ${tl.length?`<section><div class="card"><h2>Parejas desde junio</h2><div class="tl" style="margin-top:10px">${tl.map((x,i)=>`${i?'<span class="sub">→</span>':''}<a class="st" href="#pareja-${key([id,x.q])}">${av(x.q,'sm')}<span>${P[x.q].sn}</span><small>${fd(x.d)}</small></a>`).join('')}</div></div></section>`:''}
@@ -679,7 +758,7 @@ partido([id]){const m=MM[id];if(!m)return V.inicio();const t=tb(m.t);let extra='
     extra+=`<section><div class="card"><h2>Cara a cara · ${all.length} ${all.length===1?'enfrentamiento':'enfrentamientos'} desde junio</h2>${all.length?`<div class="tally" style="margin:10px 0"><span>${pl(m.a)}</span><span class="sc">${wa}–${wb}</span><span>${pl(m.b)}</span></div><div class="h2hbar"><i style="flex:${wa||0.15}"></i><i style="flex:${wb||0.15}"></i></div>`:'<p class="sub" style="margin-top:8px">Todavía no se han enfrentado con estas parejas.</p>'}</div>${prev.length?`<div class="list">${prev.map(x=>mc(x)).join('')}</div>`:''}</section>`}
   else extra='<p class="sub">Las parejas saldrán de las rondas anteriores.</p>';
   return `<a class="back" href="#torneo-${t.id}">‹ ${t.name}</a>${hero}
-  <div class="card score"><div class="mc-meta">${lvp(t)}${pill(m)}<span>${[RN[m.round],m.st<3?fd(m.date):'',m.court].filter(Boolean).join(' · ')}</span></div>${rows(m,true)}</div>${extra}${NOTE}`},
+  <div class="card score"><div class="mc-meta">${lvp(t)}${pill(m)}<span>${[RN[m.round],m.st<3?fd(m.date):'',m.court].filter(Boolean).join(' · ')}</span></div>${rows(m,true)}</div>${ytBtn(m,true)}${extra}${NOTE}`},
 h2h(){const list=Object.values(P).filter(p=>p.cat===cat&&nPlayed(p)>=4).sort((a,b)=>a.name.localeCompare(b.name,'es'));
   if(!P[hA]||P[hA].cat!==cat||!P[hB]||P[hB].cat!==cat){const top=byElo(cat);hA=top[0].id;const c={};playerMatches(hA).forEach(x=>(sideOf(x.m,hA)?x.m.a:x.m.b).forEach(i=>c[i]=(c[i]||0)+1));hB=+Object.keys(c).sort((x,y)=>c[y]-c[x])[0]}
   const opts=sel=>list.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${p.name}</option>`).join('');
@@ -731,6 +810,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if
   const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else{picks[mi]=sd;if(!window.gcQn){window.gcQn=1;gcEvent('quiniela','Rellena la quiniela')}}saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
+  const yb=e.target.closest('[data-yt]');if(yb)gcEvent('youtube/'+yb.dataset.yt,'YouTube: '+yb.dataset.yt);
+  const pu=e.target.closest('[data-push]');if(pu){togglePush(+pu.dataset.push);return}
   const ins=e.target.closest('[data-inst]');if(ins){if(ins.dataset.inst==='go'&&instEv){const ev=instEv;ev.prompt();ev.userChoice.then(c=>{instEv=null;if(c.outcome!=='accepted'){instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}}render()})}else{instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}render()}return}
   const pn=e.target.closest('[data-pin]');if(pn){mapSel=pn.dataset.pin;document.getElementById('app').className='noanim';render();const q=document.querySelector(`[data-pin="${mapSel}"]`);if(q&&e.detail===0)q.focus();return}
   const mz=e.target.closest('[data-mz]');if(mz){mapZ=mz.dataset.mz;document.getElementById('app').className='noanim';render();return}
