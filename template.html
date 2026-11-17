@@ -297,14 +297,16 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 .oopt small{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .oopm{flex:1;min-width:0}
 .oopc{display:flex;flex-direction:column;gap:8px;margin-top:6px}
-.tban{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:16/7;background:var(--surface2);border:1px solid var(--line)}
-.tban img{width:100%;height:100%;object-fit:cover;display:block}
-.tban::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(10,12,28,.7))}
-.tban.in{margin:-16px -16px 12px;border-radius:20px 20px 0 0;border:0;aspect-ratio:16/6}
+.poster{flex:none;padding:0;border:0;background:var(--surface2);border-radius:12px;overflow:hidden;cursor:zoom-in;aspect-ratio:1131/1600;width:104px;box-shadow:0 12px 26px -12px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.08)}
+.poster img{width:100%;height:100%;object-fit:cover;display:block}
+.poster.sm{width:60px;border-radius:9px}
+.thead{display:flex;gap:14px;align-items:flex-end}
+.thead>div{min-width:0;flex:1}
+#lb{position:fixed;inset:0;z-index:90;background:rgba(5,6,15,.92);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out;animation:rise .2s both}
+#lb img{max-width:100%;max-height:100%;border-radius:14px;box-shadow:0 30px 80px -20px #000}
 .count{position:relative;overflow:hidden;isolation:isolate}
 .count>*{position:relative;z-index:2}
-.count .cbg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;z-index:0}
-.count.wph::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(10,12,28,.94),rgba(10,12,28,.5))}
+.count .cbg{position:absolute;top:0;right:0;height:100%;width:auto;max-width:55%;object-fit:cover;object-position:top;z-index:0;opacity:.85;-webkit-mask-image:linear-gradient(90deg,transparent,#000 55%);mask-image:linear-gradient(90deg,transparent,#000 55%)}
 /* ---------- Animación de entrada ---------- */
 #intro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(600px 420px at 50% 42%,rgba(155,107,255,.28),transparent 70%),radial-gradient(rgba(185,198,255,.07) 1px,transparent 1.5px);background-size:auto,22px 22px;cursor:pointer}
 #intro .in-g{position:relative;display:flex;align-items:center;gap:14px;visibility:hidden}
@@ -452,7 +454,10 @@ function donut(parts,total){const C=2*Math.PI*42;let off=0;
   <text x="55" y="56" text-anchor="middle" font-family="Barlow Condensed,Arial" font-weight="700" font-size="26" fill="var(--ink)">${total}</text><text x="55" y="70" text-anchor="middle" font-size="8" letter-spacing="1" fill="var(--muted)">TORNEOS</text></svg>`}
 const tdates=t=>t.start.slice(5,7)===t.end.slice(5,7)?`${+t.start.slice(8)}–${fd(t.end)}`:`${fd(t.start)} – ${fd(t.end)}`;
 const tinfo=t=>`${t.loc} · ${tdates(t)}${t.court?' · '+(t.court==='indoor'?'Indoor':'Outdoor'):''}`;
-const tban=(t,cls='')=>t&&t.photo?`<div class="tban ${cls}"><img src="${t.photo}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>`:'';
+const poster=(t,cls='')=>t&&t.photo?`<button type="button" class="poster ${cls}" data-poster="${t.id}" aria-label="Ver el cartel de ${t.name}"><img src="${t.photo}" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>`:'';
+function showPoster(id){const t=tb(id);if(!t||!t.photo)return;const d=document.createElement('div');d.id='lb';d.setAttribute('role','dialog');d.setAttribute('aria-label','Cartel de '+t.name);
+  d.innerHTML=`<img src="${t.photo}" alt="Cartel de ${t.name}">`;const close=()=>{d.remove();document.removeEventListener('keydown',esc)},esc=e=>{if(e.key==='Escape')close()};
+  d.addEventListener('click',close);document.addEventListener('keydown',esc);document.body.appendChild(d)}
 const lvp=t=>`<span class="pill lv" ${lvs(t)}>${LV[t.level]||t.level}</span>`;
 const NOTE=`<p class="note">Datos de Padel API descargados el ${fd(D.snap)} de 2026. Incluye los cuadros finales de Premier Padel y los torneos FIP Platinum y Gold recientes; Elo, rankings y récords solo cuentan Premier Padel. App no oficial, sin relación con Premier Padel ni con la FIP. Visitas contadas de forma anónima, sin cookies.${PUSH_APP?' Los avisos al móvil los envía OneSignal solo si los activas.':''}</p>`;
 const ord=(x,y)=>x.round-y.round||x.idx-y.idx;
@@ -524,7 +529,7 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   const leg2=`<div class="mleg">${[...new Set(T.map(t=>t.level))].filter(l=>LV[l]).map(l=>`<span><i style="--lv:${LC[l]}"></i>${LV[l]}</span>`).join('')}<span><i class="o"></i>Por jugar</span>${all.some(g=>g.live)?'<span><i style="--lv:var(--red)"></i>En juego</span>':''}</div>`;
   const ct=CC[(sg.iso||'').toLowerCase()];
   const st=t=>{if(t.hidden)return '<span class="sub">Resultados fuera del plan gratuito</span>';if(t.status==='pending')return `<span class="sub">${t===nt?'Próximo torneo':'Por jugar'}</span>`;if(t.status==='live')return '<span class="sub" style="color:var(--ink)"><span class="dot"></span>En juego</span>';const fm=M.find(m=>m.t===t.id&&inCat(m)&&m.round===1&&m.w!=null);return fm?`<span class="sub" style="color:var(--ink)">${IC.trophy} ${pl(fm.w?fm.b:fm.a)}</span>`:''};
-  const panel=`<div class="card mpanel" ${lvs(sg.main)}>${tban(sg.main,'in')}<div class="mph"><span class="mflag">${flag(sg.iso)||'📍'}</span><div><div class="big">${sg.name}</div><span class="sub">${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
+  const panel=`<div class="card mpanel" ${lvs(sg.main)}><div class="mph">${poster(sg.main,'sm')||`<span class="mflag">${flag(sg.iso)||'📍'}</span>`}<div><div class="big">${sg.name}</div><span class="sub">${sg.main.photo&&flag(sg.iso)?flag(sg.iso)+' ':''}${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
     ${sg.ts.map(t=>{const inner=`<span class="tx"><b>${t.name}</b> ${lvp(t)}<span>${tdates(t)}</span>${st(t)}</span>`;return t.hidden||t.status==='pending'?`<div class="tres">${inner}</div>`:`<a class="tres" href="#torneo-${t.id}">${inner}<span class="back">Cuadro ›</span></a>`}).join('')}</div>`;
   return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
@@ -625,7 +630,7 @@ function nextT(){return T.filter(t=>t.status==='pending').sort((a,b)=>a.start<b.
 function cdText(){const t=nextT();if(!t)return '';let s=Math.max(0,Math.floor((new Date(t.start+'T00:00:00')-Date.now())/1000));const d=Math.floor(s/86400);s-=d*86400;const h=Math.floor(s/3600);s-=h*3600;const m=Math.floor(s/60);s-=m*60;const z=n=>String(n).padStart(2,'0');return `${d}d ${z(h)}:${z(m)}:${z(s)}`}
 const V={
 inicio(){const nt=nextT(),last=lastPremier();
-  const count=nt?`<div class="count${nt.photo?' wph':''}" ${lvs(nt)}>${nt.photo?`<img class="cbg" src="${nt.photo}" alt="" onerror="this.parentNode.classList.remove('wph');this.remove()">`:''}<h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
+  const count=nt?`<div class="count" ${lvs(nt)}>${nt.photo?`<img class="cbg" src="${nt.photo}" alt="" onerror="this.remove()">`:''}<h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
   const live=T.filter(t=>t.status==='live').map(t=>{const tot=Math.round((new Date(t.end)-new Date(t.start))/864e5)+1,day=Math.min(tot,Math.max(1,Math.round((new Date(D.snap)-new Date(t.start))/864e5)+1));
     const nx=M.filter(m=>m.t===t.id&&inCat(m)&&m.st===3&&m.a.length&&m.b.length).sort(chrono).slice(0,3),od=oopDay(t.id);
     const oop=od?`<div class="card"><h2>Orden de juego · ${dayName(od.k)}</h2><div class="list" style="margin-top:10px">${od.ms.sort((x,y)=>x.at-y.at).slice(0,6).map(oopRow).join('')}</div>${od.ms.length>6?`<p class="sub" style="margin-top:8px">Y ${od.ms.length-6} partidos más</p>`:''}<a class="back" style="display:inline-block;margin-top:10px" href="#torneo-${t.id}" data-tv="hr">Ver todos los horarios ›</a>${OOPNOTE}</div>`:(nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:'');
@@ -662,7 +667,7 @@ torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div cl
   return `<a class="trow" ${lvs(t)} href="#torneo-${t.id}"><span>${head}<span class="sub" style="color:var(--ink)">${st}</span></span><span class="back">Cuadro ›</span></a>`}).join('')}</div>${NOTE}`},
 torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter(m=>m.t===id&&inCat(m));
   const rs=[...new Set(ms.map(m=>m.round))].sort((a,b)=>a-b);
-  const head=`<a class="back" href="#torneos">‹ Temporada</a>${tban(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div>`;
+  const head=`<a class="back" href="#torneos">‹ Temporada</a><div class="thead">${poster(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div></div>`;
   if(!rs.length)return head+'<p class="sub">No hay partidos de esta categoría en el torneo.</p>'+NOTE;
   const sched=ms.filter(m=>m.st===3),fm=ms.find(m=>m.round===1&&m.w!=null);
   const od=oopDays(id),tabsL=[['br','Cuadro'],['li','Lista']];if(Object.keys(od).length)tabsL.push(['hr','Horarios']);if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
@@ -811,6 +816,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
   const yb=e.target.closest('[data-yt]');if(yb)gcEvent('youtube/'+yb.dataset.yt,'YouTube: '+yb.dataset.yt);
+  const po=e.target.closest('[data-poster]');if(po){showPoster(+po.dataset.poster);return}
   const pu=e.target.closest('[data-push]');if(pu){togglePush(+pu.dataset.push);return}
   const ins=e.target.closest('[data-inst]');if(ins){if(ins.dataset.inst==='go'&&instEv){const ev=instEv;ev.prompt();ev.userChoice.then(c=>{instEv=null;if(c.outcome!=='accepted'){instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}}render()})}else{instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}render()}return}
   const pn=e.target.closest('[data-pin]');if(pn){mapSel=pn.dataset.pin;document.getElementById('app').className='noanim';render();const q=document.querySelector(`[data-pin="${mapSel}"]`);if(q&&e.detail===0)q.focus();return}
