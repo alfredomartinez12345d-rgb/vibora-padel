@@ -286,6 +286,9 @@ nav.bot{bottom:calc(10px + env(safe-area-inset-bottom))}
 
 
 /* ---------- Orden de juego y fotos de torneos ---------- */
+.oopseg{display:flex;flex-wrap:nowrap;overflow-x:auto;margin:8px 0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.oopseg button{white-space:nowrap;flex:none}.oopseg small{opacity:.7;font-weight:500}
+.pill.cat{background:rgba(79,124,255,.2);color:#9db4ff}.pill.cat.f{background:rgba(255,126,182,.2);color:#ffb3d4}
 .oopw{display:flex;flex-direction:column;gap:6px}
 .ytb{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-size:13px;font-weight:700;color:#fff;background:#d4232b;border-radius:10px;padding:7px 12px;box-shadow:0 6px 16px -8px rgba(212,35,43,.8)}
 .ytb .ic{width:18px;height:18px}
@@ -635,16 +638,24 @@ const BELL='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 
 const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const hhmm=d=>d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
 const dayName=k=>new Date(k+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-function oopDays(tid){const d={};M.filter(m=>m.t===tid&&m.at&&inCat(m)&&(m.a.length||m.b.length)).forEach(m=>(d[dayKey(m.at)]??=[]).push(m));return d}
+/* Orden de juego: los partidos de las dos categorías, como en la pista */
+function oopDays(tid){const d={};M.filter(m=>m.t===tid&&m.at&&(m.a.length||m.b.length)).forEach(m=>(d[dayKey(m.at)]??=[]).push(m));return d}
 function oopDay(tid){const d=oopDays(tid),ks=Object.keys(d).sort();if(!ks.length)return null;const hoy=dayKey(new Date());
   const k=ks.includes(hoy)?hoy:ks.find(x=>d[x].some(m=>m.st===3))||ks[ks.length-1];return{k,ms:d[k]}}
 const isFav=m=>[...m.a,...m.b].some(i=>favs.has(i));
 function oopRow(m){const t=tb(m.t);
-  const card=`<a class="oop${isFav(m)?' fav':''}" ${lvs(t)} href="#partido-${m.id}"><span class="oopt">${m.approx?'<small>aprox.</small>':''}<b>${hhmm(m.at)}</b></span><span class="oopm"><span class="mc-meta">${pill(m)}<span>${RN[m.round]||''}${m.court?' · '+m.court:''}</span>${isFav(m)?'<span class="fv">★ Favorito</span>':''}</span>${rows(m)}</span></a>`;
+  const card=`<a class="oop${isFav(m)?' fav':''}" ${lvs(t)} href="#partido-${m.id}"><span class="oopt">${m.approx?'<small>aprox.</small>':''}<b>${hhmm(m.at)}</b></span><span class="oopm"><span class="mc-meta"><span class="pill cat${m.cat==='women'?' f':''}" title="${m.cat==='women'?'Femenino':'Masculino'}">${m.cat==='women'?'F':'M'}</span>${pill(m)}<span>${RN[m.round]||''}</span>${isFav(m)?'<span class="fv">★ Favorito</span>':''}</span>${rows(m)}</span></a>`;
   const y=ytBtn(m);return y?`<div class="oopw">${card}${y}</div>`:card}
 function oopCourts(ms){const by={};ms.forEach(m=>(by[m.court||'Pista']??=[]).push(m));
-  return Object.entries(by).sort((x,y)=>Math.min(...x[1].map(m=>m.at))-Math.min(...y[1].map(m=>m.at)))
-    .map(([c,l])=>`<div class="oopc"><h2>${c}</h2><div class="list">${l.sort((x,y)=>(x.ord??99)-(y.ord??99)||x.at-y.at).map(oopRow).join('')}</div></div>`).join('')}
+  /* Pista central primero, luego por número (Court 1, 2, 3…) */
+  const peso=c=>{const n=norm(c);if(/center|centre|central|centro|main/.test(n))return -1;const d=n.match(/\d+/);return d?+d[0]:99};
+  return Object.entries(by).sort((x,y)=>peso(x[0])-peso(y[0])||x[0].localeCompare(y[0]))
+    .map(([c,l])=>[c,l.sort((x,y)=>(x.ord??99)-(y.ord??99)||x.at-y.at)])}
+const oopSel={}; /* por torneo: {d: día elegido, c: pista elegida} */
+function oopBoard(tid,ms){const cs=oopCourts(ms),sel=(oopSel[tid]||{}).c,i=cs.findIndex(x=>x[0]===sel),cur=sel==='*'?-1:(i<0?0:i);
+  const chips=cs.length>1?`<div class="seg oopseg">${cs.map(([c,l],k)=>`<button type="button" data-oopc="${tid}|${k}" aria-pressed="${k===cur}">${c} <small>${l.length}</small></button>`).join('')}<button type="button" data-oopc="${tid}|*" aria-pressed="${cur<0}">Todas</button></div>`:'';
+  const show=cur<0?cs:[cs[cur]];
+  return `${chips}${show.map(([c,l])=>`<div class="oopc">${cur<0||cs.length<2?`<h2>${c}</h2>`:''}<div class="list">${l.map(oopRow).join('')}</div></div>`).join('')}`}
 /* Botón de YouTube: partidos sin jugar hasta cuartos de un torneo en juego */
 const YT_ICON='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8ZM10 15V9l5.2 3L10 15Z"/></svg>';
 const ytUrl=m=>{const t=tb(m.t);if(m.st!==3||m.round<4||!t||t.status!=='live')return null;
@@ -663,7 +674,7 @@ inicio(){const nt=nextT(),last=lastPremier();
   const count=nt?`<div class="count" ${lvs(nt)}>${nt.photo?`<img class="cbg" src="${nt.photo}" alt="" onerror="this.remove()">`:''}<h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
   const live=T.filter(t=>t.status==='live').map(t=>{const tot=Math.round((new Date(t.end)-new Date(t.start))/864e5)+1,day=Math.min(tot,Math.max(1,Math.round((new Date(D.snap)-new Date(t.start))/864e5)+1));
     const nx=M.filter(m=>m.t===t.id&&inCat(m)&&m.st===3&&m.a.length&&m.b.length).sort(chrono).slice(0,3),od=oopDay(t.id);
-    const oop=od?`<div class="card"><h2>Orden de juego · ${dayName(od.k)}</h2><div class="list" style="margin-top:10px">${od.ms.sort((x,y)=>x.at-y.at).slice(0,6).map(oopRow).join('')}</div>${od.ms.length>6?`<p class="sub" style="margin-top:8px">Y ${od.ms.length-6} partidos más</p>`:''}<a class="back" style="display:inline-block;margin-top:10px" href="#torneo-${t.id}" data-tv="hr">Ver todos los horarios ›</a>${OOPNOTE}</div>`:(nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:'');
+    const oop=od?`<div class="card oopcard"><h2>Orden de juego · ${dayName(od.k)} · ${od.ms.length} partidos</h2>${oopBoard(t.id,od.ms)}<a class="back" style="display:inline-block;margin-top:10px" href="#torneo-${t.id}" data-tv="hr">Ver los otros días ›</a>${OOPNOTE}</div>`:(nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:'');
     return `<section><a class="livecard" ${lvs(t)} href="#torneo-${t.id}"><h2><span class="dot"></span>En juego ${lvp(t)}</h2><div class="big">${t.name}</div><p class="sub">${tinfo(t)} · Día ${day} de ${tot}</p><div class="track"><i style="width:${Math.round(100*day/tot)}%"></i></div></a>${oop}</section>`}).join('');
   const fin=c=>M.find(m=>m.t===last.id&&m.cat===c&&m.round===1);
   const lastCard=`<section><div class="card"><h2>${IC.trophy} Último torneo ${lvp(last)}</h2><a href="#torneo-${last.id}"><h1 style="font-size:28px;margin:6px 0 10px">${last.name}</h1></a>${['men','women'].map(c=>{const m=fin(c);return m?`<a href="#partido-${m.id}" style="display:block;padding:8px 0;border-top:1px solid var(--line)"><h2>${c==='men'?'Masculino':'Femenino'}</h2>${rows(m)}</a>`:''}).join('')}</div></section>`;
@@ -708,7 +719,9 @@ torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter
   const maxR=rs[rs.length-1],find=(r,i)=>ms.find(x=>x.round===r&&x.idx===i);
   const grid=(start,body)=>{const cols=[];for(let r=start;r>=1;r/=2)cols.push(r);
     return `<div class="brwrap"><div class="br" style="--n:${start}">${cols.map((r,c)=>`<div class="bh" style="grid-column:${c+1}">${RN[r]}</div>`+Array.from({length:r},(_,i)=>`<div class="bc ${c<cols.length-1&&i%2===0?'top':''} ${c?'in':''}" style="grid-column:${c+1};grid-row:${i*(start/r)+2}/span ${start/r}">${body(r,i)}</div>`).join('')).join('')}</div></div>`};
-  if(tv==='hr')return `${head}${views}${OOPNOTE}${Object.keys(od).sort().map(k=>`<section><h2 style="font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">${dayName(k)}</h2>${oopCourts(od[k])}</section>`).join('')}${NOTE}`;
+  if(tv==='hr'){const ks=Object.keys(od).sort(),def=(oopDay(id)||{}).k,dk=ks.includes((oopSel[id]||{}).d)?oopSel[id].d:def;
+    const dias=`<div class="seg oopseg">${ks.map(k=>{const d=new Date(k+'T12:00:00');return `<button type="button" data-oopd="${id}|${k}" aria-pressed="${k===dk}">${d.toLocaleDateString('es-ES',{weekday:'short'})} ${d.getDate()} <small>${od[k].length}</small></button>`}).join('')}</div>`;
+    return `${head}${views}${dias}<section><h2 style="font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">${dayName(dk)} · ${od[dk].length} partidos</h2>${oopBoard(id,od[dk])}</section>${OOPNOTE}${NOTE}`}
   if(tv==='li')return `${head}${views}${rs.map(r=>`<section><h2>${RN[r]}</h2><div class="list">${ms.filter(m=>m.round===r).sort(ord).map(m=>mc(m,m.court||RN[r])).join('')}</div></section>`).join('')}${NOTE}`;
   if(tv==='cm'){const pr=fm.w?fm.b:fm.a,k=key(pr),path=ms.filter(m=>key(m.a)===k||key(m.b)===k).sort((x,y)=>y.round-x.round);
     return `${head}${views}<div class="card" style="display:flex;gap:14px;align-items:center">${duo(pr,'lg')}<div><h2>${IC.trophy} Campeones</h2><a href="#pareja-${k}"><div class="big">${pl(pr)}</div></a><p class="sub">${path.length} partidos para levantar el título</p></div></div><div class="list">${path.map(m=>mc(m,RN[m.round])).join('')}</div>${NOTE}`}
@@ -877,8 +890,8 @@ function fxView(){
   if(!fx.ses){
     return `<h1>Fantasy</h1><p class="sub">Monta tu equipo de pádel y compite con tus amigos.</p>${msg}
     <form class="card fxform" data-fx="login"><label for="fxmail">Tu correo</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(fx.email)}">
-    <button class="btn pri" type="submit">${fx.enviado?'Volver a enviar':'Entrar sin contraseña'}</button><p class="sub" style="font-size:12px">Te llega un correo para entrar. No hace falta contraseña.</p></form>
-    ${fx.enviado?`<form class="card fxform" data-fx="codigo"><label for="fxcod">¿Usas la app instalada? Escribe el código del correo</label><input id="fxcod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456" required><button class="btn" type="submit">Entrar con el código</button></form>`:''}
+    <button class="btn pri" type="submit">${fx.enviado?'Volver a enviar':'Entrar sin contraseña'}</button><p class="sub" style="font-size:12px">Te llega un correo con un enlace para entrar, sin contraseña. Ábrelo en este mismo navegador.</p></form>
+    ${fx.enviado&&D.otp?`<form class="card fxform" data-fx="codigo"><label for="fxcod">¿Usas la app instalada? Escribe el código del correo</label><input id="fxcod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456" required><button class="btn" type="submit">Entrar con el código</button></form>`:''}
     ${reglas}${NOTE}`}
   if(fx.perfil===undefined)return `<h1>Fantasy</h1><p class="sub">Cargando tu equipo…</p>`;
   if(!fx.perfil)return `<h1>Fantasy</h1>${msg}<form class="card fxform" data-fx="perfil"><label for="fxnom">Elige tu nombre de mánager</label><input id="fxnom" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid"><button class="btn pri" type="submit">Empezar</button><p class="sub" style="font-size:12px">Es el nombre que verán los demás en las clasificaciones.</p></form>${reglas}`;
@@ -929,7 +942,7 @@ async function fxAccion(a,el){const sb=fx.sb;if(!sb)return;fx.msg=null;
   try{
   if(a==='login'){fx.email=document.getElementById('fxmail').value.trim();
     const {error}=await sb.auth.signInWithOtp({email:fx.email,options:{emailRedirectTo:location.origin+location.pathname}});
-    if(error)return err(error);fx.enviado=true;fxMsg('Te hemos enviado un correo a '+fx.email+'. Abre el enlace o escribe el código.',true)}
+    if(error)return err(error);fx.enviado=true;fxMsg('Te hemos enviado un correo a '+fx.email+'. Abre el enlace que trae'+(D.otp?' o escribe el código.':'.'),true)}
   else if(a==='codigo'){const {error}=await sb.auth.verifyOtp({email:fx.email,token:document.getElementById('fxcod').value.trim(),type:'email'});if(error)return err(error)}
   else if(a==='perfil'){const nombre=document.getElementById('fxnom').value.trim();
     const {error}=await sb.from('perfiles').insert({id:fx.ses.user.id,nombre});if(error)return err(error.code==='23505'?{message:'Ese nombre ya lo tiene otro mánager.'}:error);
@@ -976,6 +989,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
   const yb=e.target.closest('[data-yt]');if(yb)gcEvent('youtube/'+yb.dataset.yt,'YouTube: '+yb.dataset.yt);
+  const oc=e.target.closest('[data-oopc]');if(oc){const [t,k]=oc.dataset.oopc.split('|');const day=(oopSel[t]||{}).d;const ms=day&&oopDays(+t)[day]||(oopDay(+t)||{}).ms||[];
+    (oopSel[t]??={}).c=k==='*'?'*':(oopCourts(ms)[+k]||[])[0];document.getElementById('app').className='noanim';render();return}
+  const odd=e.target.closest('[data-oopd]');if(odd){const [t,k]=odd.dataset.oopd.split('|');(oopSel[t]??={}).d=k;oopSel[t].c=null;document.getElementById('app').className='noanim';render();return}
   const ci=e.target.closest('[data-circ]');if(ci){circ=ci.dataset.circ;mapZ='mundo';mapSel=null;document.getElementById('app').className='noanim';render();return}
   const po=e.target.closest('[data-poster]');if(po){showPoster(+po.dataset.poster);return}
   const pu=e.target.closest('[data-push]');if(pu){togglePush(+pu.dataset.push);return}
