@@ -37,7 +37,9 @@ def leer(f):
 
 
 def api(metodo, ruta, cuerpo=None, prefer=None):
-    h = {'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json'}
+    h = {'apikey': KEY, 'Content-Type': 'application/json'}
+    if KEY.startswith('eyJ'):  # clave antigua (JWT); las nuevas sb_secret_… van solo en apikey
+        h['Authorization'] = f'Bearer {KEY}'
     if prefer:
         h['Prefer'] = prefer
     req = urllib.request.Request(f'{URL}/rest/v1/{ruta}', method=metodo, headers=h,
