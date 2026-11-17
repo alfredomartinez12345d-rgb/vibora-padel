@@ -490,7 +490,10 @@ function geoOf(t){if(t.id in GEO)return GEO[t.id];const c=ctryOf(t.country),iso=
   if(!r&&c)r={lat:c[1],lon:c[2],iso,approx:true};
   return GEO[t.id]=r}
 const ckey=t=>{const g=geoOf(t);return g?g.lat.toFixed(1)+'_'+g.lon.toFixed(1):null};
-function mapGroups(){const gs={};T.forEach(t=>{const g=geoOf(t);if(!g)return;const k=ckey(t);(gs[k]??={k,lat:g.lat,lon:g.lon,iso:g.iso,name:t.loc||(CC[g.iso.toLowerCase()]||[])[3]||'',ts:[]}).ts.push(t)});
+/* Circuito elegido en la pestaña Torneos */
+let circ='premier';
+const TC=()=>T.filter(t=>isFipT(t)===(circ==='fip'));
+function mapGroups(){const gs={};TC().forEach(t=>{const g=geoOf(t);if(!g)return;const k=ckey(t);(gs[k]??={k,lat:g.lat,lon:g.lon,iso:g.iso,name:t.loc||(CC[g.iso.toLowerCase()]||[])[3]||'',ts:[]}).ts.push(t)});
   const nt=nextT();return Object.values(gs).map(g=>{g.ts.sort((a,b)=>a.start<b.start?-1:1);
     const live=g.ts.find(t=>t.status==='live'),nx=nt&&g.ts.includes(nt)?nt:null,done=g.ts.filter(t=>t.status==='finished');
     g.main=live||nx||done[done.length-1]||g.ts[0];g.live=!!live;g.next=!!nx;g.pend=g.ts.every(t=>t.status==='pending');return g})}
@@ -506,11 +509,11 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
   const [vx,vy,vw,vh]=mapBox(gs.length?gs:all,reg[3]),u=vw/100,f=n=>n.toFixed(2);
   const pool=gs.length?gs:all;if(!pool.some(g=>g.k===mapSel)){const d=pool.find(g=>g.live)||pool.find(g=>g.next)||pool.slice().sort((a,b)=>a.main.start<b.main.start?1:-1)[0];mapSel=d.k}
   /* ruta de la temporada en orden de fechas */
-  const seq=[];T.slice().sort((a,b)=>a.start<b.start?-1:1).forEach(t=>{const k=ckey(t);if(k&&seq[seq.length-1]!==k)seq.push(k)});
-  const GK={};all.forEach(g=>GK[g.k]=g);const nt=nextT(),cur=T.filter(t=>t.status!=='pending'&&!!ckey(t)).sort((a,b)=>a.start<b.start?1:-1)[0];
+  const seq=[];TC().sort((a,b)=>a.start<b.start?-1:1).forEach(t=>{const k=ckey(t);if(k&&seq[seq.length-1]!==k)seq.push(k)});
+  const GK={};all.forEach(g=>GK[g.k]=g);const nt=nextT(),cur=TC().filter(t=>t.status!=='pending'&&!!ckey(t)).sort((a,b)=>a.start<b.start?1:-1)[0];
   const arc=(a,b,cls)=>{const x1=mx(a.lon),y1=my(a.lat),x2=mx(b.lon),y2=my(b.lat),dx=x2-x1,dy=y2-y1,d=Math.hypot(dx,dy);if(d<0.01)return '';const bend=Math.min(d*0.22,vw*0.12);const cx=(x1+x2)/2+dy/d*bend*(dx<0?-1:1),cy=(y1+y2)/2-Math.abs(dx/d)*bend;return `<path class="${cls}" d="M${f(x1)} ${f(y1)}Q${f(cx)} ${f(cy)} ${f(x2)} ${f(y2)}"/>`};
   const route=seq.slice(1).map((k,i)=>arc(GK[seq[i]],GK[k],'route')).join('');
-  const leg=nt&&cur&&ckey(nt)!==ckey(cur)?arc(GK[ckey(cur)],GK[ckey(nt)],'route nx'):'';
+  const leg=nt&&cur&&GK[ckey(nt)]&&GK[ckey(cur)]&&ckey(nt)!==ckey(cur)?arc(GK[ckey(cur)],GK[ckey(nt)],'route nx'):'';
   const grat=[...Array.from({length:11},(_,i)=>`M${f(mx(-150+i*30))} 0V500`),...Array.from({length:5},(_,i)=>`M0 ${f(my(60-i*30))}H1000`)].join('');
   const r=u*1.6;
   const pins=all.slice().sort((a,b)=>(a.k===mapSel)-(b.k===mapSel)).map(g=>{const x=f(mx(g.lon)),y=f(my(g.lat)),sel=g.k===mapSel;
@@ -526,12 +529,12 @@ function worldMap(){const all=mapGroups();if(!all.length)return '';
     <g class="routes">${route}${leg}</g>${pins}${label}</svg>`;
   const seg=regs.length>1?`<div class="seg">${regs.map(x=>`<button type="button" data-mz="${x[0]}" aria-pressed="${x===reg}">${x[1]}</button>`).join('')}</div>`:'';
   const nC=new Set(all.map(g=>g.iso)).size;
-  const leg2=`<div class="mleg">${[...new Set(T.map(t=>t.level))].filter(l=>LV[l]).map(l=>`<span><i style="--lv:${LC[l]}"></i>${LV[l]}</span>`).join('')}<span><i class="o"></i>Por jugar</span>${all.some(g=>g.live)?'<span><i style="--lv:var(--red)"></i>En juego</span>':''}</div>`;
+  const leg2=`<div class="mleg">${[...new Set(TC().map(t=>t.level))].filter(l=>LV[l]).map(l=>`<span><i style="--lv:${LC[l]}"></i>${LV[l]}</span>`).join('')}<span><i class="o"></i>Por jugar</span>${all.some(g=>g.live)?'<span><i style="--lv:var(--red)"></i>En juego</span>':''}</div>`;
   const ct=CC[(sg.iso||'').toLowerCase()];
   const st=t=>{if(t.hidden)return '<span class="sub">Resultados fuera del plan gratuito</span>';if(t.status==='pending')return `<span class="sub">${t===nt?'Próximo torneo':'Por jugar'}</span>`;if(t.status==='live')return '<span class="sub" style="color:var(--ink)"><span class="dot"></span>En juego</span>';const fm=M.find(m=>m.t===t.id&&inCat(m)&&m.round===1&&m.w!=null);return fm?`<span class="sub" style="color:var(--ink)">${IC.trophy} ${pl(fm.w?fm.b:fm.a)}</span>`:''};
   const panel=`<div class="card mpanel" ${lvs(sg.main)}><div class="mph">${poster(sg.main,'sm')||`<span class="mflag">${flag(sg.iso)||'📍'}</span>`}<div><div class="big">${sg.name}</div><span class="sub">${sg.main.photo&&flag(sg.iso)?flag(sg.iso)+' ':''}${ct?ct[3]+' · ':''}${sg.ts.length} ${sg.ts.length===1?'torneo':'torneos'} esta temporada</span></div></div>
     ${sg.ts.map(t=>{const inner=`<span class="tx"><b>${t.name}</b> ${lvp(t)}<span>${tdates(t)}</span>${st(t)}</span>`;return t.hidden||t.status==='pending'?`<div class="tres">${inner}</div>`:`<a class="tres" href="#torneo-${t.id}">${inner}<span class="back">Cuadro ›</span></a>`}).join('')}</div>`;
-  return `<section><div class="kpis"><div class="kpi a"><b>${T.length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
+  return `<section><div class="kpis"><div class="kpi a"><b>${TC().length}</b><span>Torneos</span></div><div class="kpi b"><b>${all.length}</b><span>Ciudades</span></div><div class="kpi c"><b>${nC}</b><span>Países</span></div></div></section>
   <section><div class="map">${svg}</div>${seg}${leg2}${panel}</section>`}
 
 /* ---------- Pala de cada jugador. Fuente: PadelAddict, palas de la temporada 2026 (marzo de 2026); pueden cambiar durante el año.
@@ -658,7 +661,9 @@ inicio(){const nt=nextT(),last=lastPremier();
   const lt=T.find(t=>t.status==='live'&&M.some(m=>m.t===t.id&&inCat(m)&&m.st===3));
   const links=`<div class="links"><a href="#records">Récords y curiosidades<span>Remontadas, tie-breaks, matagigantes</span></a>${lt?`<a href="#torneo-${lt.id}" data-tv="qn">Quiniela<span>Rellena el cuadro de ${lt.loc}</span></a>`:`<a href="#h2h" data-duel="sim">Simulador<span>¿Quién ganaría?</span></a>`}</div>`;
   return `${count}${installCard()}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${NOTE}`},
-torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div class="list">${T.slice().sort((a,b)=>a.start<b.start?1:-1).map(t=>{
+torneos(){const hayFip=T.some(isFipT);if(!hayFip)circ='premier';
+  const sw=hayFip?`<div class="seg">${[['premier','Premier Padel'],['fip','FIP']].map(([k,l])=>`<button type="button" data-circ="${k}" aria-pressed="${circ===k}">${l}</button>`).join('')}</div>${circ==='fip'?'<p class="sub">Torneos FIP Platinum y Gold: en juego, por jugar y de las últimas semanas.</p>':''}`:'';
+  return `<h1>Temporada 2026</h1>${sw}${worldMap()}<h2>Calendario</h2><div class="list">${TC().sort((a,b)=>a.start<b.start?1:-1).map(t=>{
   const fl=flag(isoOf(t.country)||(geoOf(t)||{}).iso),head=`<b>${fl?fl+' ':''}${t.name}</b><span class="sub">${lvp(t)} ${tinfo(t)}</span>`;
   if(t.hidden)return `<div class="trow off" ${lvs(t)}><span>${head}<span class="sub">Resultados fuera del plan gratuito de datos</span></span></div>`;
   if(t.status==='pending')return `<div class="trow" ${lvs(t)}><span>${head}<span class="sub">Por jugar</span></span></div>`;
@@ -667,7 +672,7 @@ torneos(){return `<h1>Temporada 2026</h1>${worldMap()}<h2>Calendario</h2><div cl
   return `<a class="trow" ${lvs(t)} href="#torneo-${t.id}"><span>${head}<span class="sub" style="color:var(--ink)">${st}</span></span><span class="back">Cuadro ›</span></a>`}).join('')}</div>${NOTE}`},
 torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter(m=>m.t===id&&inCat(m));
   const rs=[...new Set(ms.map(m=>m.round))].sort((a,b)=>a-b);
-  const head=`<a class="back" href="#torneos">‹ Temporada</a><div class="thead">${poster(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div></div>`;
+  circ=isFipT(t)?'fip':'premier';const head=`<a class="back" href="#torneos">‹ ${isFipT(t)?'Torneos FIP':'Temporada'}</a><div class="thead">${poster(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div></div>`;
   if(!rs.length)return head+'<p class="sub">No hay partidos de esta categoría en el torneo.</p>'+NOTE;
   const sched=ms.filter(m=>m.st===3),fm=ms.find(m=>m.round===1&&m.w!=null);
   const od=oopDays(id),tabsL=[['br','Cuadro'],['li','Lista']];if(Object.keys(od).length)tabsL.push(['hr','Horarios']);if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
@@ -816,6 +821,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rank]');if
   const qc=e.target.closest('[data-qclear]');if(qc){M.filter(m=>m.t===+qc.dataset.qclear&&m.cat===cat).forEach(m=>delete picks[m.id]);saveLocal();document.getElementById('app').className='noanim';render();return}
   const du=e.target.closest('[data-duel]');if(du){duelTab=du.dataset.duel;if(du.tagName!=='A')render();return}
   const yb=e.target.closest('[data-yt]');if(yb)gcEvent('youtube/'+yb.dataset.yt,'YouTube: '+yb.dataset.yt);
+  const ci=e.target.closest('[data-circ]');if(ci){circ=ci.dataset.circ;mapZ='mundo';mapSel=null;document.getElementById('app').className='noanim';render();return}
   const po=e.target.closest('[data-poster]');if(po){showPoster(+po.dataset.poster);return}
   const pu=e.target.closest('[data-push]');if(pu){togglePush(+pu.dataset.push);return}
   const ins=e.target.closest('[data-inst]');if(ins){if(ins.dataset.inst==='go'&&instEv){const ev=instEv;ev.prompt();ev.userChoice.then(c=>{instEv=null;if(c.outcome!=='accepted'){instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}}render()})}else{instHide=true;try{localStorage.setItem('vibora-inst','no')}catch(e){}render()}return}
