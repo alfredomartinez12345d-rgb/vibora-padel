@@ -170,11 +170,19 @@ print('youtube', len(yt_videos), 'emisiones,', enlazados, 'partidos enlazados')
 
 has={m[1] for m in M}
 T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
-data = {'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M}
+# Fantasy: precios y puntos que calcula fantasy.py
+fx = leer(os.path.join(d_meta, 'fantasy.json')) if os.path.exists(os.path.join(d_meta, 'fantasy.json')) else {}
+fx = {'precios': {k: v for k, v in (fx.get('precios') or {}).items() if int(k) in P},
+      'ultimo': fx.get('ultimo') or {}}
+data = {'fx': fx, 'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M}
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 assert '</' not in js
 push = re.sub(r'[^0-9a-fA-F-]', '', os.environ.get('ONESIGNAL_APP_ID', ''))
-html = open(tpl, encoding='utf-8').read().replace('/*DATA*/null', js).replace('/*PUSH*/""', json.dumps(push))
+# Supabase (fantasy): solo la dirección y la clave pública «anon», que pueden ir en la página
+s_url = os.environ.get('SUPABASE_URL', '').strip().rstrip('/')
+s_key = os.environ.get('SUPABASE_ANON_KEY', '').strip()
+supa = {'url': s_url, 'key': s_key} if re.fullmatch(r'https://[a-z0-9-]+\.supabase\.co', s_url) and re.fullmatch(r'[A-Za-z0-9._-]{20,}', s_key) else None
+html = open(tpl, encoding='utf-8').read().replace('/*DATA*/null', js).replace('/*PUSH*/""', json.dumps(push)).replace('/*SUPA*/null', json.dumps(supa))
 open(out, 'w', encoding='utf-8').write(html)
 print('ranking de', rk_from, 'jugadores con ranking', sum(1 for p in P.values() if p[5] is not None))
 print('players', len(P), 'tournaments', len(T), 'matches', len(M), 'hidden tournaments', sorted(hidden_t), 'other statuses', other, 'bytes', len(html.encode()))
