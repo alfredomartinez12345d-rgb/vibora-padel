@@ -320,7 +320,7 @@ nav.bot a[hidden]{display:none}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .fxmsg{margin:0;padding:12px 14px;border-radius:14px;background:rgba(255,93,108,.14);color:#ffb3ba;font-size:14px}
 .fxmsg.ok{background:rgba(61,220,151,.14);color:#a8f0cc}
-.fxreg summary{cursor:pointer;list-style:none}.fxreg summary::after{content:" ›";color:var(--muted)}
+.fxreg summary,.fxsave summary{cursor:pointer;list-style:none}.fxsave{border-color:rgba(61,214,245,.35)}.fxreg summary::after{content:" ›";color:var(--muted)}
 .fxreg ul{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:6px}.fxreg li b{color:var(--ink)}
 .fxlock{border-color:rgba(255,197,61,.45);background:linear-gradient(135deg,rgba(255,197,61,.14),var(--surface) 60%)}
 .fxpres{display:flex;flex-direction:column;gap:2px}.fxpres span{margin-left:6px}.fxpres b{font-family:var(--display);font-size:30px}.fxpres span{font-size:12px;color:var(--muted)}
@@ -888,9 +888,12 @@ function fxView(){
     <li>Puntos por partido: victoria hasta octavos <b>+3</b>, en cuartos <b>+5</b>, en semis <b>+8</b>, la final <b>+12</b>, y <b>+1</b> por cada set ganado.</li>
     <li>Compites en la <b>Liga Víbora</b> con todos y en ligas privadas con tus amigos.</li></ul></details>`;
   if(!fx.ses){
-    return `<h1>Fantasy</h1><p class="sub">Monta tu equipo de pádel y compite con tus amigos.</p>${msg}
-    <form class="card fxform" data-fx="login"><label for="fxmail">Tu correo</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(fx.email)}">
-    <button class="btn pri" type="submit">${fx.enviado?'Volver a enviar':'Entrar sin contraseña'}</button><p class="sub" style="font-size:12px">Te llega un correo con un enlace para entrar, sin contraseña. Ábrelo en este mismo navegador.</p></form>
+    return `<h1>Fantasy</h1><p class="sub">Monta tu equipo de pádel y compite con tus amigos. Sin registros: elige un nombre y a jugar.</p>${msg}
+    <form class="card fxform" data-fx="rapido"><label for="fxnom0">Tu nombre de mánager</label><input id="fxnom0" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid" autocomplete="nickname">
+    <button class="btn pri" type="submit">¡A jugar!</button><p class="sub" style="font-size:12px">Es el nombre que verán los demás en las clasificaciones. Tu equipo se queda guardado en este móvil.</p></form>
+    <details class="card fxreg"${fx.enviado?' open':''}><summary><b>Ya tengo cuenta con email</b></summary>
+    <form class="fxform" data-fx="login" style="margin-top:10px"><label for="fxmail">Tu correo</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(fx.email)}">
+    <button class="btn pri" type="submit">${fx.enviado?'Volver a enviar':'Entrar sin contraseña'}</button><p class="sub" style="font-size:12px">Te llega un correo con un enlace para entrar, sin contraseña. Ábrelo en este mismo navegador.</p></form></details>
     ${fx.enviado&&D.otp?`<form class="card fxform" data-fx="codigo"><label for="fxcod">¿Usas la app instalada? Escribe el código del correo</label><input id="fxcod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456" required><button class="btn" type="submit">Entrar con el código</button></form>`:''}
     ${reglas}${NOTE}`}
   if(fx.perfil===undefined)return `<h1>Fantasy</h1><p class="sub">Cargando tu equipo…</p>`;
@@ -899,7 +902,11 @@ function fxView(){
   const head=`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h1>Fantasy</h1><span class="sub">${esc(fx.perfil.nombre)} · <a class="back" href="#fantasy" data-fx="salir">Salir</a></span></div>`;
   let body='';
   if(fx.tab==='eq')body=fxEquipo();else if(fx.tab==='ligas')body=fxLigas();else body=fxClasif();
-  return `${head}${tabs}${msg}${body}${reglas}${NOTE}`}
+  const anon=fx.ses.user&&fx.ses.user.is_anonymous,pend=fx.ses.user&&fx.ses.user.new_email;
+  const guardar=anon&&!fx.ocultarEmail?`<details class="card fxsave"><summary><b>🔒 Guarda tu equipo con tu email</b> <span class="sub">(opcional)</span></summary>
+    <p class="sub" style="margin:8px 0">Ahora tu equipo vive en este móvil. Si añades tu email podrás recuperarlo si cambias de móvil o borras la app.</p>
+    ${pend?`<p class="fxmsg ok">Revisa tu correo (${esc(pend)}) y pulsa el enlace para confirmarlo.</p>`:`<form class="fxform" data-fx="vincular"><input id="fxmail2" type="email" required autocomplete="email" placeholder="tu@correo.com"><button class="btn" type="submit">Guardar con mi email</button></form>`}</details>`:'';
+  return `${head}${tabs}${msg}${guardar}${body}${reglas}${NOTE}`}
 
 function fxEquipo(){const ab=!fx.estado||fx.estado.abierto,b=fx.borr,gast=b.reduce((n,i)=>n+(precioDe(i)||0),0),queda=PRESU-gast;
   const prev=fx.equipo?fx.equipo.jugadores:null,cambios=prev?b.filter(i=>!prev.includes(i)).length:0;
@@ -940,6 +947,14 @@ function fxClasif(){const ls=fx.ligas||[],c=fx.clas;
 async function fxAccion(a,el){const sb=fx.sb;if(!sb)return;fx.msg=null;
   const err=e=>fxMsg((e&&e.message)||'Algo ha fallado. Prueba de nuevo.');
   try{
+  if(a==='rapido'){const nombre=document.getElementById('fxnom0').value.trim();
+    if(!fx.ses){const {data,error}=await sb.auth.signInAnonymously();if(error)return err(error.message&&/anonymous/i.test(error.message)?{message:'El juego sin registro no está activado todavía. Entra con tu email.'}:error);fx.ses=data.session}
+    const {error}=await sb.from('perfiles').insert({id:fx.ses.user.id,nombre});
+    if(error)return err(error.code==='23505'?{message:'Ese nombre ya lo tiene otro mánager. Prueba con otro.'}:error);
+    gcEvent('fantasy/registro','Fantasy: registro');await fxCargar();return}
+  if(a==='vincular'){const email=document.getElementById('fxmail2').value.trim();
+    const {data,error}=await sb.auth.updateUser({email},{emailRedirectTo:location.origin+location.pathname});if(error)return err(error);
+    if(data&&data.user)fx.ses={...fx.ses,user:data.user};gcEvent('fantasy/email','Fantasy: guarda con email');fxMsg('Te hemos enviado un correo a '+email+'. Pulsa el enlace para confirmarlo.',true);return}
   if(a==='login'){fx.email=document.getElementById('fxmail').value.trim();
     const {error}=await sb.auth.signInWithOtp({email:fx.email,options:{emailRedirectTo:location.origin+location.pathname}});
     if(error)return err(error);fx.enviado=true;fxMsg('Te hemos enviado un correo a '+fx.email+'. Abre el enlace que trae'+(D.otp?' o escribe el código.':'.'),true)}
@@ -953,7 +968,7 @@ async function fxAccion(a,el){const sb=fx.sb;if(!sb)return;fx.msg=null;
     gcEvent('fantasy/liga','Fantasy: crea liga');const l=await sb.rpc('mis_ligas');fx.ligas=l.data||[];fxMsg('Liga creada. Comparte el código '+data+' con tus amigos.',true)}
   else if(a==='unirse'){const {data,error}=await sb.rpc('unirse_liga',{p_codigo:document.getElementById('fxjoin').value.trim()});if(error)return err(error);
     const l=await sb.rpc('mis_ligas');fx.ligas=l.data||[];fx.ligaSel=data;fx.tab='clas';fx.clas=null;rerender();await fxClas();fxMsg('¡Ya estás dentro!',true)}
-  else if(a==='salir'){await sb.auth.signOut();fx.borr=null;fx.enviado=false;rerender()}
+  else if(a==='salir'){if(fx.ses.user&&fx.ses.user.is_anonymous&&!confirm('Tu equipo no tiene email: si sales, no podrás recuperarlo. ¿Salir igualmente?'))return;await sb.auth.signOut();fx.borr=null;fx.enviado=false;rerender()}
   }catch(e){err(e)}}
 
 document.addEventListener('submit',e=>{const f=e.target.closest('[data-fx]');if(f){e.preventDefault();fxAccion(f.dataset.fx,f)}});
