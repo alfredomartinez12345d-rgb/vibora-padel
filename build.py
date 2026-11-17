@@ -127,7 +127,7 @@ try:
 except Exception:
     pass
 yt_videos = yt.get('videos') or []
-yt_handle = re.sub(r'[^@A-Za-z0-9_.-]', '', yt.get('handle') or '@PremierPadel')
+yt_handle = re.sub(r'[^@A-Za-z0-9_.-]', '', yt.get('handle') or '@PremierPadelOfficial')
 enlazados = 0
 if yt_videos:
     for m in M:

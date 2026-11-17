@@ -611,7 +611,7 @@ function oopCourts(ms){const by={};ms.forEach(m=>(by[m.court||'Pista']??=[]).pus
 /* Botón de YouTube: partidos sin jugar hasta cuartos de un torneo en juego */
 const YT_ICON='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8ZM10 15V9l5.2 3L10 15Z"/></svg>';
 const ytUrl=m=>{const t=tb(m.t);if(m.st!==3||m.round<4||!t||t.status!=='live')return null;
-  return m.yt?'https://www.youtube.com/watch?v='+m.yt:'https://www.youtube.com/'+(/^@[A-Za-z0-9_.-]+$/.test(D.yt||'')?D.yt:'@PremierPadel')+'/streams'};
+  return m.yt?'https://www.youtube.com/watch?v='+m.yt:'https://www.youtube.com/'+(/^@[A-Za-z0-9_.-]+$/.test(D.yt||'')?D.yt:'@PremierPadelOfficial')+'/streams'};
 const ytBtn=(m,big)=>{const u=ytUrl(m);return u?`<a class="ytb${big?' big':''}" href="${u}" target="_blank" rel="noopener" data-yt="${m.yt?'directo':'canal'}">${YT_ICON}<span>${m.yt?'Ver en YouTube':'Buscar en YouTube'}${m.court?' · '+m.court:''}</span></a>`:''};
 const OOPNOTE='<p class="sub" style="font-size:12px">Horas en tu zona horaria. «Aprox.»: hora estimada, depende de cuánto duren los partidos anteriores.</p>';
 

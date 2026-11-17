@@ -8,7 +8,7 @@ en DATOS/youtube.json; build.py empareja cada partido con la emisión de su pist
 
 Gasta unas 3 unidades de la cuota de la API de YouTube por ejecución (de 10.000
 gratis al día). Necesita YT_API_KEY; sin ella no hace nada. YT_CHANNEL elige el
-canal (por defecto @PremierPadel). YT_API_BASE solo sirve para pruebas.
+canal (por defecto @PremierPadelOfficial). YT_API_BASE solo sirve para pruebas.
 """
 import json
 import os
@@ -18,7 +18,7 @@ import urllib.request
 
 datos = sys.argv[1]
 KEY = os.environ.get('YT_API_KEY', '').strip()
-CANAL = os.environ.get('YT_CHANNEL', '').strip() or '@PremierPadel'
+CANAL = os.environ.get('YT_CHANNEL', '').strip() or '@PremierPadelOfficial'
 BASE = os.environ.get('YT_API_BASE', 'https://www.googleapis.com/youtube/v3')
 salida = os.path.join(datos, 'youtube.json')
 
