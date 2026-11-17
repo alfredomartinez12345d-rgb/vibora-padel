@@ -84,6 +84,7 @@ jobs:
       # Emisiones de YouTube del canal oficial para enlazar cada partido a su pista; sin clave no hace nada
       - name: Buscar emisiones en YouTube
         if: steps.pub.outputs.si == '1'
+        continue-on-error: true   # si falla, la web se publica igual
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
           YT_CHANNEL: ${{ vars.YT_CHANNEL }}
@@ -93,6 +94,7 @@ jobs:
       # Avisos al móvil (OneSignal); sin las claves no hace nada
       - name: Enviar avisos
         if: steps.pub.outputs.si == '1'
+        continue-on-error: true   # si falla, la web se publica igual
         env:
           ONESIGNAL_APP_ID: ${{ vars.ONESIGNAL_APP_ID }}
           ONESIGNAL_REST_KEY: ${{ secrets.ONESIGNAL_REST_KEY }}

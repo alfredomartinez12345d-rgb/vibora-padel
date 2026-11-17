@@ -11,10 +11,16 @@ PAUSE=7
 mkdir -p "$OUT"
 
 get() {
-  local url="$1" dest="$2"
+  local url="$1" dest="$2" malos=0
   while true; do
     CODE=$(curl -s -D "$dest.hdr" -o "$dest.tmp" -w "%{http_code}" -H "$H" "$url")
-    if [[ "$CODE" == "200" ]]; then
+    if [[ "$CODE" == "200" ]] && ! python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$dest.tmp" 2>/dev/null; then
+      # Respuesta cortada a medias: se vuelve a pedir
+      malos=$((malos+1))
+      echo "Respuesta incompleta en $url (intento $malos)" >&2
+      if [[ $malos -ge 3 ]]; then rm -f "$dest.tmp" "$dest.hdr"; return 1; fi
+      sleep "$PAUSE"
+    elif [[ "$CODE" == "200" ]]; then
       mv "$dest.tmp" "$dest"; rm -f "$dest.hdr"
       return 0
     elif [[ "$CODE" == "429" ]]; then

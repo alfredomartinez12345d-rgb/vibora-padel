@@ -23,6 +23,16 @@ import re
 import sys
 import urllib.request
 
+
+def leer(f):
+    """Lee un JSON descargado; si está roto, avisa y devuelve vacío en vez de romperse."""
+    try:
+        with open(f, encoding='utf-8') as fh:
+            return json.load(fh)
+    except (OSError, ValueError) as e:
+        print(f'Aviso: no se puede leer {os.path.basename(f)} ({e}); se ignora.')
+        return {}
+
 datos, url_app = sys.argv[1], sys.argv[2].rstrip('/') + '/'
 APP = os.environ.get('ONESIGNAL_APP_ID', '').strip()
 KEY = os.environ.get('ONESIGNAL_REST_KEY', '').strip()
@@ -46,13 +56,13 @@ pendientes_antes = set(estado.get('pendientes', []))
 
 torneos = {}
 for f in glob.glob(os.path.join(datos, 'tournaments_*.json')):
-    for t in json.load(open(f)).get('data', []):
+    for t in leer(f).get('data', []):
         torneos[t['id']] = t
 
 partidos = []
 for f in glob.glob(os.path.join(datos, 't*_matches_*.json')):
     tid = int(re.search(r't(\d+)_matches', f).group(1))
-    for m in json.load(open(f)).get('data', []):
+    for m in leer(f).get('data', []):
         m['_t'] = tid
         partidos.append(m)
 
