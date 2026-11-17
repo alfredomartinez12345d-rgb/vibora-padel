@@ -52,7 +52,9 @@ for t in sorted(pf, key=lambda i: (tmeta.get(i) or {}).get('start_date') or ''):
     if n and t in tmeta:
         rk_from.append(tmeta[t]['name'])
 
-ST = {'finished': 0, 'retired': 1, 'walkover': 2, 'scheduled': 3}
+ST = {'finished': 0, 'retired': 1, 'walkover': 2, 'scheduled': 3,
+      # en juego: se trata como pendiente (si no, el partido desaparecería mientras se juega)
+      'live': 3, 'in_progress': 3, 'playing': 3, 'started': 3, 'ongoing': 3}
 other = {}
 hidden_t = set()
 P = {}
@@ -101,9 +103,56 @@ for i in sorted(tids):
         continue
     T.append([i, t['name'], t['level'], t['location'], t['country'], t['start_date'], t['end_date'], t['court_type'], t['status'], 1 if i in hidden_t else 0, t.get('photo_url')])
 
+# Emisiones de YouTube (youtube.py): cada partido pendiente hasta cuartos se enlaza con la de su pista
+import unicodedata
+
+
+def nrm(x):
+    x = unicodedata.normalize('NFD', str(x or '').lower())
+    return ' ' + re.sub(r'[^a-z0-9]+', ' ', ''.join(c for c in x if unicodedata.category(c) != 'Mn')).strip() + ' '
+
+
+def pista(x):
+    x = nrm(x)
+    if re.search(r' (center|centre|central|centro|main) ', x):
+        return 'central'
+    n = re.search(r' (?:court|pista|cancha|campo|pist) (\d+) ', x) or re.search(r' (\d+) (?:court|pista) ', x)
+    return 'n' + n.group(1) if n else None
+
+
+GENERIC = {'premier', 'padel', 'major', 'finals', 'final', 'p1', 'p2', 'open', 'fip', 'tour', 'world', 'cup'}
+yt = {}
+try:
+    yt = json.load(open(os.path.join(d_meta, 'youtube.json')))
+except Exception:
+    pass
+yt_videos = yt.get('videos') or []
+yt_handle = re.sub(r'[^@A-Za-z0-9_.-]', '', yt.get('handle') or '@PremierPadel')
+enlazados = 0
+if yt_videos:
+    for m in M:
+        t = tmeta.get(m[1]) or {}
+        if m[7] != 3 or m[3] < 4 or not m[6]:   # solo pendientes, hasta cuartos y con pista
+            continue
+        pk = pista(m[6])
+        if not pk:
+            continue
+        claves = {w for w in (nrm(t.get('name')) + nrm(t.get('location'))).split() if len(w) > 3 and w not in GENERIC and not w.isdigit()}
+        mejor = None
+        for v in yt_videos:
+            tt = nrm(v.get('title'))
+            if pista(v.get('title')) != pk or (claves and not any(f' {c} ' in tt for c in claves)):
+                continue
+            if mejor is None or (v.get('status') == 'live' and mejor.get('status') != 'live'):
+                mejor = v
+        if mejor and re.fullmatch(r'[A-Za-z0-9_-]{6,20}', mejor['id']):
+            m.append(mejor['id'])
+            enlazados += 1
+print('youtube', len(yt_videos), 'emisiones,', enlazados, 'partidos enlazados')
+
 has={m[1] for m in M}
 T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
-data = {'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'P': P, 'T': T, 'M': M}
+data = {'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handle, 'P': P, 'T': T, 'M': M}
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 assert '</' not in js
 push = re.sub(r'[^0-9a-fA-F-]', '', os.environ.get('ONESIGNAL_APP_ID', ''))

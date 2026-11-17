@@ -79,3 +79,8 @@ Para activarlos:
 3. Lanza una actualización completa.
 
 Sin esas dos claves no aparece la campana ni se envía nada. En iPhone los avisos solo funcionan con la app instalada en la pantalla de inicio (iOS 16.4 o posterior).
+
+## Botón de YouTube en cada partido
+En los partidos sin jugar **hasta cuartos** de un torneo en juego aparece «▶ Ver en YouTube · <pista>», que lleva a la emisión de esa pista en el canal oficial. Lo prepara `youtube.py` en cada actualización: mira los directos y los programados del canal (unas 3 unidades de cuota de las 10.000 diarias gratis) y `build.py` los empareja con la pista de cada partido por el título («Center Court», «Pista Central», «Court 2», «Pista 2»…) y el nombre del torneo. Si no encuentra la emisión, el botón lleva a la lista de directos del canal.
+
+Para activarlo, crea una clave de la **YouTube Data API v3** en Google Cloud y guárdala en GitHub → Settings → Secrets and variables → Actions → **Secrets** como `YT_API_KEY`. Opcional: variable `YT_CHANNEL` con otro canal (por defecto `@PremierPadel`).
