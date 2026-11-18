@@ -73,6 +73,18 @@ P = {}
 M = []
 
 
+def tipo_hora(label):
+    """0: empieza a una hora · 1: hora aproximada · 2: no antes de · 3: a continuación"""
+    s = str(label or '').lower()
+    if s.startswith('estimated'):
+        return 1
+    if s.startswith('not before'):
+        return 2
+    if s.startswith('followed') or 'after' in s:
+        return 3
+    return 0
+
+
 def num(s):
     mm = re.match(r'\s*(\d+)(?:\((\d+)\))?', str(s))
     return (int(mm.group(1)), int(mm.group(2)) if mm.group(2) else None) if mm else (0, None)
@@ -105,7 +117,7 @@ for m in raw.values():
     M.append([m['id'], m['_t'], 1 if m['category'] == 'women' else 0, m['round'], m['index'], m['played_at'],
               (m['court'] or '').strip() or None, ST[m['status']], teams[0], teams[1],
               m['seeds']['team_1'], m['seeds']['team_2'], sets, w,
-              m.get('scheduled_at'), 1 if str(m.get('schedule_label') or '').lower().startswith('estimated') else 0, m.get('court_order')])
+              m.get('scheduled_at'), tipo_hora(m.get('schedule_label')), m.get('court_order')])
 
 tids = {m['_t'] for m in raw.values()} | set(tmeta)
 T = []

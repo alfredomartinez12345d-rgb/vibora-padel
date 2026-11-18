@@ -403,7 +403,7 @@ const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--
 const okUrl=u=>/^https:\/\/[^\s"'<>()]+$/.test(u||'')?u:null;
 const T=D.T.map(([id,name,level,loc,country,start,end,court,status,hidden,photo])=>({id,name,level,loc,country,start,end,court,status,hidden:!!hidden,photo:okUrl(photo)}));
 const TM={};T.forEach(t=>TM[t.id]=t);const tb=id=>TM[id];
-const M=D.M.map(a=>({yt:/^[A-Za-z0-9_-]{6,20}$/.test(a[17]||'')?a[17]:null,id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],idx:a[4],date:a[5],court:a[6],st:a[7],a:a[8],b:a[9],sa:a[10],sb:a[11],sets:a[12],w:a[13],at:a[14]&&!isNaN(Date.parse(a[14]))?new Date(a[14]):null,approx:!!a[15],ord:a[16]}));
+const M=D.M.map(a=>({yt:/^[A-Za-z0-9_-]{6,20}$/.test(a[17]||'')?a[17]:null,id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],idx:a[4],date:a[5],court:a[6],st:a[7],a:a[8],b:a[9],sa:a[10],sb:a[11],sets:a[12],w:a[13],at:a[14]&&!isNaN(Date.parse(a[14]))?new Date(a[14]):null,approx:a[15]===1,nb:a[15]===2,ord:a[16]}));
 const MM={};M.forEach(m=>MM[m.id]=m);
 const isFipT=t=>!!t&&String(t.level||'').startsWith('fip');
 const prem=m=>!isFipT(TM[m.t]); /* las estadísticas solo cuentan Premier Padel */
@@ -639,18 +639,25 @@ const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+S
 const hhmm=d=>d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
 const dayName=k=>new Date(k+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
 /* Orden de juego: los partidos de las dos categorías, como en la pista */
-function oopDays(tid){const d={};M.filter(m=>m.t===tid&&m.at&&(m.a.length||m.b.length)).forEach(m=>(d[dayKey(m.at)]??=[]).push(m));return d}
+/* Cada partido en el día del torneo (fecha de la API), no en el del reloj del usuario: un «no antes de las 18:00» en México
+   es de madrugada en España y no debe saltar al día siguiente. Entran también los «a continuación», que no traen hora. */
+function oopDays(tid){const d={};M.filter(m=>m.t===tid&&(m.a.length||m.b.length)&&(m.at||(m.court&&m.ord!=null))).forEach(m=>{const k=/^\d{4}-\d\d-\d\d$/.test(m.date||'')?m.date:m.at?dayKey(m.at):null;if(k)(d[k]??=[]).push(m)});return d}
 function oopDay(tid){const d=oopDays(tid),ks=Object.keys(d).sort();if(!ks.length)return null;const hoy=dayKey(new Date());
   const k=ks.includes(hoy)?hoy:ks.find(x=>d[x].some(m=>m.st===3))||ks[ks.length-1];return{k,ms:d[k]}}
 const isFav=m=>[...m.a,...m.b].some(i=>favs.has(i));
+/* Hora de cada partido como en el orden de juego oficial */
+function oopHora(m){if(m.at&&!m.nb&&(m.ord==null||m.ord===1||m.approx))return `${m.approx?'<small>aprox.</small>':''}<b>${hhmm(m.at)}</b>`;
+  if(m.at&&m.nb)return `<small>no antes de</small><b>${hhmm(m.at)}</b>`;
+  if(m.at)return `<b>${hhmm(m.at)}</b>`;
+  return `<small>a continuación</small><b>${m.ord}º</b>`}
 function oopRow(m){const t=tb(m.t);
-  const card=`<a class="oop${isFav(m)?' fav':''}" ${lvs(t)} href="#partido-${m.id}"><span class="oopt">${m.approx?'<small>aprox.</small>':''}<b>${hhmm(m.at)}</b></span><span class="oopm"><span class="mc-meta"><span class="pill cat${m.cat==='women'?' f':''}" title="${m.cat==='women'?'Femenino':'Masculino'}">${m.cat==='women'?'F':'M'}</span>${pill(m)}<span>${RN[m.round]||''}</span>${isFav(m)?'<span class="fv">★ Favorito</span>':''}</span>${rows(m)}</span></a>`;
+  const card=`<a class="oop${isFav(m)?' fav':''}" ${lvs(t)} href="#partido-${m.id}"><span class="oopt">${oopHora(m)}</span><span class="oopm"><span class="mc-meta"><span class="pill cat${m.cat==='women'?' f':''}" title="${m.cat==='women'?'Femenino':'Masculino'}">${m.cat==='women'?'F':'M'}</span>${pill(m)}<span>${RN[m.round]||''}</span>${isFav(m)?'<span class="fv">★ Favorito</span>':''}</span>${rows(m)}</span></a>`;
   const y=ytBtn(m);return y?`<div class="oopw">${card}${y}</div>`:card}
 function oopCourts(ms){const by={};ms.forEach(m=>(by[m.court||'Pista']??=[]).push(m));
   /* Pista central primero, luego por número (Court 1, 2, 3…) */
   const peso=c=>{const n=norm(c);if(/center|centre|central|centro|main/.test(n))return -1;const d=n.match(/\d+/);return d?+d[0]:99};
   return Object.entries(by).sort((x,y)=>peso(x[0])-peso(y[0])||x[0].localeCompare(y[0]))
-    .map(([c,l])=>[c,l.sort((x,y)=>(x.ord??99)-(y.ord??99)||x.at-y.at)])}
+    .map(([c,l])=>[c,l.sort((x,y)=>(x.ord??99)-(y.ord??99)||(x.at||0)-(y.at||0))])}
 const oopSel={}; /* por torneo: {d: día elegido, c: pista elegida} */
 function oopBoard(tid,ms){const cs=oopCourts(ms),sel=(oopSel[tid]||{}).c,i=cs.findIndex(x=>x[0]===sel),cur=sel==='*'?-1:(i<0?0:i);
   const chips=cs.length>1?`<div class="seg oopseg">${cs.map(([c,l],k)=>`<button type="button" data-oopc="${tid}|${k}" aria-pressed="${k===cur}">${c} <small>${l.length}</small></button>`).join('')}<button type="button" data-oopc="${tid}|*" aria-pressed="${cur<0}">Todas</button></div>`:'';
@@ -662,7 +669,7 @@ const ytUrl=m=>{const t=tb(m.t);if(m.st!==3||m.round<4||!t||t.status!=='live')re
   const ch=(D.yt||{})[isFipT(t)?'fip':'premier'],h=/^@[A-Za-z0-9_.-]+$/.test(ch||'')?ch:(isFipT(t)?'@padelfip':'@PremierPadelOfficial');
   return m.yt?'https://www.youtube.com/watch?v='+m.yt:'https://www.youtube.com/'+h+'/streams'};
 const ytBtn=(m,big)=>{const u=ytUrl(m);return u?`<a class="ytb${big?' big':''}" href="${u}" target="_blank" rel="noopener" data-yt="${m.yt?'directo':'canal'}">${YT_ICON}<span>${m.yt?'Ver en YouTube':'Buscar en YouTube'}${m.court?' · '+m.court:''}</span></a>`:''};
-const OOPNOTE='<p class="sub" style="font-size:12px">Horas en tu zona horaria. «Aprox.»: hora estimada, depende de cuánto duren los partidos anteriores.</p>';
+const OOPNOTE='<p class="sub" style="font-size:12px">Horas en tu zona horaria. «A continuación»: empieza cuando acabe el partido anterior en esa pista. «Aprox.»: hora estimada.</p>';
 
 /* ---------- Vistas ---------- */
 let cat='men',rankTab='ofi',hA=null,hB=null,tView='br',brStart=0,duelTab='jug',sim=[];
