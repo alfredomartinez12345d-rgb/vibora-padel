@@ -1025,7 +1025,10 @@ function cromo(id,o={}){const t=mxTier(id),f=P[id]&&P[id].photo,cl=o.cls||'',i=o
     <span class="sd">${mxGen(id)==='F'?'♀':'♂'} ${LADO[mxLado(id)]||''} · ${TIERN[t]}</span>${o.l3===false?'':`<span class="l3">${mxUlt3(id).map(x=>`<i>${x}</i>`).join('')}</span>`}${o.tag?`<span class="tag">${o.tag}</span>`:''}</button>`}
 const mxAv=(nombre,id)=>`<span class="mxav" style="--h:${[...String(id)].reduce((a,c)=>a+c.charCodeAt(0),0)%360}">${esc((nombre||'?').slice(0,2).toUpperCase())}</span>`;
 function falta(ts){let s=Math.max(0,(new Date(ts)-Date.now())/1000);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h} h ${m} min`:`${m} min`}
-const horaDe=ts=>new Date(ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
+const horaDe=ts=>new Date(ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+/* Las alineaciones se congelan con la actualización del día en que empieza el torneo (01:30 UTC): se enseña en la hora de cada uno */
+function mxBloqueo(){const t=T.filter(t=>!isFipT(t)&&t.status==='pending'&&t.start).sort((a,b)=>a.start<b.start?-1:1)[0];if(!t)return null;
+  const d=new Date(t.start+'T01:30:00Z');return{t,d,txt:d.toLocaleString('es-ES',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}}
 
 /* Puntos de cada mánager */
 const mxPtsFoto=f=>+f.puntos||0;
@@ -1105,7 +1108,7 @@ function mxTabPlan(){const L=mx.L,yo=mxYo(),sub=mx.sub,blo=L.estado&&L.estado.bl
   const req=`<div class="mxreq"><span class="${v.n.R===2?'':'mal'}">${v.n.R}/2 revés</span><span class="${v.n.D===2?'':'mal'}">${v.n.D}/2 drive</span>${v.X?`<span class="${v.n.M===2?'':'mal'}">${v.n.M}/2 chicos</span><span class="${v.n.F===2?'':'mal'}">${v.n.F}/2 chicas</span>`:''}</div>`;
   const slot=k=>j[k]!=null?cromo(j[k],{cls:(k===0?'cap ':'')+(mx.sel===j[k]?'sel':''),x2:k===0}):`<button type="button" class="cr vacio${mx.sel!=null&&!j.includes(mx.sel)?' sel':''}" data-mxslot="${k}">${k===0?'🏆 Pala de Oro':'Hueco'}</button>`;
   const huecos=6-yo.jugadores.length;
-  return `${seg}<div class="mxlock">${blo?`<span>🔒 ${esc(L.estado.torneo_nombre||'Torneo')} en juego</span><span><b>Bloqueada</b></span>`:`<span>Se bloquea al empezar el próximo torneo</span><span>${mx.sel!=null?'<b>Toca otro para cambiar</b>':'Toca un jugador'}</span>`}</div>${req}
+  return `${seg}<div class="mxlock">${blo?`<span>🔒 ${esc(L.estado.torneo_nombre||'Torneo')} en juego</span><span><b>Bloqueada</b></span>`:`<span>${(b=>b?`Se bloquea el <b>${b.txt}</b> (${esc(b.t.name.replace(/ 20\d\d$/,''))})`:'Se bloquea al empezar el próximo torneo')(mxBloqueo())}</span><span>${mx.sel!=null?'<b>Toca otro</b>':''}</span>`}</div>${req}
   <div class="mxpista"><div class="g">${slot(0)}${slot(1)}<div class="red"></div>${slot(2)}${slot(3)}</div></div>
   <div class="mxlbl">Banquillo</div><div class="mxbench">${banco.map(i=>cromo(i,{cls:mx.sel===i?'sel':'',l3:false})).join('')}${Array.from({length:huecos},()=>`<button type="button" class="cr vacio" data-mxtab="merc">+ Fichar</button>`).join('')}</div>
   ${blo?'':`<button type="button" class="btn pri" data-mx="alinear" style="align-self:stretch;padding:12px"${!v.ok||!cambio?' disabled':''}>${!cambio&&v.ok?'Alineación guardada ✓':'Guardar alineación'}</button>`}
