@@ -973,6 +973,7 @@ async function mxCargar(){if(!mx.sb)return;
   mx.J={};(j.data||[]).forEach(r=>mx.J[r.id]={...r,valor:+r.valor});mx.est=e.data||{};
   if(!mx.ses){mx.perfil=null;rerender();return}
   const pf=await mx.sb.from('perfiles').select('*').eq('id',mx.ses.user.id).maybeSingle();mx.perfil=pf.data||null;
+  if(mx.perfil){try{const eq=await mx.sb.from('equipos').select('user_id').eq('user_id',mx.ses.user.id).maybeSingle();mx.antiguo=!!(eq&&eq.data)}catch(e){mx.antiguo=false}}
   if(mx.perfil){await mxLigas();const c=codigoHash();
     if(c){mx.vista='unirse';mx.cod=c;mxPrev()}
     else{let ult=null;try{ult=localStorage.getItem('vibora-liga')}catch(e){}if(ult&&mx.ligas.some(l=>l.id===ult))await mxAbrir(ult)}}
@@ -1055,7 +1056,12 @@ function mxView(){
   if(mx.vista==='unirse')return mxUnirse(msg);
   if(mx.vista==='como'||!mx.ligas.length)return mxComo(msg,logo);
   return mxMisLigas(msg)}
-function mxComo(msg,logo){return `<div class="mxhead"><div class="tt"><h1>¿Cómo quieres jugar?</h1></div></div>${msg}
+function mxAviso(){let visto=false;try{visto=localStorage.getItem('vibora-aviso-mx')==='1'}catch(e){}
+  if(!mx.antiguo||visto||mx.ligas.length)return '';
+  return `<div class="card" style="border-color:#d9e021;background:linear-gradient(135deg,rgba(217,224,33,.14),var(--surface) 60%)"><b style="font-size:17px">🐍 ¡El fantasy ha cambiado, ${esc(mx.perfil.nombre)}!</b>
+  <p class="sub" style="margin:6px 0 10px">Ahora juegas en ligas con tus amigos: abres un sobre con 4 jugadores, fichas en el mercado cada día y puedes robar cracks con clausulazos. Tu equipo antiguo ya no cuenta: <b style="color:var(--ink)">crea tu liga o únete con el código de un amigo</b>. Tu nombre de mánager sigue siendo tuyo.</p>
+  <button type="button" class="btn" data-mx="aviso-ok">Entendido</button></div>`}
+function mxComo(msg,logo){return `<div class="mxhead"><div class="tt"><h1>¿Cómo quieres jugar?</h1></div></div>${msg}${mxAviso()}
   <button type="button" class="card mxop" disabled><span>🌍</span><span><b>Unirme a una liga pública</b><small>Muy pronto: la Liga Víbora para todos</small></span></button>
   <button type="button" class="card mxop" data-mx="v-crear" style="border-color:var(--blue)"><span>➕</span><span><b>Crear liga con amigos</b><small>Eliges los jugadores y compartes el código</small></span></button>
   <button type="button" class="card mxop" data-mx="v-unirse"><span>🔑</span><span><b>Unirme a la liga de mis amigos</b><small>Con código o con el enlace de WhatsApp</small></span></button>
@@ -1250,6 +1256,7 @@ async function fxAccion(a,el){const sb=mx.sb;if(!sb)return;mx.msg=null;const err
 async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
   if(a==='v-crear'||a==='v-unirse'||a==='v-como'||a==='v-inicio'){mx.vista=a.slice(2);mx.msg=null;mx.L=null;mx.liga=null;try{localStorage.removeItem('vibora-liga')}catch(e){}rerender();return}
   if(a==='cerrar'){mx.hoja=null;mxHojaPintar();return}
+  if(a==='aviso-ok'){try{localStorage.setItem('vibora-aviso-mx','1')}catch(e){}mx.antiguo=false;rerender();return}
   if(a==='reglas'){mxHoja({tipo:'reglas'});return}
   if(a==='invitar'){mxHoja({tipo:'invitar'});return}
   if(a==='todo'){mx.todo=true;rerender();return}
