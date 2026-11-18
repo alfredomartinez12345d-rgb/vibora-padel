@@ -182,11 +182,9 @@ print('youtube', len(yt_videos), 'emisiones,', enlazados, 'partidos enlazados')
 
 has={m[1] for m in M}
 T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
-# Fantasy: precios y puntos que calcula fantasy.py
-fx = leer(os.path.join(d_meta, 'fantasy.json')) if os.path.exists(os.path.join(d_meta, 'fantasy.json')) else {}
-fx = {'precios': {k: v for k, v in (fx.get('precios') or {}).items() if int(k) in P},
-      'ultimo': fx.get('ultimo') or {}}
-data = {'otp': os.environ.get('FANTASY_CODIGO') == '1', 'fx': fx, 'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M}
+data = {'otp': os.environ.get('FANTASY_CODIGO') == '1', 'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M}
+# Copia de los datos de la app para manager.py (valores y puntos del fantasy)
+json.dump(data, open(os.path.join(d_meta, 'app.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 assert '</' not in js
 push = re.sub(r'[^0-9a-fA-F-]', '', os.environ.get('ONESIGNAL_APP_ID', ''))

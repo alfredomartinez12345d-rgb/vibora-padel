@@ -88,8 +88,9 @@ Para activarlo, crea una clave de la **YouTube Data API v3** en Google Cloud y g
 ## Torneos FIP
 Además de la temporada de Premier Padel entran los **FIP Platinum y Gold** de la temporada FIP activa que estén en juego, por jugar o que empezaran hace como mucho 45 días (`fip.py`; los Silver se dejan fuera porque son decenas). Sus partidos salen en el calendario, el mapa, los cuadros, los horarios y con botón de YouTube, pero **el Elo, los rankings, las rachas y los récords solo cuentan Premier Padel**.
 
-## Fantasy (Supabase)
-Pestaña **Fantasy**: equipo de 5 jugadores con 100 M y capitán (puntos x2), bloqueo durante cada torneo Premier y 2 cambios entre torneos; Liga Víbora pública y ligas privadas con código.
-- `supabase/fantasy.sql`: tablas, reglas (presupuesto, cambios, bloqueo) y seguridad. Se pega en Supabase → SQL Editor → Run.
-- `fantasy.py`: en cada actualización sube los precios (5–30 M según el ranking), bloquea o abre los equipos según haya torneo Premier en juego y calcula los puntos (victoria hasta octavos +3, cuartos +5, semis +8, final +12, +1 por set ganado; capitán x2).
+## Fantasy (Supabase) · modo mánager
+Pestaña **Fantasy**: ligas con amigos de hasta 10 mánagers (solo chicos, solo chicas o mixtas, con o sin clausulazos), sobre inicial de 4 jugadores, plantilla de 6, alineación de 2 revés + 2 drive con Pala de Oro (×2), mercado diario de 8 jugadores con pujas ciegas, ventas y cláusulas.
+- `supabase/fantasy.sql`: perfiles de mánager (ya instalado). `supabase/manager.sql`: todo el modo mánager (tablas, reglas en `m_cfg`, funciones y seguridad). Se pegan en Supabase → SQL Editor → Run; se pueden volver a ejecutar.
+- `manager.py` (después de `build.py`): valor de cada jugador (según ranking y racha, ±10 % al día, de 3 a 90 M), bloqueo de alineaciones al empezar un torneo Premier, pago de 0,2 M por punto al acabar, puntos de cada jugador y cierre de mercados pendientes.
+- Puntos por partido: victoria hasta octavos +3, cuartos +5, semis +8, final +12; campeón +5; +1 por set ganado; +1 si gana sin ceder set; +2 por 6-0; sorpresa (gana a mejor Elo) +2 o +4; −2 si cae en su primer partido; −1 por 0-6; abandono propio 0. Las mismas reglas en `manager.py` y en la app (`mxPartido`).
 - En GitHub → Settings → Secrets and variables → Actions: **variables** `SUPABASE_URL` y `SUPABASE_ANON_KEY`; **secreto** `SUPABASE_SERVICE_KEY`. Sin ellas no aparece la pestaña.
