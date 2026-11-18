@@ -149,7 +149,7 @@ language sql immutable as $$
     when 'credito'    then 0.2      -- se puede pujar hasta caja + 20 % de la plantilla
     when 'clausula'   then 1.25     -- cláusula inicial = 1,25 × lo pagado
     when 'blindaje'   then 1.5      -- se puede blindar hasta 1,5 × el valor
-    when 'proteccion' then 3        -- días sin poder pagar su cláusula tras ficharlo
+    when 'proteccion' then 7        -- días sin poder pagar su cláusula tras ficharlo (o tras el sobre)
     when 'venganza'   then 7        -- días sin poder recuperar a quien te clausularon
     when 'por_punto'  then 0.2      -- millones por punto al acabar cada torneo
   end
