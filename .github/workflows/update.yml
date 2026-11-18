@@ -91,15 +91,6 @@ jobs:
           YT_CHANNEL_FIP: ${{ vars.YT_CHANNEL_FIP }}
         run: python3 -I youtube.py datos
 
-      # Fantasy: precios, bloqueo de equipos y puntos (Supabase); sin claves solo calcula precios
-      - name: Fantasy
-        if: steps.pub.outputs.si == '1'
-        continue-on-error: true   # si falla, la web se publica igual
-        env:
-          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python3 -I fantasy.py datos
-
       # Avisos al móvil (OneSignal); sin las claves no hace nada
       - name: Enviar avisos
         if: steps.pub.outputs.si == '1'
@@ -129,6 +120,15 @@ jobs:
           mkdir -p _site
           cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png apple-touch-icon.png _site/
           [[ -d fotos ]] && cp -r fotos _site/ || true
+
+      # Fantasy (modo mánager): valores, bloqueo de alineaciones, puntos y mercados en Supabase
+      - name: Fantasy mánager
+        if: steps.pub.outputs.si == '1'
+        continue-on-error: true   # si falla, la web se publica igual
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python3 -I manager.py datos
 
       - name: Publicar en GitHub Pages
         if: steps.pub.outputs.si == '1'
