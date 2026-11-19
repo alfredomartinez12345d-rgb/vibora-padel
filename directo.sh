@@ -72,5 +72,13 @@ for TID in $LIVE; do
     echo "  torneo $TID: no se pudo actualizar, se mantienen los partidos anteriores"
   fi
   rm -rf "$OUT/nuevo"
+  # Previa (solo torneos Premier, para el fantasy)
+  if ! grep -qw "$TID" "$OUT/fip_ids.txt" 2>/dev/null; then
+    mkdir -p "$OUT/nuevo"
+    if get_all "$BASE/tournaments/$TID/matches?draw=qualy&per_page=50" "$OUT/nuevo/t${TID}_qualy"; then
+      rm -f "$OUT"/t"${TID}"_qualy_*.json && mv "$OUT"/nuevo/t"${TID}"_qualy_*.json "$OUT/" 2>/dev/null || true
+    fi
+    rm -rf "$OUT/nuevo"
+  fi
 done
 salida 1

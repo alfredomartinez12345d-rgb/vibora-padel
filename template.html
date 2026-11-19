@@ -503,6 +503,7 @@ const okUrl=u=>/^https:\/\/[^\s"'<>()]+$/.test(u||'')?u:null;
 const T=D.T.map(([id,name,level,loc,country,start,end,court,status,hidden,photo])=>({id,name,level,loc,country,start,end,court,status,hidden:!!hidden,photo:okUrl(photo)}));
 const TM={};T.forEach(t=>TM[t.id]=t);const tb=id=>TM[id];
 const M=D.M.map(a=>({yt:/^[A-Za-z0-9_-]{6,20}$/.test(a[17]||'')?a[17]:null,id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],idx:a[4],date:a[5],court:a[6],st:a[7],a:a[8],b:a[9],sa:a[10],sb:a[11],sets:a[12],w:a[13],at:a[14]&&!isNaN(Date.parse(a[14]))?new Date(a[14]):null,approx:a[15]===1,nb:a[15]===2,ord:a[16]}));
+const Q=(D.Q||[]).map(a=>({id:a[0],t:a[1],cat:a[2]?'women':'men',round:a[3],date:a[4]||'',st:a[5],a:a[6]||[],b:a[7]||[],sets:a[8]||[],w:a[9],q:true})); /* previas Premier: solo para el fantasy */
 const MM={};M.forEach(m=>MM[m.id]=m);
 const isFipT=t=>!!t&&String(t.level||'').startsWith('fip');
 const prem=m=>!isFipT(TM[m.t]); /* las estadísticas solo cuentan Premier Padel */
@@ -517,7 +518,10 @@ const chrono=(x,y)=>x.date<y.date?-1:x.date>y.date?1:y.round-x.round||x.id-y.id;
 /* ---------- Elo propio: 1500 de partida, K=32, media de la pareja ---------- */
 const avg=pr=>(P[pr[0]].elo+P[pr[1]].elo)/2;
 const PK=new Set();
-M.filter(m=>m.a.length===2&&m.b.length===2&&prem(m)).sort(chrono).forEach(m=>{
+Q.forEach(m=>[...m.a,...m.b].forEach(i=>{if(P[i])(P[i].qs??=[]).push(m)}));
+const chronoQ=(x,y)=>x.date<y.date?-1:x.date>y.date?1:(x.q?0:1)-(y.q?0:1)||y.round-x.round||x.id-y.id;
+[...M.filter(m=>m.a.length===2&&m.b.length===2&&prem(m)),...Q.filter(m=>m.a.length===2&&m.b.length===2&&[...m.a,...m.b].every(i=>P[i]))].sort(chronoQ).forEach(m=>{
+  if(m.q){if(played(m))m.pre=1/(1+Math.pow(10,(avg(m.b)-avg(m.a))/400));return} /* la previa no mueve el Elo */
   [...m.a,...m.b].forEach(i=>P[i].ms.push(m));PK.add(key(m.a));PK.add(key(m.b));
   if(!played(m))return;
   [...m.a,...m.b].forEach(i=>{const p=P[i];if(p.lastT!==null&&p.lastT!==m.t)p.hist.push(p.elo);p.lastT=m.t});
@@ -990,18 +994,18 @@ const mxNom=id=>P[id]?(P[id].sn||P[id].name):'Jugador '+id;
 const LADO={R:'Revés',D:'Drive'};
 const SEAS=()=>T.filter(t=>!isFipT(t)&&!t.hidden&&M.some(m=>m.t===t.id)).sort((a,b)=>a.start<b.start?-1:1);
 const SG=1/(1+Math.pow(10,100/400));
-function mxPartido(m,s,primero){if(m.w==null||m.st>2)return null;const gana=m.w===s,v={1:12,2:8,4:5}[m.round]||3;
-  const c={vict:0,camp:0,sets:0,sin:0,rosco:0,sorp:0,primero:0,cero:0},n={vict:0,camp:0,sets:0,sin:0,rosco:0,sorp:0,grande:0,primero:0,cero:0};
-  if(m.st===1||m.st===2){if(gana){c.vict=v;n.vict=1;if(m.round===1){c.camp=5;n.camp=1}}return{c,n}}
+function mxPartido(m,s,primero){if(m.w==null||m.st>2)return null;const gana=m.w===s,v=m.q?2:{1:12,2:8,4:5}[m.round]||3,kv=m.q?'vq':'vict',fin=m.round===1&&!m.q;
+  const c={vict:0,vq:0,camp:0,sets:0,sin:0,rosco:0,sorp:0,primero:0,cero:0},n={vict:0,vq:0,camp:0,sets:0,sin:0,rosco:0,sorp:0,grande:0,primero:0,cero:0};
+  if(m.st===1||m.st===2){if(gana){c[kv]=v;n[kv]=1;if(fin){c.camp=5;n.camp=1}}return{c,n}}
   const st=(m.sets||[]).filter(x=>x.length>=2).map(x=>[x[s],x[1-s]]);
   n.sets=st.filter(([a,b])=>a>b).length;c.sets=n.sets;n.rosco=st.filter(([a,b])=>a===6&&b===0).length;c.rosco=2*n.rosco;n.cero=st.filter(([a,b])=>a===0&&b===6).length;c.cero=-n.cero;
-  if(gana){c.vict=v;n.vict=1;if(m.round===1){c.camp=5;n.camp=1}if(st.every(([a,b])=>a>b)){c.sin=1;n.sin=1}
+  if(gana){c[kv]=v;n[kv]=1;if(fin){c.camp=5;n.camp=1}if(st.every(([a,b])=>a>b)){c.sin=1;n.sin=1}
     if(m.pre!=null){const mio=s===0?m.pre:1-m.pre;if(mio<.5){n.sorp=1;c.sorp=mio<SG?4:2;if(mio<SG)n.grande=1}}}
   else if(primero){c.primero=-2;n.primero=1}
   return{c,n}}
 const mxCache={};
 function mxTorneo(pid,tid){const k=pid+':'+tid;if(mxCache[k])return mxCache[k];
-  const ms=P[pid]?P[pid].ms.filter(m=>m.t===tid):[];let primero=true;const res=[];
+  const ms=P[pid]?[...(P[pid].qs||[]).filter(m=>m.t===tid),...P[pid].ms.filter(m=>m.t===tid)].sort(chronoQ):[];let primero=true;const res=[];
   for(const m of ms){const r=mxPartido(m,sideOf(m,pid),primero);if(!r)continue;primero=false;res.push({m,...r,p:Object.values(r.c).reduce((a,b)=>a+b,0)})}
   return mxCache[k]={tot:res.reduce((a,x)=>a+x.p,0),res,jugo:ms.length>0,vivo:ms.some(m=>m.st===3)}}
 function mxUlt3(id){return SEAS().filter(t=>t.status!=='pending').slice(-3).map(t=>{const r=mxTorneo(id,t.id);return r.jugo?r.tot:'–'})}
@@ -1163,14 +1167,14 @@ document.addEventListener('touchend',()=>{if(!mxDrag)return;const d=mxDrag;mxDra
   if(d.dy>90){d.el.style.transform='translateY(100%)';setTimeout(()=>{mx.hoja=null;mxHojaPintar()},180)}else d.el.style.transform=''});
 function mxBarras(id,sel){const ts=SEAS().slice().reverse();return `<div class="mxbars">${ts.map(t=>{const r=mxTorneo(id,t.id),p=r.tot,h=r.jugo&&p>0?Math.min(100,Math.round(100*Math.pow(p/45,.6))):6,c=!r.jugo?'z':p<0?'n':p===0?'z':'';
   return `<button type="button" class="${c}" data-mxbar="${t.id}" aria-pressed="${sel===t.id}" title="${esc(t.name)}"><b>${r.jugo?Math.round(p):t.status==='pending'?'?':'0'}</b><span class="tr">${t.status==='pending'?'':`<i style="height:${h}%"></i>`}</span><span>${esc(t.loc||t.name).slice(0,6)}</span></button>`}).join('')}</div>`}
-function mxTabla(id,tid,cap){const r=mxTorneo(id,tid),n={},c={};['vict','camp','sets','sin','rosco','sorp','grande','primero','cero'].forEach(k=>{n[k]=0;c[k]=0});
+function mxTabla(id,tid,cap){const r=mxTorneo(id,tid),n={},c={};['vict','vq','camp','sets','sin','rosco','sorp','grande','primero','cero'].forEach(k=>{n[k]=0;c[k]=0});
   r.res.forEach(x=>{for(const k in x.n)n[k]+=x.n[k];for(const k in x.c)c[k]+=x.c[k]});
   const fila=(i,t,d,p)=>`<tr class="${p===0?'z':p<0?'neg':''}"><td><span class="ci">${i}</span>${t}</td><td>${d}</td><td>${p>0?'+':''}${p}</td></tr>`;
   const t=tb(tid)||{},tot=r.tot*(cap?2:1),ult=r.res[r.res.length-1],ronda={1:'final',2:'semifinales',4:'cuartos',8:'octavos',16:'dieciseisavos',32:'1/32'};
-  const fin=!r.jugo?'No juega este torneo':r.vivo&&!r.res.some(x=>x.m.w!==x.s)?'Sigue en el torneo':ult&&ult.m.w===ult.s&&ult.m.round===1?'Campeón':ult?'Cae en '+(ronda[ult.m.round]||'el cuadro'):'';
+  const fin=!r.jugo?'No juega este torneo':r.vivo&&!r.res.some(x=>x.m.w!==x.s)?'Sigue en el torneo':ult&&ult.m.w===ult.s&&ult.m.round===1?'Campeón':ult?(ult.m.q?'Cae en la previa':'Cae en '+(ronda[ult.m.round]||'el cuadro')):'';
   return `<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-family:var(--display);font-size:20px;text-transform:uppercase">${esc(t.name||'')}</b><b style="color:${tot<0?'var(--red)':tot?'var(--mint)':'var(--orange)'}">${tot} pts</b></div>
   <table class="st8"><thead><tr><th></th><th>Dato</th><th>Pts</th></tr></thead><tbody>
-  ${fila('🏆','Victorias',`${n.vict} de ${r.res.length}`,c.vict)}${fila('👑','Campeón',n.camp?'Sí':'No',c.camp)}${fila('🎾','Sets ganados',n.sets,c.sets)}${fila('🧱','Ganados sin ceder set',n.sin,c.sin)}
+  ${r.res.some(x=>x.m.q)?fila('🎟️','Victorias en la previa',`${n.vq} de ${r.res.filter(x=>x.m.q).length}`,c.vq):''}${fila('🏆','Victorias',`${n.vict} de ${r.res.filter(x=>!x.m.q).length}`,c.vict)}${fila('👑','Campeón',n.camp?'Sí':'No',c.camp)}${fila('🎾','Sets ganados',n.sets,c.sets)}${fila('🧱','Ganados sin ceder set',n.sin,c.sin)}
   ${fila('🍩','Sets 6-0',n.rosco,c.rosco)}${fila('⚡','Sorpresas (mejor Elo)',n.sorp+(n.grande?` · ${n.grande} grande${n.grande>1?'s':''}`:''),c.sorp)}${fila('❌','Cae en su primer partido',n.primero?'Sí':'No',c.primero)}${fila('🕳️','Sets 0-6 perdidos',n.cero,c.cero)}
   </tbody></table><div class="mxtot"><span>Total<small>${fin}${cap?' · ×2 Pala de Oro':''}</small></span><b>${tot} pts</b></div>`}
 function mxFicha(id,h){const ts=SEAS(),def=(ts.filter(t=>mxTorneo(id,t.id).jugo).slice(-1)[0]||{}).id,sel=h.tor||def;
@@ -1179,7 +1183,7 @@ function mxFicha(id,h){const ts=SEAS(),def=(ts.filter(t=>mxTorneo(id,t.id).jugo)
 function mxCab(id,extra){return `<div style="display:flex;gap:12px;align-items:center"><div style="width:110px;flex:none">${cromo(id,{l3:false})}</div><div class="sub" style="display:flex;flex-direction:column;gap:3px;font-size:13px"><b style="color:var(--ink);font-size:16px">${esc(P[id]?P[id].name:mxNom(id))}</b><span>${flag(P[id]&&P[id].nat)} ${mxRank(id)?'#'+mxRank(id)+' del mundo':''}</span><span>Valor: <b style="color:var(--ink)">${mxM(mxVal(id))}</b></span>${extra||''}</div></div>`}
 function mxHojaHtml(h){const L=mx.L,id=h.id;
   if(h.tipo==='reglas')return `<h3>Cómo puntúa</h3><table class="st8"><tbody>
-    <tr><td>🏆 Gana un partido hasta octavos</td><td></td><td>+3</td></tr><tr><td>🏆 Gana en cuartos · semis · final</td><td></td><td>+5 · +8 · +12</td></tr><tr><td>👑 Campeón del torneo</td><td></td><td>+5</td></tr>
+    <tr><td>🎟️ Gana un partido de previa</td><td></td><td>+2</td></tr><tr><td>🏆 Gana un partido hasta octavos</td><td></td><td>+3</td></tr><tr><td>🏆 Gana en cuartos · semis · final</td><td></td><td>+5 · +8 · +12</td></tr><tr><td>👑 Campeón del torneo</td><td></td><td>+5</td></tr>
     <tr><td>🎾 Cada set ganado</td><td></td><td>+1</td></tr><tr><td>🧱 Gana 2-0 sin ceder set</td><td></td><td>+1</td></tr><tr><td>🍩 Set ganado 6-0</td><td></td><td>+2</td></tr>
     <tr><td>⚡ Sorpresa: gana a mejor Elo</td><td></td><td>+2 / +4</td></tr><tr class="neg"><td>❌ Pierde su primer partido</td><td></td><td>−2</td></tr><tr class="neg"><td>🕳️ Set perdido 0-6</td><td></td><td>−1</td></tr>
     <tr class="z"><td>Se retira o no juega</td><td></td><td>0</td></tr><tr><td><b>Pala de Oro</b></td><td></td><td style="color:var(--gold)">×2</td></tr></tbody></table>

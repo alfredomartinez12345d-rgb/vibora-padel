@@ -119,6 +119,33 @@ for m in raw.values():
               m['seeds']['team_1'], m['seeds']['team_2'], sets, w,
               m.get('scheduled_at'), tipo_hora(m.get('schedule_label')), m.get('court_order')])
 
+# Previas de los torneos Premier: solo para el fantasy (no entran en cuadros, Elo ni estadísticas)
+Q = []
+for f in sorted(glob.glob(os.path.join(d_matches, 't*_qualy_*.json'))):
+    t = int(re.search(r't(\d+)_qualy', f).group(1))
+    if t not in tmeta or str(tmeta[t].get('level') or '').startswith('fip'):
+        continue
+    for m in leer(f).get('data', []):
+        if m.get('draw', 'qualy') != 'qualy' or m.get('status') not in ST or m.get('score') == 'hidden_free_plan' or m.get('winner') == 'hidden_free_plan':
+            continue
+        teams = []
+        for tm in ('team_1', 'team_2'):
+            ids = []
+            for p in (m.get('players') or {}).get(tm) or []:
+                ids.append(p['id'])
+                if p['id'] not in P:
+                    r = rk.get(p['id'], (None, None))
+                    P[p['id']] = [p['name'], p['short_name'], p['nationality'], p['side'], 1 if m['category'] == 'women' else 0, r[0], r[1], p.get('photo_url')]
+            teams.append(ids)
+        sets = []
+        for x in (m.get('score') or []):
+            a_, ta = num(x['team_1'])
+            b_, tb = num(x['team_2'])
+            sets.append([a_, b_])
+        Q.append([m['id'], t, 1 if m['category'] == 'women' else 0, m['round'], m.get('played_at'), ST[m['status']], teams[0], teams[1], sets,
+                  {'team_1': 0, 'team_2': 1}.get(m.get('winner'))])
+print('previas', len(Q), 'partidos')
+
 tids = {m['_t'] for m in raw.values()} | set(tmeta)
 T = []
 for i in sorted(tids):
@@ -182,7 +209,7 @@ print('youtube', len(yt_videos), 'emisiones,', enlazados, 'partidos enlazados')
 
 has={m[1] for m in M}
 T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
-data = {'otp': os.environ.get('FANTASY_CODIGO') == '1', 'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M}
+data = {'otp': os.environ.get('FANTASY_CODIGO') == '1', 'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M, 'Q': Q}
 # Copia de los datos de la app para manager.py (valores y puntos del fantasy)
 json.dump(data, open(os.path.join(d_meta, 'app.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
