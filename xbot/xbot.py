@@ -76,6 +76,39 @@ def tags(tid):
     return '#padel #PremierPadel' if premier(tid) else '#padel #FIP'
 
 
+def bandera(cod):
+    cod = str(cod or '').upper()
+    return ''.join(chr(0x1F1E6 + ord(c) - 65) for c in cod) if len(cod) == 2 and cod.isalpha() else ''
+
+
+def con_b(i):
+    """Apellido con su bandera: «🇪🇸 Coello»."""
+    b = bandera((P.get(i) or [None] * 3)[2])
+    return f'{b} {corto(i)}' if b else corto(i)
+
+
+def par_b(ids):
+    return ' / '.join(con_b(i) for i in ids)
+
+
+def sede(tid):
+    """«Dubai P1 🇦🇪» sin el año."""
+    t = T.get(tid)
+    if not t:
+        return ''
+    n = t[1].rsplit(' ', 1)[0] if t[1][-4:].isdigit() else t[1]
+    b = bandera(t[4])
+    return f'{n} {b}' if b else n
+
+
+def lugar(tid):
+    t = T.get(tid)
+    if not t:
+        return ''
+    b = bandera(t[4])
+    return f'{t[3]} {b}' if b else str(t[3])
+
+
 def corto(i):
     p = P.get(i)
     return (p[1] or p[0].split()[-1]) if p else '?'
@@ -311,22 +344,61 @@ def img_podio(tid, tops):
 
 # ---------------------------------------------------------------- candidatos
 cands = []   # (prioridad, clave, texto, imagen o None)
-TAGS = '#padel #PremierPadel'
 
 nuevos = [m for m in M if cubre(m['t']) and terminado(m) and str(m['id']) not in vistos and len(m['a']) == 2 and len(m['b']) == 2]
+RONDA_TXT = {1: 'la final', 2: 'semis', 4: 'cuartos', 8: 'octavos', 16: 'dieciseisavos', 32: 'primera ronda'}
+
+
+def misma(x, y):
+    return sorted(x) == sorted(y)
+
+
+def titulos(ids, hasta):
+    """Finales ganadas por esa pareja (mismo circuito) hasta ese partido, incluido."""
+    return sum(1 for m in M if m['ronda'] == 1 and terminado(m) and premier(m['t']) == premier(hasta['t']) and m['fecha'] <= hasta['fecha']
+               and misma(m['a'] if m['w'] == 0 else m['b'], ids))
+
+
+def cara_a_cara(x, y, antes):
+    """(victorias de x, victorias de y) en partidos anteriores entre esas dos parejas."""
+    vx = vy = 0
+    for m in M:
+        if m['id'] == antes['id'] or not terminado(m) or m['fecha'] > antes['fecha']:
+            continue
+        if misma(m['a'], x) and misma(m['b'], y):
+            vx, vy = vx + (m['w'] == 0), vy + (m['w'] == 1)
+        elif misma(m['a'], y) and misma(m['b'], x):
+            vx, vy = vx + (m['w'] == 1), vy + (m['w'] == 0)
+    return vx, vy
+
+
 if not primera_vez:
     for m in nuevos:
         g = m['w']
         win, lose = (m['a'], m['b']) if g == 0 else (m['b'], m['a'])
         pct = round((m['pre'] if g == 0 else 1 - m['pre']) * 100)
+        sets = marcador(m, g).replace(' ', ', ')
+        vx, vy = cara_a_cara(win, lose, m)
         if m['ronda'] == 1:
-            cat = 'femenino' if m['mujer'] else 'masculino'
-            txt = (f"🏆 ¡{par(win)} campeones del {nombre_t(m['t'])}! ({cat})\n\n"
-                   f"Final: {marcador(m, g)} a {par(lose)}.\n\n{tags(m['t'])}")
+            n = titulos(win, m)
+            extra = [f"📊 Llegaban a la final con un {pct}% de pronóstico."]
+            if n >= 2:
+                extra.append(f"🔥 Es su {n}.º título juntos desde junio.")
+            elif n == 1:
+                extra.append("🆕 Su PRIMER título juntos desde junio.")
+            txt = (f"🏆 ¡{' Y '.join(corto(i).upper() for i in win)}, CAMPEON{'AS' if m['mujer'] else 'ES'} DEL {sede(m['t']).upper()}!\n\n"
+                   f"{par_b(win)} ganan la final a {par_b(lose)}: {sets}.\n\n" + '\n'.join(extra))
             cands.append((0, f"camp:{m['id']}", txt, lambda m=m: img_campeones(m)))
         elif m['st'] == 0 and (pct <= 25 or (m['ronda'] <= 8 and pct <= 35)):
-            txt = (f"💥 SORPRESA en {RN.get(m['ronda'], '').lower()} del {nombre_t(m['t'])}\n\n"
-                   f"{par(win)} ganan a {par(lose)} ({marcador(m, g)}) con solo un {pct}% de pronóstico según el Elo de Víbora.\n\n{tags(m['t'])}")
+            extra = [f"📊 Solo tenían un {pct}% de opciones según el Elo de Víbora."]
+            if vy and not vx:
+                extra.append(f"👀 Nunca les habían ganado: {vy} derrota{'s' if vy > 1 else ''} en {vy} partido{'s' if vy > 1 else ''}.")
+            elif vx or vy:
+                extra.append(f"⚔️ Con esta, el cara a cara queda {vx + 1}-{vy}.")
+            if m['ronda'] <= 4:
+                extra.append(f"➡️ Ya están en {RONDA_TXT.get(m['ronda'] // 2, 'la siguiente ronda')}.")
+            txt = (f"🚨 SORPRESA EN {lugar(m['t']).upper()}\n\n"
+                   f"{par_b(win)} tumban a {par_b(lose)} en {RONDA_TXT.get(m['ronda'], 'el cuadro')}: {sets}.\n\n" + '\n'.join(extra))
             cands.append((1, f"sorp:{m['id']}", txt, lambda m=m: img_sorpresa(m)))
 
 # Elo final de torneo: cuando ya se han jugado las dos finales
@@ -342,9 +414,15 @@ for tid in {m['t'] for m in M if premier(m['t'])}:
     for muj, tit in ((0, 'MASCULINO'), (1, 'FEMENINO')):
         l = sorted([i for i in elo if P.get(i) and P[i][4] == muj], key=lambda i: -elo[i])[:5]
         tops.append((tit, [(i, elo[i], ultimo.get(tid, {}).get(i, 0)) for i in l]))
-    txt = (f"📊 Así queda el Elo de Víbora tras el {nombre_t(tid)}\n\n"
-           + ''.join(f"👑 {tit.capitalize()}: {' y '.join(corto(i) for i, e, _ in l if round(e) == round(l[0][1]))} ({round(l[0][1])})\n" for tit, l in tops) + "\n"
-           f"El ranking completo y el de parejas, en la app (link en la bio). {TAGS}")
+    lineas = []
+    for tit, l in tops:
+        lider = [i for i, e, _ in l if round(e) == round(l[0][1])]
+        lineas.append(f"👑 {tit.capitalize()}: {' y '.join(con_b(i) for i in lider)} ({round(l[0][1])})")
+    sube = max(ultimo.get(tid, {}).items(), key=lambda kv: kv[1], default=None)
+    if sube and round(sube[1]) > 0:
+        lineas.append(f"📈 El que más sube: {con_b(sube[0])} (+{round(sube[1])})")
+    txt = (f"📊 ASÍ QUEDA EL ELO TRAS EL {sede(tid).upper()}\n\n" + '\n'.join(lineas) +
+           "\n\n👇 El ranking completo y el de parejas, en la app (link en la bio)")
     cands.append((2, f'podio:{tid}', txt, lambda tid=tid, tops=tops: img_podio(tid, tops)))
 
 # Partidos de hoy, una vez al día por torneo: desde 2 h antes del primer partido con hora
@@ -384,10 +462,13 @@ if AHORA.astimezone(MAD).hour >= 8:
         top = ms[:4]
         fav = max(top, key=lambda m: abs(m['pre'] - .5))
         igual = min(top, key=lambda m: abs(m['pre'] - .5))
-        txt = (f"🎾 Hoy en el {nombre_t(tid)}: {len(ms)} partido{'s' if len(ms) != 1 else ''}\n\n"
-               f"⚖️ El más igualado: {par(igual['a'])} vs {par(igual['b'])} ({round(igual['pre'] * 100)}%-{round((1 - igual['pre']) * 100)}%)\n"
-               f"🔒 El más claro: {par(fav['a'] if fav['pre'] >= .5 else fav['b'])} ({round(max(fav['pre'], 1 - fav['pre']) * 100)}%)\n\n"
-               f"¿Quién da la sorpresa? 👇 {tags(tid)}")
+        rondas = sorted({m['ronda'] for m in ms})
+        que = RONDA_TXT.get(rondas[0], 'partidos').upper() if len(rondas) == 1 else f"{len(ms)} PARTIDOS"
+        fv = fav['a'] if fav['pre'] >= .5 else fav['b']
+        txt = (f"🎾 HOY EN {lugar(tid).upper()}: {que}\n\n"
+               f"⚖️ El más igualado: {par_b(igual['a'])} vs {par_b(igual['b'])} ({round(igual['pre'] * 100)}-{round((1 - igual['pre']) * 100)}%)\n"
+               f"🔒 El favorito más claro: {par_b(fv)} ({round(max(fav['pre'], 1 - fav['pre']) * 100)}%)\n\n"
+               f"👇 Los pronósticos según el Elo de Víbora. ¿Quién da la sorpresa?")
         cands.append((3, clave, txt, lambda tid=tid, top=top: img_previa(tid, top)))
 
 # Cierre de alineaciones del fantasy: 01:30 UTC del día que empieza el próximo torneo Premier
@@ -401,9 +482,10 @@ if prox:
     if 2 < falta <= 30 and clave not in hechos:
         hl = cierre.astimezone(MAD)
         DIAS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
-        txt = (f"⏰ Fantasy Víbora: las alineaciones del {t[1]} se cierran en {round(falta)} horas "
-               f"(el {DIAS[hl.weekday()]} {hl.strftime('%d/%m')} a las {hl.strftime('%H:%M')}, hora España).\n\n"
-               f"Elige tu capitán, mira el mercado y no te quedes sin puntos. Link en la bio 🐍 #padel #fantasy")
+        txt = (f"⏰ ÚLTIMAS {round(falta)} HORAS PARA HACER TU EQUIPO\n\n"
+               f"{bandera(t[4])} El {sede(t[0]).replace(' ' + bandera(t[4]), '')} está a punto de empezar y las alineaciones del Fantasy Víbora se cierran el {DIAS[hl.weekday()]} {hl.strftime('%d/%m')} "
+               f"a las {hl.strftime('%H:%M')} (hora España).\n\n"
+               f"🧢 Elige a tu capitán\n💰 Ficha en el mercado\n🐍 Link en la bio")
         cands.append((4, clave, txt, None))
 
 
