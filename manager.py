@@ -184,6 +184,11 @@ try:
     print(f'Mánager: {len(filas)} valores actualizados')
 
     estado = (api('GET', 'm_estado?id=eq.1&select=*') or [{}])[0]
+    # Próximo torneo Premier: para el recordatorio de unas horas antes del bloqueo (01:30 UTC del primer día)
+    prox = sorted([t for t in T.values() if premier(t[0]) and t[8] == 'pending' and (t[5] or '') > hoy], key=lambda t: t[5])
+    if prox and estado.get('proximo') != prox[0][0]:
+        api('PATCH', 'm_estado?id=eq.1', {'proximo': prox[0][0], 'proximo_nombre': prox[0][1], 'proximo_bloqueo': prox[0][5] + 'T01:30:00Z'})
+        print(f'Mánager: próximo torneo {prox[0][1]} (se bloquea el {prox[0][5]} a las 01:30 UTC)')
     if en_juego and not estado.get('bloqueado'):
         t = en_juego[0]
         n = api('POST', 'rpc/m_bloquear', {'p_torneo': t[0], 'p_nombre': t[1]})

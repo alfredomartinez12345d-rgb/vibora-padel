@@ -141,6 +141,17 @@ create index if not exists m_actividad_liga on public.m_actividad (liga, cuando 
 alter table public.m_jugadores add column if not exists ref numeric(5,1);
 alter table public.m_jugadores add column if not exists ref_torneo int;
 
+-- Avisos al móvil (OneSignal): configuración y control para no repetir avisos
+alter table public.m_ligas  add column if not exists aviso10 timestamptz;          -- último «cierra en 10 min» enviado
+alter table public.m_estado add column if not exists proximo int;                  -- próximo torneo Premier (lo pone GitHub)
+alter table public.m_estado add column if not exists proximo_nombre text;
+alter table public.m_estado add column if not exists proximo_bloqueo timestamptz;  -- cuándo se congelan las alineaciones
+alter table public.m_estado add column if not exists aviso_bloqueo int;            -- torneo del que ya se avisó
+create table if not exists public.m_config (clave text primary key, valor text);
+create table if not exists public.m_avisos (user_id uuid primary key references public.perfiles on delete cascade, activo boolean not null default true);
+insert into public.m_config values ('onesignal_app', '6f1f07fb-b432-4b84-9fb0-3367f1be7e51'),
+  ('app_url', 'https://alfredomartinez12345d-rgb.github.io/vibora-padel/') on conflict (clave) do nothing;
+
 create table if not exists public.m_ofertas (
   id        bigserial primary key,
   liga      uuid not null references public.m_ligas on delete cascade,
@@ -158,7 +169,7 @@ create index if not exists m_ofertas_liga on public.m_ofertas (liga, estado);
 create or replace function public.m_cfg(k text) returns numeric
 language sql immutable as $$
   select case k
-    when 'patrimonio' then 120      -- valor del sobre + caja al entrar
+    when 'patrimonio' then 150      -- valor del sobre + caja al entrar
     when 'caja_min'   then 10       -- caja mínima al entrar
     when 'plantilla'  then 6        -- jugadores como máximo
     when 'miembros'   then 10       -- mánagers por liga
@@ -205,6 +216,40 @@ returns void language sql security definer set search_path = public as $$
   insert into m_actividad (liga, tipo, quien, otro, jugador, cantidad) values (p_liga, p_tipo, p_quien, p_otro, p_jugador, p_cantidad)
 $$;
 
+-- Aviso al móvil (OneSignal) a unos usuarios. Nunca rompe la acción que lo llama:
+-- si falta la clave (Vault: onesignal_rest_key) o la extensión pg_net, no hace nada.
+create or replace function public.m_push(p_users uuid[], p_titulo text, p_texto text) returns void
+language plpgsql security definer set search_path = public as $$
+declare v_app text; v_url text; v_key text;
+begin
+  -- solo a quien ha activado los avisos del fantasy en la app
+  p_users := array(select x from unnest(p_users) x where exists (select 1 from m_avisos a where a.user_id = x and a.activo));
+  if coalesce(array_length(p_users, 1), 0) = 0 then return; end if;
+  select c.valor into v_app from m_config c where c.clave = 'onesignal_app';
+  select c.valor into v_url from m_config c where c.clave = 'app_url';
+  if v_app is null then return; end if;
+  execute 'select decrypted_secret from vault.decrypted_secrets where name = $1 limit 1' into v_key using 'onesignal_rest_key';
+  if v_key is null or trim(v_key) = '' then return; end if;
+  execute 'select net.http_post(url := $1, body := $2, headers := $3)'
+    using 'https://api.onesignal.com/notifications?c=push',
+          jsonb_build_object('app_id', v_app, 'target_channel', 'push',
+            'include_aliases', jsonb_build_object('external_id', to_jsonb(p_users::text[])),
+            'headings', jsonb_build_object('en', p_titulo, 'es', p_titulo),
+            'contents', jsonb_build_object('en', p_texto, 'es', p_texto),
+            'url', coalesce(v_url, '') || '#fantasy'),
+          jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Key ' || trim(both E' \n\r\t' from v_key));
+exception when others then
+  null;   -- un aviso que falla nunca rompe la jugada
+end $$;
+
+create or replace function public.m_fmt(x numeric) returns text
+language sql immutable as $$
+  select case when round(x, 1) = trunc(round(x, 1)) then trunc(round(x, 1))::text else replace(round(x, 1)::text, '.', ',') end || ' M' $$;
+create or replace function public.m_jn(p_jugador int) returns text
+language sql stable security definer set search_path = public as $$ select coalesce(corto, nombre, 'un jugador') from m_jugadores where id = p_jugador $$;
+create or replace function public.m_un(p_user uuid) returns text
+language sql stable security definer set search_path = public as $$ select coalesce((select nombre from perfiles where id = p_user), 'Alguien') $$;
+
 -- Jugadores que se pueden fichar en una liga (libres, del género de la liga y con lado)
 create or replace function public.m_libres(p_liga uuid) returns setof public.m_jugadores
 language sql stable security definer set search_path = public as $$
@@ -221,6 +266,7 @@ returns int language sql volatile security definer set search_path = public as $
   where coalesce(rank, 999) between p_rmin and p_rmax
     and (p_genero is null or genero = p_genero) and (p_lado is null or lado = p_lado)
     and not (id = any(coalesce(p_excluir, '{}')))
+    and not (id = any(coalesce((select mercado from m_ligas where id = p_liga), '{}')))   -- los del mercado de hoy no salen en sobres
   order by -ln(greatest(random(), 1e-9)) /
            case when p_rmax <= 20 then case when rank <= 4 then 0.1 when rank <= 6 then 0.4 else 1 end else 1 end
   limit 1
@@ -287,7 +333,7 @@ end $$;
 create or replace function public.m_procesar(p_liga uuid) returns void
 language plpgsql security definer set search_path = public as $$
 declare
-  l m_ligas; b record; hechos int[] := '{}'; cnt int; v numeric; cred numeric; vend record; val numeric;
+  l m_ligas; b record; hechos int[] := '{}'; cnt int; v numeric; cred numeric; vend record; val numeric; ganadas text[] := '{}'; r record;
 begin
   select * into l from m_ligas where id = p_liga for update;
   if l.id is null or now() < l.cierre then return; end if;
@@ -314,13 +360,16 @@ begin
       perform m_quitar_de_alineacion(p_liga, vend.user_id, b.jugador);
       delete from m_plantilla where liga = p_liga and jugador = b.jugador;
       perform m_log(p_liga, 'vende', vend.user_id, b.user_id, b.jugador, b.cantidad);
+      perform m_push(array[vend.user_id], '🏷️ Vendido', m_jn(b.jugador) || ' se va con ' || m_un(b.user_id) || ' por ' || m_fmt(b.cantidad) || ' en «' || l.nombre || '».');
     end if;
     insert into m_plantilla (liga, jugador, user_id, precio, clausula, protegido)
       values (p_liga, b.jugador, b.user_id, b.cantidad,
               round(greatest(b.cantidad, b.valor) * m_cfg('clausula'), 1), now() + make_interval(days => m_cfg('proteccion')::int));
     update m_miembros set caja = caja - b.cantidad where liga = p_liga and user_id = b.user_id;
     perform m_log(p_liga, 'ficha', b.user_id, vend.user_id, b.jugador, b.cantidad);
+    perform m_push(array[b.user_id], '💰 ¡Puja ganada!', m_jn(b.jugador) || ' es tuyo por ' || m_fmt(b.cantidad) || ' en «' || l.nombre || '».');
     hechos := hechos || b.jugador;
+    ganadas := ganadas || (b.user_id::text || ':' || b.jugador);
   end loop;
   -- Lo que estaba en venta y nadie compró, lo compra el sistema por su valor
   for vend in select p.*, j.valor from m_plantilla p join m_jugadores j on j.id = p.jugador
@@ -329,6 +378,12 @@ begin
     perform m_quitar_de_alineacion(p_liga, vend.user_id, vend.jugador);
     delete from m_plantilla where liga = p_liga and jugador = vend.jugador;
     perform m_log(p_liga, 'vende', vend.user_id, null, vend.jugador, vend.valor);
+    perform m_push(array[vend.user_id], '🏷️ Sin ofertas', 'Nadie pujó por ' || m_jn(vend.jugador) || ': te lo compra la liga por ' || m_fmt(vend.valor) || '.');
+  end loop;
+  -- Pujas perdidas: un aviso por mánager con todos los jugadores
+  for r in select pu.user_id, string_agg(m_jn(pu.jugador), ', ') as js from m_pujas pu
+           where pu.liga = p_liga and not ((pu.user_id::text || ':' || pu.jugador) = any(ganadas)) group by pu.user_id loop
+    perform m_push(array[r.user_id], '😬 Puja perdida', 'No te has llevado a ' || r.js || ' en «' || l.nombre || '».');
   end loop;
   delete from m_pujas where liga = p_liga;
   perform m_nuevo_mercado(p_liga);
@@ -337,6 +392,10 @@ begin
     where id = p_liga;
   update m_ligas set cierre = cierre + interval '1 day' where id = p_liga and cierre <= now();
   perform m_log(p_liga, 'mercado', null, null, null, null);
+  -- Quien se ha quedado en negativo
+  for r in select user_id, caja from m_miembros where liga = p_liga and caja < 0 loop
+    perform m_push(array[r.user_id], '⚠️ Estás en negativo', 'Tienes ' || m_fmt(r.caja) || ' en «' || l.nombre || '». Vende antes del torneo o no puntuarás.');
+  end loop;
 end $$;
 
 -- --- Crear, ver y unirse a ligas -------------------------------------------------------
@@ -417,6 +476,7 @@ begin
   if p_user = auth.uid() then raise exception 'No te puedes echar a ti mismo.'; end if;
   if not exists (select 1 from m_miembros where liga = p_liga and user_id = p_user) then raise exception 'Ese mánager ya no está en la liga.'; end if;
   perform m_log(p_liga, 'echa', auth.uid(), p_user, null, null);
+  perform m_push(array[p_user], '🚪 Fuera de la liga', 'Ya no estás en «' || (select nombre from m_ligas where id = p_liga) || '».');
   delete from m_pujas where liga = p_liga and user_id = p_user;
   delete from m_miembros where liga = p_liga and user_id = p_user;
 end $$;
@@ -458,7 +518,7 @@ begin
                  'creada', o.creada) order by o.creada desc), '[]')
                 from m_ofertas o where o.liga = p_liga and (o.de = yo or o.para = yo) and o.creada > now() - interval '7 days'),
     'estado', (select to_jsonb(e) from m_estado e where id = 1),
-    'yo', (select jsonb_build_object('id', yo, 'caja', caja, 'sobre', sobre, 'sobre_visto', sobre_visto,
+    'yo', (select jsonb_build_object('id', yo, 'avisos', coalesce((select activo from m_avisos where user_id = yo), false), 'caja', caja, 'sobre', sobre, 'sobre_visto', sobre_visto,
               'clausulazo_hoy', clausulazo = (now() at time zone 'Europe/Madrid')::date)
            from m_miembros where liga = p_liga and user_id = yo),
     'alineacion', (select jsonb_build_object('jugadores', jugadores, 'capitan', capitan) from m_alineacion where liga = p_liga and user_id = yo),
@@ -606,6 +666,7 @@ begin
     where liga = p_liga and jugador = p_jugador;
   delete from m_pujas where liga = p_liga and jugador = p_jugador;
   perform m_log(p_liga, 'clausula', auth.uid(), pl.user_id, p_jugador, pl.clausula);
+  perform m_push(array[pl.user_id], '💥 ¡Clausulazo!', m_un(auth.uid()) || ' ha pagado la cláusula de ' || m_jn(p_jugador) || ': recibes ' || m_fmt(pl.clausula) || '.');
   return pl.clausula;
 end $$;
 
@@ -650,6 +711,7 @@ begin
     where liga = p_liga and de = auth.uid() and jugador = p_jugador and estado = 'pendiente';
   insert into m_ofertas (liga, de, para, jugador, cantidad) values (p_liga, auth.uid(), pl.user_id, p_jugador, p_cantidad)
     returning id into id_;
+  perform m_push(array[pl.user_id], '📩 Te han hecho una oferta', m_un(auth.uid()) || ' te ofrece ' || m_fmt(p_cantidad) || ' por ' || m_jn(p_jugador) || '. Tienes 48 h para responder.');
   return id_;
 end $$;
 
@@ -663,6 +725,7 @@ begin
   if o.creada < now() - make_interval(hours => m_cfg('oferta_h')::int) then raise exception 'Esa oferta ha caducado.'; end if;
   if not p_aceptar then
     update m_ofertas set estado = 'rechazada', resuelta = now() where id = o.id;
+    perform m_push(array[o.de], '❌ Oferta rechazada', m_un(o.para) || ' no acepta tu oferta por ' || m_jn(o.jugador) || '.');
     return;
   end if;
   if m_bloqueado() then raise exception 'Durante el torneo no se pueden cerrar traspasos.'; end if;
@@ -686,6 +749,7 @@ begin
   update m_ofertas set estado = 'cancelada', resuelta = now() where liga = o.liga and jugador = o.jugador and estado = 'pendiente';
   delete from m_pujas where liga = o.liga and jugador = o.jugador;
   perform m_log(o.liga, 'traspaso', auth.uid(), o.de, o.jugador, o.cantidad);
+  perform m_push(array[o.de], '🤝 ¡Oferta aceptada!', m_jn(o.jugador) || ' es tuyo por ' || m_fmt(o.cantidad) || '.');
 end $$;
 
 create or replace function public.m_cancelar_oferta(p_oferta bigint) returns void
@@ -735,6 +799,10 @@ begin
     from m_alineacion a join m_miembros m on m.liga = a.liga and m.user_id = a.user_id
   on conflict (liga, user_id, torneo) do nothing;
   get diagnostics n = row_count;
+  perform m_push((select array_agg(distinct user_id) from m_fotos where torneo = p_torneo and not negativo),
+                 '🔒 Empieza el ' || p_nombre, 'Tu equipo queda bloqueado. ¡Suerte!');
+  perform m_push((select array_agg(distinct user_id) from m_fotos where torneo = p_torneo and negativo),
+                 '⚠️ Empieza el ' || p_nombre, 'Empiezas en negativo: en este torneo no puntúas.');
   return n;
 end $$;
 
@@ -749,6 +817,13 @@ begin
       from m_fotos f where f.torneo = t and f.liga = m.liga and f.user_id = m.user_id and not f.negativo;
     get diagnostics n = row_count;
     update m_torneos set pagado = true where id = t;
+    declare r record; nom text := (select nombre from m_torneos where id = t);
+    begin
+      for r in select f.user_id, string_agg('«' || l.nombre || '» ' || round(m_pts_foto(f))::text || ' pts', ' · ') as txt
+               from m_fotos f join m_ligas l on l.id = f.liga where f.torneo = t group by f.user_id loop
+        perform m_push(array[r.user_id], '🏁 Termina el ' || nom, r.txt || '. Cobras 0,2 M por punto.');
+      end loop;
+    end;
   end if;
   return n;
 end $$;
@@ -761,6 +836,43 @@ begin
     perform m_procesar(l); n := n + 1;
   end loop;
   return n;
+end $$;
+
+-- El mánager activa o desactiva sus avisos del fantasy
+create or replace function public.m_avisos_set(p_activo boolean) returns void
+language sql security definer set search_path = public as $$
+  insert into m_avisos (user_id, activo) values (auth.uid(), p_activo)
+  on conflict (user_id) do update set activo = excluded.activo
+$$;
+
+-- Reloj: lo llama pg_cron cada minuto. Cierra los mercados a su hora y manda los avisos con hora.
+create or replace function public.m_tick() returns void
+language plpgsql security definer set search_path = public as $$
+declare l record; e m_estado; r record;
+begin
+  perform m_procesar_todas();
+  -- «El mercado cierra en 10 minutos»
+  for l in select * from m_ligas where cierre > now() and cierre <= now() + interval '10 minutes' and aviso10 is distinct from cierre loop
+    update m_ligas set aviso10 = l.cierre where id = l.id;
+    perform m_push((select array_agg(user_id) from m_miembros where liga = l.id), '⏰ El mercado cierra en 10 minutos',
+                   'Últimos minutos para pujar en «' || l.nombre || '».');
+  end loop;
+  -- Recordatorio unas horas antes de que se bloqueen las alineaciones
+  select * into e from m_estado where id = 1;
+  if e.proximo is not null and not e.bloqueado and e.aviso_bloqueo is distinct from e.proximo
+     and now() between e.proximo_bloqueo - interval '7 hours' and e.proximo_bloqueo then
+    update m_estado set aviso_bloqueo = e.proximo where id = 1;
+    for r in select m.user_id,
+                    bool_or(coalesce((select count(*) from unnest(a.jugadores) x
+                                      where exists (select 1 from m_plantilla p where p.liga = m.liga and p.user_id = m.user_id and p.jugador = x)), 0) < 4) as incompleta,
+                    bool_or(m.caja < 0) as negativo
+             from m_miembros m left join m_alineacion a on a.liga = m.liga and a.user_id = m.user_id group by m.user_id loop
+      perform m_push(array[r.user_id], '⏳ En unas horas empieza el ' || e.proximo_nombre,
+        case when r.incompleta then 'Tu alineación está incompleta: complétala antes de que se bloquee.'
+             when r.negativo then 'Estás en negativo: vende antes de que se bloquee o no puntuarás.'
+             else 'Revisa tu alineación y tu Pala de Oro antes de que se bloquee.' end);
+    end loop;
+  end if;
 end $$;
 
 -- --- Permisos -------------------------------------------------------------------------------
@@ -776,6 +888,8 @@ alter table public.m_pujas      enable row level security;
 alter table public.m_fotos      enable row level security;
 alter table public.m_actividad  enable row level security;
 alter table public.m_ofertas    enable row level security;
+alter table public.m_config     enable row level security;
+alter table public.m_avisos     enable row level security;
 -- Lectura libre de lo que es público; el resto, solo a través de las funciones
 drop policy if exists leer on public.m_jugadores; create policy leer on public.m_jugadores for select using (true);
 drop policy if exists leer on public.m_estado;    create policy leer on public.m_estado    for select using (true);
@@ -786,18 +900,26 @@ drop policy if exists leer on public.m_puntos;    create policy leer on public.m
 revoke execute on function public.m_soy(uuid), public.m_valor_plantilla(uuid, uuid), public.m_quitar_de_alineacion(uuid, uuid, int),
   public.m_log(uuid, text, uuid, uuid, int, numeric), public.m_libres(uuid), public.m_escoger(uuid, int, int, char, char, int[]),
   public.m_nuevo_mercado(uuid), public.m_dar_sobre(uuid, uuid), public.m_procesar(uuid), public.m_pts_foto(public.m_fotos),
-  public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera() from public, anon, authenticated;
-grant execute on function public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera() to service_role;
+  public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(),
+  public.m_push(uuid[], text, text), public.m_tick() from public, anon, authenticated;
+grant execute on function public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
 revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint) from public, anon;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean) from public, anon;
 grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint) to authenticated;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean) to authenticated;
 
 -- Una vez: quien tenga jugadores fuera del top 100 recibe otros a cambio (se puede repetir sin problema)
 select public.m_reemplazar_fuera() as jugadores_cambiados;
+
+-- Reloj de cada minuto (solo si la extensión pg_cron está activada: Database → Extensions)
+do $$ begin
+  if exists (select 1 from pg_extension where extname = 'pg_cron') then
+    perform cron.schedule('vibora-fantasy', '* * * * *', 'select public.m_tick()');
+  end if;
+end $$;
