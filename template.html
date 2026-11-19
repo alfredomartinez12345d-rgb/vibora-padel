@@ -612,7 +612,7 @@ function pairStats(c){const ps={};M.filter(m=>m.cat===c&&played(m)&&prem(m)).sor
 const IC={trophy:'<svg class="ic gold" viewBox="0 0 24 24"><path d="M7 4h10v3a5 5 0 0 1-10 0V4Zm-3 1h3v2a3 3 0 0 1-3-2Zm16 0h-3v2a3 3 0 0 0 3-2ZM11 13h2v4h3v2H8v-2h3v-4Z"/></svg>'};
 const flag=n=>n&&/^[A-Z]{2}$/.test(n)?String.fromCodePoint(...[...n].map(c=>127397+c.charCodeAt(0))):'';
 const ini=p=>(p.name.split(' ')[0][0]+(p.sn[0]||'')).toUpperCase();
-const av=(id,cls='')=>`<span class="av ${cls}" style="--h:${(id*47)%360}" aria-hidden="true">${ini(P[id])}${P[id].photo?`<img src="${P[id].photo}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`;
+const av=(id,cls='')=>`<span class="av ${cls}" style="--h:${(id*47)%360}" aria-hidden="true">${P[id].photo?'':ini(P[id])}${P[id].photo?`<img src="${P[id].photo}" alt="" loading="lazy" onerror="this.parentNode.textContent='${ini(P[id])}'">`:''}</span>`;
 const fig=id=>P[id].photo?`<span class="fig" style="background-image:url('${P[id].photo}')"></span>`:`<span class="fig ini">${ini(P[id])}</span>`;
 const top4=(rs,num,val,lbl)=>`<div class="top4">${rs.slice(0,4).map((p,i)=>`<a class="tp p${Math.min(4,num(p,i))}" href="#jugador-${p.id}"><span class="num">${num(p,i)}</span>${fig(p.id)}<span class="inf"><b>${P[p.id].sn||p.name}</b><span>${flag(p.nat)} ${p.nat||''}<em>${val(p)} <small>${lbl}</small></em></span></span></a>`).join('')}</div>`;
 const duo=(pr,cls='')=>`<span class="duo">${pr.map(i=>av(i,cls)).join('')}</span>`;
