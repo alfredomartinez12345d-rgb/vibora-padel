@@ -95,3 +95,16 @@ Pestaña **Fantasy**: ligas con amigos de hasta 10 mánagers (solo chicos, solo 
 - Avisos del fantasy al móvil: los manda Supabase con OneSignal (`m_push`) a quien los activa en la app (el móvil se identifica con el id del mánager). Hace falta activar las extensiones **pg_net** y **pg_cron** (Database → Extensions) y guardar la REST API Key de OneSignal en Vault: `select vault.create_secret('LA_CLAVE', 'onesignal_rest_key');`. `m_tick` corre cada minuto: cierra los mercados a su hora, avisa 10 minutos antes del cierre y unas horas antes del bloqueo.
 - Puntos por partido: victoria hasta octavos +3, cuartos +5, semis +8, final +12; campeón +5; +1 por set ganado; +1 si gana sin ceder set; +2 por 6-0; sorpresa (gana a mejor Elo) +2 o +4; −2 si cae en su primer partido; −1 por 0-6; abandono propio 0. La previa de los torneos Premier también puntúa (victoria +2; el resto igual, sin campeón): `descargar.sh` y `directo.sh` la bajan aparte (`t*_qualy_*.json`) y solo la usa el fantasy. Las mismas reglas en `manager.py` y en la app (`mxPartido`).
 - En GitHub → Settings → Secrets and variables → Actions: **variables** `SUPABASE_URL` y `SUPABASE_ANON_KEY`; **secreto** `SUPABASE_SERVICE_KEY`. Sin ellas no aparece la pestaña.
+
+## Bot de X (Twitter)
+
+`xbot/xbot.py` publica solo en la cuenta de X, con imagen, a partir de los datos de la app (solo torneos Premier):
+campeones, sorpresas (gana quien tenía poco pronóstico), los partidos del día con su pronóstico, el top 5 del Elo
+al acabar cada torneo y el aviso de cierre de alineaciones del fantasy. Como mucho 3 posts por ejecución y 10 al día.
+
+- Claves en *Settings → Secrets → Actions*: `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`
+  (las de «OAuth 1.0» de la app en console.x.com, con permiso de lectura y escritura).
+- Solo publica de verdad con la variable `X_PUBLICAR` = `1` (*Settings → Variables → Actions*). Sin ella está en modo
+  prueba: el registro de la acción enseña los textos y las imágenes quedan en el artefacto `xbot-imagenes`.
+- Los posts no llevan enlaces (en la API de X un post con enlace cuesta unas 13 veces más); el enlace va en la bio.
+- Probar en local: `XBOT_AHORA=2026-11-24T10:00:00+01:00 python3 xbot/xbot.py datos /tmp/xestado`.
