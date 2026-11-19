@@ -416,6 +416,7 @@ nav.bot a[hidden]{display:none}
 .cr .sd{display:block;position:relative;z-index:2;font-size:8px;letter-spacing:.6px;color:var(--muted);font-weight:700;text-transform:uppercase}
 .cr .l3{display:flex;justify-content:center;gap:3px;font-size:9.5px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}.cr .l3 i{font-style:normal;padding:0 3px;border-radius:4px;background:var(--surface2)}
 .cr.sel{outline:3px solid var(--cyan);outline-offset:2px}
+.cr.dest{outline:2px dashed var(--mint);outline-offset:2px}
 .cr.cap{box-shadow:0 0 0 2px #ffc53d,0 0 18px #ffc53d88}
 .cr .x2{position:absolute;left:50%;top:-10px;transform:translateX(-50%);background:var(--gold);color:#2a1d00;font-size:9px;font-weight:800;border-radius:999px;padding:1px 7px;white-space:nowrap;z-index:2}
 .cr .tag{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;border-radius:999px;padding:1px 7px;white-space:nowrap;background:var(--blue);color:#fff}
@@ -778,7 +779,7 @@ const savePush=()=>{try{localStorage.setItem('vibora-push',JSON.stringify([...pu
 let osReady=null;
 function loadOS(){if(osReady)return osReady;
   osReady=new Promise((res,rej)=>{window.OneSignalDeferred=window.OneSignalDeferred||[];
-    OneSignalDeferred.push(async OS=>{try{await OS.init({appId:PUSH_APP,serviceWorkerPath:'sw.js',serviceWorkerUpdaterPath:'sw.js',serviceWorkerParam:{scope:'./'},promptOptions:{autoPrompt:false},notifyButton:{enable:false}});res(OS)}catch(e){rej(e)}});
+    OneSignalDeferred.push(async OS=>{try{await OS.init({appId:PUSH_APP,serviceWorkerPath:'sw.js',serviceWorkerUpdaterPath:'sw.js',serviceWorkerParam:{scope:'./'},promptOptions:{autoPrompt:false},notifyButton:{enable:false},welcomeNotification:{title:'Víbora Pádel 🐍',message:'¡Bienvenido a Víbora! Gracias por activar los avisos: te contaremos lo que pase con tus jugadores y tu liga.'}});res(OS)}catch(e){rej(e)}});
     const s=document.createElement('script');s.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';s.defer=true;s.onerror=()=>rej(new Error('sdk'));document.head.appendChild(s)});
   osReady.catch(()=>{osReady=null});return osReady}
 function toast(msg){let el=document.getElementById('toast');if(!el){el=document.createElement('div');el.id='toast';el.setAttribute('role','status');document.body.appendChild(el)}
@@ -1172,13 +1173,14 @@ function mxTabPlan(){const L=mx.L,yo=mxYo(),sub=mx.sub,blo=L.estado&&L.estado.bl
   const j=mx.borr.j,banco=yo.jugadores.map(p=>p.id).filter(i=>!j.includes(i)),v=mxValida(j);
   const a=L.alineacion||{},cambio=JSON.stringify([a.capitan,...(a.jugadores||[]).filter(x=>x!==a.capitan)].filter(x=>x!=null))!==JSON.stringify(j);
   const req=`<div class="mxreq"><span class="${v.n.R===2?'':'mal'}">${v.n.R}/2 revés</span><span class="${v.n.D===2?'':'mal'}">${v.n.D}/2 drive</span>${v.X?`<span class="${v.n.M===2?'':'mal'}">${v.n.M}/2 chicos</span><span class="${v.n.F===2?'':'mal'}">${v.n.F}/2 chicas</span>`:''}</div>`;
-  const slot=k=>j[k]!=null?cromo(j[k],{cls:(k===0?'cap ':'')+(mx.sel===j[k]?'sel':''),x2:k===0}):`<button type="button" class="cr vacio${mx.sel!=null&&!j.includes(mx.sel)?' sel':''}" data-mxslot="${k}">${k===0?'🏆 Pala de Oro':'Hueco'}</button>`;
+  const dest=i=>mx.sel!=null&&mx.sel!==i&&j.includes(mx.sel)!==j.includes(i)&&mxLado(mx.sel)===mxLado(i)?' dest':'';
+  const slot=k=>j[k]!=null?cromo(j[k],{cls:(k===0?'cap ':'')+(mx.sel===j[k]?'sel':'')+dest(j[k]),x2:k===0}):`<button type="button" class="cr vacio${mx.sel!=null&&!j.includes(mx.sel)?' sel':''}" data-mxslot="${k}">${k===0?'🏆 Pala de Oro':'Hueco'}</button>`;
   const huecos=6-yo.jugadores.length;
   return `${seg}<div class="mxlock">${blo?`<span>🔒 ${esc(L.estado.torneo_nombre||'Torneo')} en juego</span><span><b>Bloqueada</b></span>`:`<span>${(b=>b?`Se bloquea el <b>${b.txt}</b> (${esc(b.t.name.replace(/ 20\d\d$/,''))})`:'Se bloquea al empezar el próximo torneo')(mxBloqueo())}</span><span>${mx.sel!=null?'<b>Toca con quién cambiarlo</b>':''}</span>`}</div>${req}
   <div class="mxpista"><div class="g">${slot(0)}${slot(1)}<div class="red"></div>${slot(2)}${slot(3)}</div></div>
-  <div class="mxlbl">Banquillo</div><div class="mxbench">${banco.map(i=>cromo(i,{cls:mx.sel===i?'sel':'',l3:false})).join('')}${Array.from({length:huecos},()=>`<button type="button" class="cr vacio" data-mxtab="merc">+ Fichar</button>`).join('')}</div>
+  <div class="mxlbl">Banquillo</div><div class="mxbench">${banco.map(i=>cromo(i,{cls:(mx.sel===i?'sel':'')+dest(i),l3:false})).join('')}${Array.from({length:huecos},()=>`<button type="button" class="cr vacio" data-mxtab="merc">+ Fichar</button>`).join('')}</div>
   ${blo?'':`<button type="button" class="btn pri" data-mx="alinear" style="align-self:stretch;padding:12px"${!v.ok||!cambio?' disabled':''}>${!cambio&&v.ok?'Alineación guardada ✓':'Guardar alineación'}</button>`}
-  <p class="sub" style="font-size:12px">Toca un jugador para ver sus puntos, venderlo o cambiarlo de sitio («🔁 Cambiar de sitio»). El de arriba a la izquierda es tu Pala de Oro y puntúa doble.</p>`}
+  <p class="sub" style="font-size:12px">Para meter a un suplente, tócalo y luego toca al titular de su misma posición (drive por drive, revés por revés). Toca un titular para ver sus puntos, venderlo o hacerlo Pala de Oro: el de arriba a la izquierda puntúa doble.</p>`}
 function mxPuntos(){const L=mx.L,yo=L.yo.id,mias=L.fotos.filter(f=>f.user===yo),ts=mxTorneos().filter(t=>mias.some(f=>f.torneo===t.id));
   if(!ts.length)return `<div class="card"><b>Aún no hay puntos</b><p class="sub" style="margin-top:6px">Cuando empiece el próximo torneo Premier se congela tu alineación y aquí verás lo que suma cada jugador, partido a partido.</p></div>`;
   let sel=mx.ptor&&ts.some(t=>t.id===+mx.ptor)?+mx.ptor:ts[ts.length-1].id;const f=mias.find(x=>x.torneo===sel),t=ts.find(x=>x.id===sel);
@@ -1429,9 +1431,10 @@ async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
   if(a==='clausula'){const reg=mxReg(id);if(!confirm(`¿Pagar ${mxM(reg.clausula)} y quedarte a ${mxNom(id)} ahora mismo?`))return;const r=await mxRpc('m_pagar_clausula',{p_liga:mx.liga,p_jugador:id});if(r){toast('💥 ¡Clausulazo! '+mxNom(id)+' es tuyo');mx.hoja=null;await mxRecargar()}return}}
 function mxTocar(id){const L=mx.L;if(!L)return;
   if(mx.tab==='plan'&&mx.sub==='ali'&&mxMio(id)&&!(L.estado&&L.estado.bloqueado)){const j=mx.borr.j,s=mx.sel;
-    if(s==null){mxHoja({tipo:'jug',id});return}
-    if(s===id){mx.sel=null;rerender();return}
+    if(s==null){if(!j.includes(id)){mx.sel=id;rerender();toast(`Toca el ${mxLado(id)==='D'?'drive':'revés'} titular por el que quieres cambiarlo`);return}mxHoja({tipo:'jug',id});return}
+    if(s===id){mx.sel=null;if(!j.includes(id))mxHoja({tipo:'jug',id});else rerender();return}
     const a=j.indexOf(s),b=j.indexOf(id);
+    if((a>=0)!==(b>=0)&&mxLado(s)!==mxLado(id)){toast('Solo puedes cambiar un drive por otro drive y un revés por otro revés');return}
     if(a>=0&&b>=0){j[a]=id;j[b]=s}else if(a>=0){j[a]=id}else if(b>=0){j[b]=s}else{mx.sel=id;rerender();return}
     mx.sel=null;rerender();return}
   mxHoja({tipo:mxMio(id)?'jug':'merc',id})}
