@@ -4,13 +4,16 @@ Uso: python3 manager.py DATOS   (después de build.py, que deja DATOS/app.json)
 
 1. Valor de cada jugador con lado conocido: sale de su ranking (o de su Elo si no
    tiene) y sube o baja hasta un 15 % según sus puntos en los 2 últimos torneos
-   Premier; cambia como mucho un 10 % al día; de 3 a 90 M.
+   Premier; de un torneo al siguiente cambia como mucho un 10 % (respecto a su
+   valor al acabar el último torneo); de 3 a 90 M.
 2. Si hay un torneo Premier en juego, congela las alineaciones; si no, las abre y
    paga 0,2 M por punto del torneo que acaba de terminar.
 3. Puntos de cada jugador en los torneos con alineaciones congeladas.
 4. Cierra los mercados que tocan (por si nadie ha entrado en esas ligas).
 
-Las reglas de puntos son las mismas que enseña la app (template.html, función mxPts).
+La previa de los torneos Premier también puntúa (victoria +2; lo demás igual, sin
+campeón) y el «cae en su primer partido» cuenta desde la previa.
+Las reglas de puntos son las mismas que enseña la app (template.html, función mxPartido).
 Sin SUPABASE_URL y SUPABASE_SERVICE_KEY solo calcula y muestra un resumen.
 """
 import datetime
@@ -46,6 +49,8 @@ P = {int(k): v for k, v in D['P'].items()}
 T = {t[0]: t for t in D['T']}
 # M: [id, torneo, mujer, ronda, orden, fecha, pista, estado, a, b, cab_a, cab_b, sets, ganador, …]
 M = [dict(id=m[0], t=m[1], ronda=m[3], fecha=m[5] or '', st=m[7], a=m[8], b=m[9], sets=m[12] or [], w=m[13]) for m in D['M']]
+# Q (previas, solo fantasy): [id, torneo, mujer, ronda, fecha, estado, a, b, sets, ganador]
+Q = [dict(id=m[0], t=m[1], ronda=m[3], fecha=m[4] or '', st=m[5], a=m[6], b=m[7], sets=m[8] or [], w=m[9], q=True) for m in D.get('Q') or []]
 
 
 def premier(tid):
@@ -55,17 +60,20 @@ def premier(tid):
 
 # --- Elo propio, igual que la app: 1500, K=32, media de la pareja, solo Premier -----------
 elo = {}
-ms = sorted([m for m in M if premier(m['t']) and len(m['a']) == 2 and len(m['b']) == 2],
-            key=lambda m: (m['fecha'], -m['ronda'], m['id']))
+orden = lambda m: (m['fecha'], 0 if m.get('q') else 1, -m['ronda'], m['id'])
+ms = sorted([m for m in M + Q if premier(m['t']) and len(m['a']) == 2 and len(m['b']) == 2], key=orden)
 jugados = {}
 for m in ms:
-    for i in m['a'] + m['b']:
-        jugados.setdefault(i, 0)
+    if not m.get('q'):
+        for i in m['a'] + m['b']:
+            jugados.setdefault(i, 0)
     if not (m['st'] < 2 and m['w'] is not None):
         continue
     ea = sum(elo.get(i, 1500) for i in m['a']) / 2
     eb = sum(elo.get(i, 1500) for i in m['b']) / 2
     m['pre'] = 1 / (1 + 10 ** ((eb - ea) / 400))
+    if m.get('q'):   # la previa no mueve el Elo (como en la app); solo sirve para la sorpresa
+        continue
     d = 32 * ((1 if m['w'] == 0 else 0) - m['pre'])
     for i in m['a']:
         elo[i] = elo.get(i, 1500) + d
@@ -82,16 +90,18 @@ def pts_partido(m, s, primero):
     if m['w'] is None or m['st'] > 2:
         return None
     gana = m['w'] == s
-    vict = {1: 12, 2: 8, 4: 5}.get(m['ronda'], 3)
+    previa = bool(m.get('q'))
+    vict = 2 if previa else {1: 12, 2: 8, 4: 5}.get(m['ronda'], 3)
+    camp = 5 if m['ronda'] == 1 and not previa else 0
     if m['st'] in (1, 2):   # abandono o no presentado: solo cuenta ganar
-        return (vict + (5 if m['ronda'] == 1 else 0)) if gana else 0
+        return (vict + camp) if gana else 0
     p = 0
     sets = [(x[s], x[1 - s]) for x in m['sets'] if len(x) >= 2]
     p += sum(1 for a, b in sets if a > b)                       # sets ganados
     p += 2 * sum(1 for a, b in sets if a == 6 and b == 0)       # roscos a favor
     p -= sum(1 for a, b in sets if a == 0 and b == 6)           # roscos en contra
     if gana:
-        p += vict + (5 if m['ronda'] == 1 else 0)
+        p += vict + camp
         if all(a > b for a, b in sets):
             p += 1                                              # sin ceder set
         pre = m.get('pre')
@@ -154,15 +164,21 @@ if not remoto:
     sys.exit(0)
 
 try:
-    antes = {r['id']: float(r['valor']) for r in api('GET', 'm_jugadores?select=id,valor') or []}
+    # Referencia: el valor que tenía al acabar el último torneo Premier
+    ult = terminados[-1][0] if terminados else None
+    antes = {r['id']: r for r in api('GET', 'm_jugadores?select=id,valor,ref,ref_torneo') or []}
     filas = []
     for i, v in objetivo.items():
-        if i in antes:   # como mucho un 10 % al día
-            v = min(antes[i] * 1.1, max(antes[i] * 0.9, v))
+        a = antes.get(i)
+        if a and a.get('ref') is not None and a.get('ref_torneo') == ult:
+            ref = float(a['ref'])
+        else:   # ha acabado otro torneo (o es nuevo): la referencia pasa a ser su valor actual
+            ref = float(a['valor']) if a else v
+        v = min(ref * 1.1, max(ref * 0.9, v))   # entre torneos, como mucho ±10 %
         p = P[i]
         filas.append({'id': i, 'nombre': p[0], 'corto': p[1], 'genero': 'F' if p[4] else 'M',
                       'lado': 'R' if p[3] == 'backhand' else 'D', 'rank': p[5],
-                      'valor': max(3.0, min(90.0, round(v * 2) / 2)), 'actualizado': datetime.datetime.utcnow().isoformat() + 'Z'})
+                      'valor': max(3.0, min(90.0, round(v * 2) / 2)), 'ref': round(ref, 1), 'ref_torneo': ult, 'actualizado': datetime.datetime.utcnow().isoformat() + 'Z'})
     for k in range(0, len(filas), 300):
         api('POST', 'm_jugadores?on_conflict=id', filas[k:k + 300], 'resolution=merge-duplicates')
     print(f'Mánager: {len(filas)} valores actualizados')

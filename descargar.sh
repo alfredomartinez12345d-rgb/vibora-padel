@@ -60,6 +60,12 @@ for TID in $T_IDS; do
   get_all "$BASE/tournaments/$TID/matches" "$OUT/t${TID}_matches" || echo "  Sin partidos del torneo $TID, sigo"
 done
 
+# Previas de los torneos Premier (solo para el fantasy; los FIP no tienen previa en la API)
+for TID in $T_IDS; do
+  grep -qw "$TID" "$OUT/fip_ids.txt" && continue
+  get_all "$BASE/tournaments/$TID/matches?draw=qualy&per_page=50" "$OUT/t${TID}_qualy" || echo "  Sin previa del torneo $TID, sigo"
+done
+
 # Ranking oficial: la API solo da inscritos de torneos en juego o por jugar.
 # Se prueban (sin FIP) el que está en juego y los próximos, y después los últimos jugados.
 RANK_TIDS=$(python3 -c "
