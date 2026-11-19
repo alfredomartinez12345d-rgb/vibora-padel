@@ -158,7 +158,7 @@ create index if not exists m_ofertas_liga on public.m_ofertas (liga, estado);
 create or replace function public.m_cfg(k text) returns numeric
 language sql immutable as $$
   select case k
-    when 'patrimonio' then 140      -- valor del sobre + caja al entrar
+    when 'patrimonio' then 150      -- valor del sobre + caja al entrar
     when 'caja_min'   then 10       -- caja mínima al entrar
     when 'plantilla'  then 6        -- jugadores como máximo
     when 'miembros'   then 10       -- mánagers por liga
