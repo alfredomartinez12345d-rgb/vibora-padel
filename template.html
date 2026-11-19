@@ -434,6 +434,15 @@ nav.bot a[hidden]{display:none}
 .tierpop.go{animation:pop 1.6s forwards}@keyframes pop{0%{opacity:0;transform:translate(-50%,0) scale(.4)}20%{opacity:1;transform:translate(-50%,0) scale(1.15)}75%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-20px) scale(1)}}
 #mxpack canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #mxpack [hidden],.pkc[hidden]{display:none!important}
+#mxguia{position:fixed;inset:0;z-index:80}
+#mxguia .gfondo{position:absolute;inset:0;background:rgba(5,6,15,.78)}
+#mxguia .gluz{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(5,6,15,.78),0 0 0 3px #d9e021,0 0 24px #d9e02188;transition:all .25s ease;pointer-events:none}
+#mxguia .gbur{position:absolute;left:16px;right:16px;max-width:420px;margin:0 auto;background:var(--surface2);border:1px solid #d9e021;border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+#mxguia .gbur b{font-family:var(--display);font-size:22px;text-transform:uppercase;font-style:italic}
+#mxguia .gbur p{margin:0;color:#d6daf5;font-size:14.5px;line-height:1.45}
+#mxguia .gpas{font-size:11px;letter-spacing:1.2px;color:#d9e021;font-weight:700;text-transform:uppercase}
+#mxguia .gbtn{display:flex;gap:8px;margin-top:6px}#mxguia .gbtn .pri{margin-left:auto}
+@media (prefers-reduced-motion:reduce){#mxguia .gluz{transition:none}}
 @media (prefers-reduced-motion:reduce){.cr.elite,.pack::after{animation:none}}
 /* ---------- Animación de entrada ---------- */
 #intro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(600px 420px at 50% 42%,rgba(155,107,255,.28),transparent 70%),radial-gradient(rgba(185,198,255,.07) 1px,transparent 1.5px);background-size:auto,22px 22px;cursor:pointer}
@@ -974,7 +983,7 @@ async function mxAbrir(id,tab){const r=await mx.sb.rpc('m_liga',{p_liga:id});if(
   mx.borr={j:a.capitan&&j.includes(a.capitan)?[a.capitan,...j.filter(x=>x!==a.capitan)]:j};
   if(mx.tor==null)mx.tor=mx.L.estado&&mx.L.estado.bloqueado&&mx.L.estado.torneo?mx.L.estado.torneo:'total';
   try{localStorage.setItem('vibora-liga',id)}catch(e){}
-  if(mx.L.yo&&!mx.L.yo.sobre_visto)mxSobre();rerender()}
+  if(mx.L.yo&&!mx.L.yo.sobre_visto)mxSobre();rerender();if(mx.L.yo&&mx.L.yo.sobre_visto)setTimeout(()=>mxGuia(false),350)}
 const mxRecargar=()=>mx.liga?mxAbrir(mx.liga):null;
 async function mxPrev(){mx.prev=null;if((mx.cod||'').length!==6)return rerender();const r=await mx.sb.rpc('m_ver_liga',{p_codigo:mx.cod});mx.prev=(r.data&&r.data[0])||false;rerender()}
 if(SUPA&&/access_token=|error_description=/.test(location.hash)){mxInit().then(()=>{history.replaceState(null,'',location.pathname+'#fantasy');render()})}
@@ -1187,7 +1196,8 @@ function mxHojaHtml(h){const L=mx.L,id=h.id;
     <tr><td>🎾 Cada set ganado</td><td></td><td>+1</td></tr><tr><td>🧱 Gana 2-0 sin ceder set</td><td></td><td>+1</td></tr><tr><td>🍩 Set ganado 6-0</td><td></td><td>+2</td></tr>
     <tr><td>⚡ Sorpresa: gana a mejor Elo</td><td></td><td>+2 / +4</td></tr><tr class="neg"><td>❌ Pierde su primer partido</td><td></td><td>−2</td></tr><tr class="neg"><td>🕳️ Set perdido 0-6</td><td></td><td>−1</td></tr>
     <tr class="z"><td>Se retira o no juega</td><td></td><td>0</td></tr><tr><td><b>Pala de Oro</b></td><td></td><td style="color:var(--gold)">×2</td></tr></tbody></table>
-    <p class="sub">Todos los torneos Premier valen igual. Al acabar cada torneo cobras 0,2 M por punto. Si empieza el torneo y estás en negativo, no puntúas.</p>`;
+    <p class="sub">Todos los torneos Premier valen igual. Al acabar cada torneo cobras 0,2 M por punto. Si empieza el torneo y estás en negativo, no puntúas.</p>
+    <button type="button" class="btn" data-mx="guia" style="align-self:center">🧭 Ver la guía del fantasy</button>`;
   if(h.tipo==='invitar'){const url=location.origin+location.pathname+'#fantasy-'+L.liga.codigo;
     return `<h3>Invitar a la liga</h3><p class="sub">Comparte este código o el enlace: tus amigos entran directamente.</p><div class="mxcod" style="letter-spacing:10px">${esc(L.liga.codigo)}</div>
     <div class="mxtwo"><button type="button" class="btn" data-mx="copiar">Copiar código</button><button type="button" class="btn ok" data-mx="compartir">WhatsApp / compartir</button></div><p class="sub" style="font-size:12px;word-break:break-all">${esc(url)}</p>`}
@@ -1220,6 +1230,40 @@ function mxPujaHtml(id,min){const L=mx.L,yo=mxYo(),mia=L.pujas.find(p=>p.jugador
   return `<div class="mxlbl">${mia?'Tu puja':'Pujar'} · mínimo ${mxM(min)}</div><div class="mxtwo"><input id="mxpuja" class="mxnum" type="number" min="${min}" step="0.5" inputmode="decimal" value="${mia?+mia.cantidad:min}" aria-label="Tu puja en millones"><button type="button" class="btn pri" data-mx="pujar" style="align-self:stretch">${mia?'Cambiar puja':'Pujar'}</button></div>
   <p class="sub" style="font-size:12px">Puedes pujar hasta ${mxM(tope)} (tu caja + 20 % de tu plantilla). Nadie ve tu puja. Si la ganas y te quedas en negativo, tendrás que vender antes del torneo o no puntuarás.</p>${mia?'<button type="button" class="btn no" data-mx="retirar">Retirar puja</button>':''}`}
 
+/* Guía de la primera vez: ilumina cada parte de la liga con una explicación corta */
+function mxGuiaPasos(){const L=mx.L,X=L.liga.genero==='X';return [
+  {t:'¡Bienvenido a tu liga! 🐍',x:`Te enseño en un minuto cómo funciona «${esc(L.liga.nombre)}». Puedes saltarte la guía cuando quieras.`},
+  {sel:'.mxcaja',t:'💰 Tu dinero',x:'Lo que tienes para fichar. Entre tu caja y lo que valen tus jugadores empezáis todos con lo mismo. Si te quedas en negativo cuando empieza un torneo, no puntúas.'},
+  {sel:'[data-mxtab=plan]',tab:'plan',t:'🎾 Tu plantilla',x:`Hasta 6 jugadores. Alineas 4 en la pista: 2 de revés y 2 de drive${X?', y 2 chicos y 2 chicas':''}. El de arriba a la izquierda es tu Pala de Oro y puntúa doble. Toca un jugador para ver sus puntos, venderlo o cambiarlo de sitio.`},
+  {sel:'.mxpista',tab:'plan',t:'🔒 Se bloquea con el torneo',x:'Cuando empieza un torneo Premier tu alineación se congela y suma lo que hagan tus 4 titulares, previa incluida. Guárdala antes.'},
+  {sel:'[data-mxtab=merc]',tab:'merc',t:'🛒 El mercado',x:`Cada día salen 8 jugadores del top 100. Pujas a ciegas y gana la más alta cuando cierra el mercado (hoy a las ${horaDe(L.liga.cierre)}). Para pujar necesitas un hueco libre en la plantilla.`},
+  {sel:'[data-mxtab=clas]',tab:'clas',t:'🏆 La clasificación',x:`Puntos de cada uno por torneo o en total. Toca a un mánager para ver sus jugadores y hacerle una oferta${L.liga.clausulas?' o pagar una cláusula 💥':''}.`},
+  {sel:'[data-mxtab=vest]',tab:'vest',t:'👕 El vestuario',x:'Aquí te llegan las ofertas de tus amigos (aceptar o rechazar) y ves todo lo que pasa en la liga: fichajes, ventas y clausulazos.'},
+  {sel:'[data-mx=reglas]',t:'ⓘ Cómo puntúa',x:'Victorias, sets, roscos, sorpresas… Aquí tienes la tabla de puntos siempre a mano, y también esta guía por si quieres volver a verla.'},
+  {sel:'[data-mxtab=ligas]',t:'🏟️ Tus ligas',x:'Para volver a la lista de tus ligas, crear otra o unirte a la de otros amigos.'},
+  {t:'¡A jugar! 🔥',x:'Empieza por revisar tu alineación y echar un ojo al mercado. ¡Suerte!'}]}
+let mxG=null;
+function mxGuia(forzar){let visto=false;try{visto=localStorage.getItem('vibora-guia')==='1'}catch(e){}
+  if((visto&&!forzar)||!mx.L||route().v!=='fantasy'||document.getElementById('mxpack')||document.getElementById('mxguia'))return;
+  mxG={i:0,pasos:mxGuiaPasos(),tab0:mx.tab};const d=document.createElement('div');d.id='mxguia';d.setAttribute('role','dialog');d.setAttribute('aria-label','Guía del fantasy');document.body.appendChild(d);mxGuiaPintar()}
+function mxGuiaFin(){const d=document.getElementById('mxguia');if(d)d.remove();try{localStorage.setItem('vibora-guia','1')}catch(e){}
+  if(mxG){mx.tab=mxG.tab0==='clas'?'plan':mxG.tab0;mxG=null;rerender()}}
+function mxGuiaPintar(){const d=document.getElementById('mxguia');if(!d||!mxG)return;const p=mxG.pasos[mxG.i],n=mxG.pasos.length;
+  if(p.tab&&mx.tab!==p.tab){mx.tab=p.tab;mx.sub='ali';rerender()}
+  const el=p.sel?document.querySelector(p.sel):null;
+  if(el&&p.sel==='.mxpista')el.scrollIntoView({block:'center'});else if(el&&!el.closest('.mxtabs'))scrollTo(0,0);
+  const r=el?el.getBoundingClientRect():null,pad=6,vh=innerHeight;
+  const luz=r?`<div class="gluz" style="top:${r.top-pad}px;left:${r.left-pad}px;width:${r.width+2*pad}px;height:${r.height+2*pad}px"></div>`:'<div class="gfondo"></div>';
+  const abajo=r&&r.top<vh/2,pos=!r?'top:50%;transform:translateY(-50%)':abajo?`top:${Math.min(r.bottom+pad+12,vh-240)}px`:`bottom:${Math.max(vh-r.top+pad+12,12)}px`;
+  d.innerHTML=`${luz}<div class="gbur" style="${pos}"><div class="gpas">${mxG.i+1} de ${n}</div><b>${p.t}</b><p>${p.x}</p>
+    <div class="gbtn"><button type="button" class="btn" data-g="saltar">${mxG.i===n-1?'Cerrar':'Saltar guía'}</button>${mxG.i>0?'<button type="button" class="btn" data-g="atras">‹</button>':''}<button type="button" class="btn pri" data-g="sig">${mxG.i===n-1?'¡A jugar!':'Siguiente ›'}</button></div></div>`;
+  const b=d.querySelector('[data-g=sig]');if(b)b.focus({preventScroll:true})}
+document.addEventListener('click',e=>{const g=e.target.closest('#mxguia [data-g]');if(!g){if(e.target.closest('#mxguia'))e.stopPropagation();return}
+  e.stopPropagation();const k=g.dataset.g;if(k==='saltar')return mxGuiaFin();if(k==='atras'){mxG.i=Math.max(0,mxG.i-1);return mxGuiaPintar()}
+  if(mxG.i>=mxG.pasos.length-1)return mxGuiaFin();mxG.i++;mxGuiaPintar()},true);
+addEventListener('resize',()=>{if(mxG)mxGuiaPintar()});
+document.addEventListener('keydown',e=>{if(mxG&&e.key==='Escape')mxGuiaFin()});
+
 /* Sobre */
 function mxSobre(){if(document.getElementById('mxpack'))return;const L=mx.L,s=(L.yo.sobre||[]).slice(0,4);if(s.length<4)return;
   const d=document.createElement('div');d.id='mxpack';d.setAttribute('role','dialog');d.setAttribute('aria-label','Tu sobre');
@@ -1240,7 +1284,7 @@ async function mxAbrirSobre(){const d=document.getElementById('mxpack');if(!d||d
 function mxConfeti(d){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const c=d.querySelector('canvas'),r=c.getBoundingClientRect();c.width=r.width;c.height=r.height;const g=c.getContext('2d');
   const col=['#3dd6f5','#9b6bff','#ffc53d','#3ddc97','#d9e021','#fff'],P2=Array.from({length:140},()=>({x:r.width/2,y:r.height*.42,vx:(Math.random()-.5)*10,vy:-Math.random()*10-3,w:4+Math.random()*4,c:col[Math.random()*6|0],a:Math.random()*6}));
   let f=0;(function tick(){g.clearRect(0,0,c.width,c.height);P2.forEach(p=>{p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.a+=.2;g.save();g.translate(p.x,p.y);g.rotate(p.a);g.fillStyle=p.c;g.fillRect(-p.w/2,-2,p.w,4);g.restore()});if(++f<120)requestAnimationFrame(tick);else g.clearRect(0,0,c.width,c.height)})()}
-function mxCerrarSobre(){const d=document.getElementById('mxpack');if(d)d.remove();if(mx.L&&!mx.L.yo.sobre_visto){mx.L.yo.sobre_visto=true;mx.sb.rpc('m_sobre_visto',{p_liga:mx.liga}).then(()=>{})}mx.tab='plan';mx.sub='ali';rerender()}
+function mxCerrarSobre(){const d=document.getElementById('mxpack');if(d)d.remove();if(mx.L&&!mx.L.yo.sobre_visto){mx.L.yo.sobre_visto=true;mx.sb.rpc('m_sobre_visto',{p_liga:mx.liga}).then(()=>{})}mx.tab='plan';mx.sub='ali';rerender();setTimeout(()=>mxGuia(false),350)}
 
 /* Acciones */
 async function mxRpc(fn,args,ok){if(mx.ocupado)return null;mx.ocupado=true;mx.msg=null;
@@ -1277,6 +1321,7 @@ async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
   if(a==='cerrar'){mx.hoja=null;mxHojaPintar();return}
   if(a==='aviso-ok'){try{localStorage.setItem('vibora-aviso-mx','1')}catch(e){}mx.antiguo=false;rerender();return}
   if(a==='reglas'){mxHoja({tipo:'reglas'});return}
+  if(a==='guia'){mx.hoja=null;mxHojaPintar();mxGuia(true);return}
   if(a==='invitar'){mxHoja({tipo:'invitar'});return}
   if(a==='todo'){mx.todo=true;rerender();return}
   if(a==='copiar'){navigator.clipboard?.writeText(L.liga.codigo).then(()=>toast('Código copiado'),()=>toast(L.liga.codigo));return}
