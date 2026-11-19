@@ -916,8 +916,8 @@ ranking(){const tabs=`<div class="seg">${[['ofi','Oficial'],['elo','Elo Víbora'
     body=rs.map((p,i)=>i<4?'':`<a class="${tint(i)}" href="#jugador-${p.id}"><span class="n">${p.rank}</span>${av(p.id,'pop')}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.nat||''}</span></span><span class="big">${p.pts!=null?p.pts.toLocaleString('es-ES'):'—'}</span><span class="dif">${i&&p.pts!=null&&rs[i-1].pts!=null&&rs[i-1].pts!==p.pts?(rs[i-1].pts-p.pts).toLocaleString('es-ES'):'–'}</span></a>`).join('')}
   else if(rankTab==='elo'){const rs=byElo(cat).slice(0,60);
     expl='Elo calculado por Víbora con los partidos desde junio: sube o baja según a quién ganas o pierdes. La última columna es el cambio en su último torneo.';
-    head4=top4(rs,(p,i)=>i+1,p=>Math.round(p.elo),'Elo');
-    body=rs.map((p,i)=>{if(i<4)return '';const d=eloDelta(p);return `<a class="${tint(i)}" href="#jugador-${p.id}"><span class="n">${i+1}</span>${av(p.id,'pop')}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.nat||''}</span></span><span class="big">${Math.round(p.elo)}</span><span class="dif ${d>0?'up':d<0?'down':''}">${d>0?'+':''}${d}</span></a>`}).join('')}
+    head4=top4(rs,p=>1+rs.filter(q=>Math.round(q.elo)>Math.round(p.elo)).length,p=>Math.round(p.elo),'Elo');
+    body=rs.map((p,i)=>{if(i<4)return '';const d=eloDelta(p);return `<a class="${tint(i)}" href="#jugador-${p.id}"><span class="n">${1+rs.filter(q=>Math.round(q.elo)>Math.round(p.elo)).length}</span>${av(p.id,'pop')}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.nat||''}</span></span><span class="big">${Math.round(p.elo)}</span><span class="dif ${d>0?'up':d<0?'down':''}">${d>0?'+':''}${d}</span></a>`}).join('')}
   else{const pm={};M.filter(m=>inCat(m)&&played(m)&&prem(m)).forEach(m=>[m.a,m.b].forEach((pr,s)=>{const k=key(pr);(pm[k]??={pr,w:0,l:0})[m.w===s?'w':'l']++}));
     const rs=Object.values(pm).filter(x=>x.w+x.l>=6).sort((a,b)=>b.w/(b.w+b.l)-a.w/(a.w+a.l)||b.w-a.w).slice(0,40);
     expl='Parejas con al menos 6 partidos juntos desde junio, ordenadas por porcentaje de victorias.';
