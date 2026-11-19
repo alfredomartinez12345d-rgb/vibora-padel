@@ -66,6 +66,16 @@ def premier(tid):
     return bool(t) and not str(t[2] or '').startswith('fip')
 
 
+def cubre(tid):
+    """Torneos de los que habla el bot: Premier y FIP Platinum."""
+    t = T.get(tid)
+    return premier(tid) or (bool(t) and str(t[2] or '') == 'fip_platinum')
+
+
+def tags(tid):
+    return '#padel #PremierPadel' if premier(tid) else '#padel #FIP'
+
+
 def corto(i):
     p = P.get(i)
     return (p[1] or p[0].split()[-1]) if p else '?'
@@ -84,13 +94,14 @@ def nombre_t(tid):
 
 
 # Elo como la app: 1500, K=32, media de la pareja, solo Premier; guarda el pronóstico previo de cada partido
+# (los FIP Platinum reciben pronóstico con el Elo de ese momento, pero no lo mueven)
 elo, ultimo = {}, {}
-for m in sorted([m for m in M if premier(m['t']) and len(m['a']) == 2 and len(m['b']) == 2],
+for m in sorted([m for m in M if cubre(m['t']) and len(m['a']) == 2 and len(m['b']) == 2],
                 key=lambda m: (m['fecha'], -m['ronda'], m['id'])):
     ea = sum(elo.get(i, 1500) for i in m['a']) / 2
     eb = sum(elo.get(i, 1500) for i in m['b']) / 2
     m['pre'] = 1 / (1 + 10 ** ((eb - ea) / 400))
-    if not (m['st'] < 2 and m['w'] is not None):
+    if not (m['st'] < 2 and m['w'] is not None) or not premier(m['t']):
         continue
     d = 32 * ((1 if m['w'] == 0 else 0) - m['pre'])
     for i in m['a'] + m['b']:
@@ -302,7 +313,7 @@ def img_podio(tid, tops):
 cands = []   # (prioridad, clave, texto, imagen o None)
 TAGS = '#padel #PremierPadel'
 
-nuevos = [m for m in M if premier(m['t']) and terminado(m) and str(m['id']) not in vistos and len(m['a']) == 2 and len(m['b']) == 2]
+nuevos = [m for m in M if cubre(m['t']) and terminado(m) and str(m['id']) not in vistos and len(m['a']) == 2 and len(m['b']) == 2]
 if not primera_vez:
     for m in nuevos:
         g = m['w']
@@ -311,11 +322,11 @@ if not primera_vez:
         if m['ronda'] == 1:
             cat = 'femenino' if m['mujer'] else 'masculino'
             txt = (f"🏆 ¡{par(win)} campeones del {nombre_t(m['t'])}! ({cat})\n\n"
-                   f"Final: {marcador(m, g)} a {par(lose)}.\n\n{TAGS}")
+                   f"Final: {marcador(m, g)} a {par(lose)}.\n\n{tags(m['t'])}")
             cands.append((0, f"camp:{m['id']}", txt, lambda m=m: img_campeones(m)))
         elif m['st'] == 0 and (pct <= 25 or (m['ronda'] <= 8 and pct <= 35)):
             txt = (f"💥 SORPRESA en {RN.get(m['ronda'], '').lower()} del {nombre_t(m['t'])}\n\n"
-                   f"{par(win)} ganan a {par(lose)} ({marcador(m, g)}) con solo un {pct}% de pronóstico según el Elo de Víbora.\n\n{TAGS}")
+                   f"{par(win)} ganan a {par(lose)} ({marcador(m, g)}) con solo un {pct}% de pronóstico según el Elo de Víbora.\n\n{tags(m['t'])}")
             cands.append((1, f"sorp:{m['id']}", txt, lambda m=m: img_sorpresa(m)))
 
 # Elo final de torneo: cuando ya se han jugado las dos finales
@@ -336,19 +347,34 @@ for tid in {m['t'] for m in M if premier(m['t'])}:
            f"El ranking completo y el de parejas, en la app (link en la bio). {TAGS}")
     cands.append((2, f'podio:{tid}', txt, lambda tid=tid, tops=tops: img_podio(tid, tops)))
 
-# Partidos de hoy (hora España), una vez al día por torneo, desde las 8:00
+# Partidos de hoy, una vez al día por torneo: desde 2 h antes del primer partido con hora
+# (o desde las 10:00 si no hay horas), nunca antes de las 8:00 de España
 if AHORA.astimezone(MAD).hour >= 8:
-    hoy = {}
+    hoy, primero, zona = {}, {}, {}
     for m in M:
-        if not premier(m['t']) or terminado(m) or len(m['a']) != 2 or len(m['b']) != 2 or not m['hora']:
+        if cubre(m['t']) and m['hora']:
+            try:
+                zona.setdefault(m['t'], datetime.datetime.fromisoformat(m['hora']).tzinfo)
+            except ValueError:
+                pass
+    for m in M:
+        if not cubre(m['t']) or terminado(m) or len(m['a']) != 2 or len(m['b']) != 2:
             continue
+        h = None
         try:
-            h = datetime.datetime.fromisoformat(m['hora'])
+            h = datetime.datetime.fromisoformat(m['hora']) if m['hora'] else None
         except ValueError:
+            pass
+        dia_local = str(AHORA.astimezone((h.tzinfo if h else None) or zona.get(m['t']) or MAD).date())
+        if h:
+            if str(h.date()) != dia_local or h <= AHORA:
+                continue
+            primero[m['t']] = min(primero.get(m['t'], h), h)
+        elif m['fecha'][:10] != dia_local:
             continue
-        dia_local = AHORA.astimezone(h.tzinfo).date()   # «hoy» en la hora del torneo
-        if h.date() == dia_local and h > AHORA:
-            hoy.setdefault((m['t'], str(dia_local)), []).append(m)
+        hoy.setdefault((m['t'], dia_local), []).append(m)
+    listos = lambda tid: (AHORA >= primero[tid] - datetime.timedelta(hours=2)) if tid in primero else AHORA.astimezone(MAD).hour >= 10
+    hoy = {k: v for k, v in hoy.items() if listos(k[0])}
     for (tid, dia_local), ms in hoy.items():
         clave = f'hoy:{tid}:{dia_local}'
         if clave in hechos:
@@ -361,7 +387,7 @@ if AHORA.astimezone(MAD).hour >= 8:
         txt = (f"🎾 Hoy en el {nombre_t(tid)}: {len(ms)} partido{'s' if len(ms) != 1 else ''}\n\n"
                f"⚖️ El más igualado: {par(igual['a'])} vs {par(igual['b'])} ({round(igual['pre'] * 100)}%-{round((1 - igual['pre']) * 100)}%)\n"
                f"🔒 El más claro: {par(fav['a'] if fav['pre'] >= .5 else fav['b'])} ({round(max(fav['pre'], 1 - fav['pre']) * 100)}%)\n\n"
-               f"¿Quién da la sorpresa? 👇 {TAGS}")
+               f"¿Quién da la sorpresa? 👇 {tags(tid)}")
         cands.append((3, clave, txt, lambda tid=tid, top=top: img_previa(tid, top)))
 
 # Cierre de alineaciones del fantasy: 01:30 UTC del día que empieza el próximo torneo Premier
