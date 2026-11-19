@@ -4,13 +4,14 @@ Uso: python3 manager.py DATOS   (después de build.py, que deja DATOS/app.json)
 
 1. Valor de cada jugador con lado conocido: sale de su ranking (o de su Elo si no
    tiene) y sube o baja hasta un 15 % según sus puntos en los 2 últimos torneos
-   Premier; cambia como mucho un 10 % al día; de 3 a 90 M.
+   Premier; de un torneo al siguiente cambia como mucho un 10 % (respecto a su
+   valor al acabar el último torneo); de 3 a 90 M.
 2. Si hay un torneo Premier en juego, congela las alineaciones; si no, las abre y
    paga 0,2 M por punto del torneo que acaba de terminar.
 3. Puntos de cada jugador en los torneos con alineaciones congeladas.
 4. Cierra los mercados que tocan (por si nadie ha entrado en esas ligas).
 
-Las reglas de puntos son las mismas que enseña la app (template.html, función mxPts).
+Las reglas de puntos son las mismas que enseña la app (template.html, función mxPartido).
 Sin SUPABASE_URL y SUPABASE_SERVICE_KEY solo calcula y muestra un resumen.
 """
 import datetime
@@ -154,15 +155,21 @@ if not remoto:
     sys.exit(0)
 
 try:
-    antes = {r['id']: float(r['valor']) for r in api('GET', 'm_jugadores?select=id,valor') or []}
+    # Referencia: el valor que tenía al acabar el último torneo Premier
+    ult = terminados[-1][0] if terminados else None
+    antes = {r['id']: r for r in api('GET', 'm_jugadores?select=id,valor,ref,ref_torneo') or []}
     filas = []
     for i, v in objetivo.items():
-        if i in antes:   # como mucho un 10 % al día
-            v = min(antes[i] * 1.1, max(antes[i] * 0.9, v))
+        a = antes.get(i)
+        if a and a.get('ref') is not None and a.get('ref_torneo') == ult:
+            ref = float(a['ref'])
+        else:   # ha acabado otro torneo (o es nuevo): la referencia pasa a ser su valor actual
+            ref = float(a['valor']) if a else v
+        v = min(ref * 1.1, max(ref * 0.9, v))   # entre torneos, como mucho ±10 %
         p = P[i]
         filas.append({'id': i, 'nombre': p[0], 'corto': p[1], 'genero': 'F' if p[4] else 'M',
                       'lado': 'R' if p[3] == 'backhand' else 'D', 'rank': p[5],
-                      'valor': max(3.0, min(90.0, round(v * 2) / 2)), 'actualizado': datetime.datetime.utcnow().isoformat() + 'Z'})
+                      'valor': max(3.0, min(90.0, round(v * 2) / 2)), 'ref': round(ref, 1), 'ref_torneo': ult, 'actualizado': datetime.datetime.utcnow().isoformat() + 'Z'})
     for k in range(0, len(filas), 300):
         api('POST', 'm_jugadores?on_conflict=id', filas[k:k + 300], 'resolution=merge-duplicates')
     print(f'Mánager: {len(filas)} valores actualizados')

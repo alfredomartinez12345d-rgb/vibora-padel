@@ -137,6 +137,23 @@ create table if not exists public.m_actividad (
 );
 create index if not exists m_actividad_liga on public.m_actividad (liga, cuando desc);
 
+-- Valor de referencia: el que tenía al acabar el último torneo (entre torneos cambia como mucho un 10 %)
+alter table public.m_jugadores add column if not exists ref numeric(5,1);
+alter table public.m_jugadores add column if not exists ref_torneo int;
+
+create table if not exists public.m_ofertas (
+  id        bigserial primary key,
+  liga      uuid not null references public.m_ligas on delete cascade,
+  de        uuid not null,
+  para      uuid not null,
+  jugador   int not null,
+  cantidad  numeric(6,1) not null check (cantidad > 0),
+  estado    text not null default 'pendiente' check (estado in ('pendiente', 'aceptada', 'rechazada', 'cancelada')),
+  creada    timestamptz not null default now(),
+  resuelta  timestamptz
+);
+create index if not exists m_ofertas_liga on public.m_ofertas (liga, estado);
+
 -- --- Reglas en un solo sitio ---------------------------------------------------
 create or replace function public.m_cfg(k text) returns numeric
 language sql immutable as $$
@@ -152,6 +169,8 @@ language sql immutable as $$
     when 'proteccion' then 7        -- días sin poder pagar su cláusula tras ficharlo (o tras el sobre)
     when 'venganza'   then 7        -- días sin poder recuperar a quien te clausularon
     when 'por_punto'  then 0.2      -- millones por punto al acabar cada torneo
+    when 'top'        then 100      -- solo se fichan jugadores del top 100 de su ranking
+    when 'oferta_h'   then 48       -- horas que dura una oferta entre amigos
   end
 $$;
 
@@ -191,6 +210,7 @@ create or replace function public.m_libres(p_liga uuid) returns setof public.m_j
 language sql stable security definer set search_path = public as $$
   select j.* from m_jugadores j, m_ligas l
   where l.id = p_liga and j.lado is not null and (l.genero = 'X' or j.genero = l.genero)
+    and coalesce(j.rank, 999) <= m_cfg('top')   -- solo el top 100 de cada ranking
     and not exists (select 1 from m_plantilla p where p.liga = p_liga and p.jugador = j.id)
 $$;
 
@@ -210,7 +230,7 @@ $$;
 create or replace function public.m_nuevo_mercado(p_liga uuid) returns void
 language sql security definer set search_path = public as $$
   update m_ligas set mercado = coalesce((
-    select array_agg(id) from (select id from m_libres(p_liga) where coalesce(rank, 999) <= 150
+    select array_agg(id) from (select id from m_libres(p_liga)
                                order by random() limit m_cfg('mercado')::int) x), '{}')
   where id = p_liga
 $$;
@@ -244,10 +264,10 @@ begin
   if g = 'X' then generos := array['M','F']; else generos := array[g, g]; end if;
   if random() < 0.5 then lados := array[lados[2], lados[1]]; end if;
   elegidos := array[est, bue];
-  r1 := m_escoger(p_liga, 41, 150, generos[1], lados[1], elegidos);
+  r1 := m_escoger(p_liga, 41, 100, generos[1], lados[1], elegidos);
   if r1 is null then r1 := m_escoger(p_liga, 21, 999, generos[1], lados[1], elegidos); end if;
   elegidos := elegidos || r1;
-  r2 := m_escoger(p_liga, 41, 150, generos[2], lados[2], elegidos);
+  r2 := m_escoger(p_liga, 41, 100, generos[2], lados[2], elegidos);
   if r2 is null then r2 := m_escoger(p_liga, 21, 999, generos[2], lados[2], elegidos); end if;
   if r1 is null or r2 is null then raise exception 'No quedan jugadores libres para el sobre.'; end if;
   elegidos := array[r1, r2, bue, est];   -- orden del sobre: de peor a mejor
@@ -380,7 +400,25 @@ begin
   perform m_soy(p_liga);
   delete from m_pujas where liga = p_liga and user_id = auth.uid();
   delete from m_miembros where liga = p_liga and user_id = auth.uid();
-  if not exists (select 1 from m_miembros where liga = p_liga) then delete from m_ligas where id = p_liga; end if;
+  if not exists (select 1 from m_miembros where liga = p_liga) then delete from m_ligas where id = p_liga; return; end if;
+  update m_ligas set creador = (select user_id from m_miembros where liga = p_liga order by unido limit 1)
+    where id = p_liga and creador = auth.uid();
+  perform m_log(p_liga, 'sale', auth.uid(), null, null, null);
+end $$;
+
+-- El creador de la liga puede echar a un mánager (sus jugadores vuelven a quedar libres)
+create or replace function public.m_echar(p_liga uuid, p_user uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform m_soy(p_liga);
+  if (select creador from m_ligas where id = p_liga) is distinct from auth.uid() then
+    raise exception 'Solo quien creó la liga puede echar a alguien.';
+  end if;
+  if p_user = auth.uid() then raise exception 'No te puedes echar a ti mismo.'; end if;
+  if not exists (select 1 from m_miembros where liga = p_liga and user_id = p_user) then raise exception 'Ese mánager ya no está en la liga.'; end if;
+  perform m_log(p_liga, 'echa', auth.uid(), p_user, null, null);
+  delete from m_pujas where liga = p_liga and user_id = p_user;
+  delete from m_miembros where liga = p_liga and user_id = p_user;
 end $$;
 
 -- Puntos de un mánager en un torneo (Pala de Oro doble; en negativo, 0)
@@ -413,7 +451,12 @@ begin
   perform m_procesar(p_liga);
   select jsonb_build_object(
     'liga', (select jsonb_build_object('id', l.id, 'nombre', l.nombre, 'codigo', l.codigo, 'genero', l.genero,
-              'clausulas', l.clausulas, 'cierre', l.cierre, 'mercado', l.mercado) from m_ligas l where l.id = p_liga),
+              'clausulas', l.clausulas, 'cierre', l.cierre, 'mercado', l.mercado, 'creador', l.creador) from m_ligas l where l.id = p_liga),
+    'ofertas', (select coalesce(jsonb_agg(jsonb_build_object('id', o.id, 'de', o.de, 'para', o.para,
+                 'de_nombre', (select nombre from perfiles where id = o.de), 'para_nombre', (select nombre from perfiles where id = o.para), 'jugador', o.jugador, 'cantidad', o.cantidad,
+                 'estado', case when o.estado = 'pendiente' and o.creada < now() - make_interval(hours => m_cfg('oferta_h')::int) then 'caducada' else o.estado end,
+                 'creada', o.creada) order by o.creada desc), '[]')
+                from m_ofertas o where o.liga = p_liga and (o.de = yo or o.para = yo) and o.creada > now() - interval '7 days'),
     'estado', (select to_jsonb(e) from m_estado e where id = 1),
     'yo', (select jsonb_build_object('id', yo, 'caja', caja, 'sobre', sobre, 'sobre_visto', sobre_visto,
               'clausulazo_hoy', clausulazo = (now() at time zone 'Europe/Madrid')::date)
@@ -588,6 +631,95 @@ begin
   return nueva;
 end $$;
 
+-- --- Ofertas entre amigos (se pueden hacer aunque el jugador esté protegido) -------------------
+create or replace function public.m_ofertar(p_liga uuid, p_jugador int, p_cantidad numeric) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare pl m_plantilla; id_ bigint;
+begin
+  perform m_soy(p_liga);
+  if m_bloqueado() then raise exception 'Durante el torneo no se pueden hacer ofertas.'; end if;
+  select * into pl from m_plantilla where liga = p_liga and jugador = p_jugador;
+  if pl.jugador is null then raise exception 'Ese jugador no tiene dueño: búscalo en el mercado.'; end if;
+  if pl.user_id = auth.uid() then raise exception 'Ese jugador ya es tuyo.'; end if;
+  p_cantidad := round(p_cantidad, 1);
+  if p_cantidad is null or p_cantidad <= 0 then raise exception 'Escribe cuántos millones ofreces.'; end if;
+  if p_cantidad > (select caja from m_miembros where liga = p_liga and user_id = auth.uid()) then
+    raise exception 'No tienes tanto dinero en caja.';
+  end if;
+  update m_ofertas set estado = 'cancelada', resuelta = now()
+    where liga = p_liga and de = auth.uid() and jugador = p_jugador and estado = 'pendiente';
+  insert into m_ofertas (liga, de, para, jugador, cantidad) values (p_liga, auth.uid(), pl.user_id, p_jugador, p_cantidad)
+    returning id into id_;
+  return id_;
+end $$;
+
+create or replace function public.m_responder_oferta(p_oferta bigint, p_aceptar boolean) returns void
+language plpgsql security definer set search_path = public as $$
+declare o m_ofertas; cnt int; caja_ numeric; v numeric;
+begin
+  select * into o from m_ofertas where id = p_oferta for update;
+  if o.id is null or o.para is distinct from auth.uid() then raise exception 'Esa oferta no es para ti.'; end if;
+  if o.estado <> 'pendiente' then raise exception 'Esa oferta ya no está pendiente.'; end if;
+  if o.creada < now() - make_interval(hours => m_cfg('oferta_h')::int) then raise exception 'Esa oferta ha caducado.'; end if;
+  if not p_aceptar then
+    update m_ofertas set estado = 'rechazada', resuelta = now() where id = o.id;
+    return;
+  end if;
+  if m_bloqueado() then raise exception 'Durante el torneo no se pueden cerrar traspasos.'; end if;
+  if not exists (select 1 from m_plantilla where liga = o.liga and jugador = o.jugador and user_id = auth.uid()) then
+    raise exception 'Ese jugador ya no es tuyo.';
+  end if;
+  if not exists (select 1 from m_miembros where liga = o.liga and user_id = o.de) then raise exception 'Ese mánager ya no está en la liga.'; end if;
+  select count(*) into cnt from m_plantilla where liga = o.liga and user_id = o.de;
+  if cnt >= m_cfg('plantilla') then raise exception 'Quien te hace la oferta tiene la plantilla llena.'; end if;
+  select caja into caja_ from m_miembros where liga = o.liga and user_id = o.de;
+  if caja_ < o.cantidad then raise exception 'Quien te hace la oferta ya no tiene ese dinero.'; end if;
+  select valor into v from m_jugadores where id = o.jugador;
+  update m_miembros set caja = caja + o.cantidad where liga = o.liga and user_id = auth.uid();
+  update m_miembros set caja = caja - o.cantidad where liga = o.liga and user_id = o.de;
+  perform m_quitar_de_alineacion(o.liga, auth.uid(), o.jugador);
+  update m_plantilla set user_id = o.de, precio = o.cantidad, venta = null, desde = now(),
+         clausula = round(greatest(o.cantidad, v) * m_cfg('clausula'), 1),
+         protegido = now() + make_interval(days => m_cfg('proteccion')::int)
+    where liga = o.liga and jugador = o.jugador;
+  update m_ofertas set estado = 'aceptada', resuelta = now() where id = o.id;
+  update m_ofertas set estado = 'cancelada', resuelta = now() where liga = o.liga and jugador = o.jugador and estado = 'pendiente';
+  delete from m_pujas where liga = o.liga and jugador = o.jugador;
+  perform m_log(o.liga, 'traspaso', auth.uid(), o.de, o.jugador, o.cantidad);
+end $$;
+
+create or replace function public.m_cancelar_oferta(p_oferta bigint) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  update m_ofertas set estado = 'cancelada', resuelta = now() where id = p_oferta and de = auth.uid() and estado = 'pendiente';
+  if not found then raise exception 'Esa oferta ya no está pendiente.'; end if;
+end $$;
+
+-- Cambia los jugadores que ya no están en el top 100 por otros del 41 al 100 (mismo lado y género), gratis
+create or replace function public.m_reemplazar_fuera() returns int
+language plpgsql security definer set search_path = public as $$
+declare r record; nuevo int; n int := 0;
+begin
+  for r in select p.liga, p.user_id, p.jugador, j.genero, j.lado from m_plantilla p join m_jugadores j on j.id = p.jugador
+           where coalesce(j.rank, 999) > m_cfg('top') loop
+    nuevo := m_escoger(r.liga, 41, 100, r.genero, r.lado, null);
+    if nuevo is null then nuevo := m_escoger(r.liga, 1, 100, r.genero, r.lado, null); end if;
+    continue when nuevo is null;
+    delete from m_pujas where liga = r.liga and jugador = r.jugador;
+    update m_plantilla set jugador = nuevo, precio = (select valor from m_jugadores where id = nuevo),
+           clausula = round((select valor from m_jugadores where id = nuevo) * m_cfg('clausula'), 1),
+           protegido = now() + make_interval(days => m_cfg('proteccion')::int), venta = null
+      where liga = r.liga and jugador = r.jugador;
+    update m_alineacion set jugadores = array_replace(jugadores, r.jugador, nuevo),
+           capitan = case when capitan = r.jugador then nuevo else capitan end
+      where liga = r.liga and user_id = r.user_id;
+    update m_miembros set sobre = array_replace(sobre, r.jugador, nuevo) where liga = r.liga and user_id = r.user_id;
+    perform m_log(r.liga, 'cambio', r.user_id, null, nuevo, null);
+    n := n + 1;
+  end loop;
+  return n;
+end $$;
+
 -- --- Lo que hace GitHub (clave service_role) ------------------------------------------------
 create or replace function public.m_bloquear(p_torneo int, p_nombre text) returns int
 language plpgsql security definer set search_path = public as $$
@@ -643,6 +775,7 @@ alter table public.m_alineacion enable row level security;
 alter table public.m_pujas      enable row level security;
 alter table public.m_fotos      enable row level security;
 alter table public.m_actividad  enable row level security;
+alter table public.m_ofertas    enable row level security;
 -- Lectura libre de lo que es público; el resto, solo a través de las funciones
 drop policy if exists leer on public.m_jugadores; create policy leer on public.m_jugadores for select using (true);
 drop policy if exists leer on public.m_estado;    create policy leer on public.m_estado    for select using (true);
@@ -653,13 +786,18 @@ drop policy if exists leer on public.m_puntos;    create policy leer on public.m
 revoke execute on function public.m_soy(uuid), public.m_valor_plantilla(uuid, uuid), public.m_quitar_de_alineacion(uuid, uuid, int),
   public.m_log(uuid, text, uuid, uuid, int, numeric), public.m_libres(uuid), public.m_escoger(uuid, int, int, char, char, int[]),
   public.m_nuevo_mercado(uuid), public.m_dar_sobre(uuid, uuid), public.m_procesar(uuid), public.m_pts_foto(public.m_fotos),
-  public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas() from public, anon, authenticated;
-grant execute on function public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas() to service_role;
+  public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera() from public, anon, authenticated;
+grant execute on function public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera() to service_role;
 revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
-  public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric) from public, anon;
+  public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint) from public, anon;
 grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
-  public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric) to authenticated;
+  public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint) to authenticated;
+
+-- Una vez: quien tenga jugadores fuera del top 100 recibe otros a cambio (se puede repetir sin problema)
+select public.m_reemplazar_fuera() as jugadores_cambiados;
