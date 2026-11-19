@@ -363,16 +363,24 @@ nav.bot a[hidden]{display:none}
 .mxrow .pt{font-family:var(--display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums}
 .mxav{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;background:hsl(var(--h),55%,45%)}
 .mxcards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.mxcards.c3{grid-template-columns:repeat(3,1fr)}
-.cr{position:relative;border-radius:12px;padding:6px 4px 7px;text-align:center;background:linear-gradient(170deg,#262a52,#14172e);border:2px solid #c0824f;min-width:0;font:inherit;color:var(--ink);cursor:pointer;display:block;width:100%}
-.cr.plata{border-color:#c3c9dc;background:linear-gradient(170deg,#2c3150,#14172e)}
-.cr.oro{border-color:var(--gold);background:linear-gradient(170deg,#3a3010,#14172e)}
-.cr.elite{border:2px solid transparent;background:linear-gradient(170deg,#0f2a24,#0a0c1c) padding-box,linear-gradient(120deg,#3dd6f5,#9b6bff,#ffc53d,#3ddc97,#3dd6f5) border-box;background-size:100% 100%,300% 300%;animation:holo 5s linear infinite}
-@keyframes holo{to{background-position:0 0,300% 0}}
-.cr .pr{position:absolute;top:3px;right:3px;font-size:9.5px;font-weight:800;font-variant-numeric:tabular-nums;background:#05060fcc;border:1px solid #ffffff26;border-radius:999px;padding:1px 6px;z-index:1}
-.cr .ic{position:absolute;top:2px;left:4px;font-size:11px;z-index:1}
-.cr .fc{width:52px;height:52px;border-radius:50%;margin:14px auto 4px;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:17px;background:var(--surface2) center top/cover;border:1px solid #ffffff33;overflow:hidden}
-.cr .n{display:block;font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cr .sd{display:block;font-size:8px;letter-spacing:.6px;color:var(--muted);font-weight:700;text-transform:uppercase}
+/* Cromos: el jugador recortado sale de la carta, precio grande arriba, banda con el nombre y un reflejo que la recorre */
+.cr{position:relative;border-radius:14px;padding:0 0 6px;text-align:center;border:2px solid #c0824f;min-width:0;font:inherit;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;width:100%;
+  background:radial-gradient(circle at 50% 30%,rgba(192,130,79,.35),transparent 62%),linear-gradient(170deg,#262a52,#14172e);transition:transform .15s ease}
+.cr:active{transform:scale(.97)}
+.cr.plata{border-color:#c3c9dc;background:radial-gradient(circle at 50% 30%,rgba(195,201,220,.35),transparent 62%),linear-gradient(170deg,#2c3150,#14172e)}
+.cr.oro{border-color:var(--gold);background:radial-gradient(circle at 50% 30%,rgba(255,197,61,.45),transparent 62%),linear-gradient(170deg,#3a3010,#14172e)}
+.cr.elite{border:2px solid transparent;background:radial-gradient(circle at 50% 30%,rgba(61,214,245,.35),transparent 62%) padding-box,linear-gradient(170deg,#0f2a24,#0a0c1c) padding-box,linear-gradient(120deg,#3dd6f5,#9b6bff,#ffc53d,#3ddc97,#3dd6f5) border-box;background-size:100% 100%,100% 100%,300% 300%;animation:holo 5s linear infinite}
+@keyframes holo{to{background-position:0 0,0 0,300% 0}}
+.cr::after{content:"";position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:4;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.26) 47%,rgba(255,255,255,.05) 52%,transparent 60%);background-size:320% 100%;animation:crbrillo 5.5s ease-in-out infinite}
+@keyframes crbrillo{0%,55%{background-position:120% 0}100%{background-position:-60% 0}}
+.cr.elite::before{content:"";position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:3;mix-blend-mode:color-dodge;opacity:.22;background:linear-gradient(130deg,#3dd6f5,#9b6bff,#ffc53d,#3ddc97,#3dd6f5);background-size:300% 300%;animation:holo2 6s linear infinite}
+@keyframes holo2{to{background-position:300% 0}}
+.cr .pr{position:absolute;top:4px;left:4px;z-index:5;font-family:var(--display);font-weight:700;font-size:13px;line-height:1;font-variant-numeric:tabular-nums;background:#05060fd9;border:1px solid #ffffff2e;border-radius:8px;padding:3px 5px}
+.cr.oro .pr{color:var(--gold)}.cr.elite .pr{color:#8ff0ff}
+.cr .ic{position:absolute;top:3px;right:5px;font-size:12px;z-index:5}
+.cr .fc{width:100%;aspect-ratio:1/1;border-radius:12px 12px 0 0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:28px;background:transparent center bottom/contain no-repeat;position:relative;z-index:1}
+.cr .n{display:block;position:relative;z-index:2;margin-top:-16px;padding:10px 3px 0;background:linear-gradient(180deg,transparent,rgba(5,6,15,.88) 45%);font-family:var(--display);font-weight:700;font-size:16px;text-transform:uppercase;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr .sd{display:block;position:relative;z-index:2;font-size:8px;letter-spacing:.6px;color:var(--muted);font-weight:700;text-transform:uppercase}
 .cr .l3{display:flex;justify-content:center;gap:3px;font-size:9.5px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}.cr .l3 i{font-style:normal;padding:0 3px;border-radius:4px;background:var(--surface2)}
 .cr.sel{outline:3px solid var(--cyan);outline-offset:2px}
 .cr.cap{box-shadow:0 0 0 2px #ffc53d,0 0 18px #ffc53d88}
@@ -446,7 +454,7 @@ nav.bot a[hidden]{display:none}
 #mxguia .gpas{font-size:11px;letter-spacing:1.2px;color:#d9e021;font-weight:700;text-transform:uppercase}
 #mxguia .gbtn{display:flex;gap:8px;margin-top:6px}#mxguia .gbtn .pri{margin-left:auto}
 @media (prefers-reduced-motion:reduce){#mxguia .gluz{transition:none}}
-@media (prefers-reduced-motion:reduce){.cr.elite,.pack::after{animation:none}}
+@media (prefers-reduced-motion:reduce){.cr.elite,.pack::after,.cr::after,.cr.elite::before{animation:none}}
 /* ---------- Animación de entrada ---------- */
 #intro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(600px 420px at 50% 42%,rgba(155,107,255,.28),transparent 70%),radial-gradient(rgba(185,198,255,.07) 1px,transparent 1.5px);background-size:auto,22px 22px;cursor:pointer}
 #intro .in-g{position:relative;display:flex;align-items:center;gap:14px;visibility:hidden}
@@ -508,7 +516,7 @@ const PUSH_APP=/*PUSH*/"";
 const SUPA=/*SUPA*/null; /* {url,key} de Supabase para el fantasy (lo pone build.py); null = sin fantasy */ /* App ID de OneSignal (lo pone build.py); vacío = sin avisos */
 
 /* ---------- Carga de datos reales (Padel API) ---------- */
-const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^https:\/\/[^\s"'<>]+$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
+const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^(https:\/\/[^\s"'<>]+|fotos\/jugadores\/\d+\.(webp|png|jpg))$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
 const LV={major:'Major',p1:'P1',p2:'P2',finals:'Finals',fip_platinum:'FIP Platinum',fip_gold:'FIP Gold',fip_silver:'FIP Silver'};
 const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--violet)',fip_platinum:'var(--mint)',fip_gold:'#ff7eb6',fip_silver:'#9aa1c7'};
 const okUrl=u=>/^https:\/\/[^\s"'<>()]+$/.test(u||'')?u:null;
