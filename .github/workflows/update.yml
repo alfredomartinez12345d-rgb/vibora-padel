@@ -130,6 +130,47 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python3 -I manager.py datos
 
+      # Bot de X (xbot/xbot.py): campeones, sorpresas, partidos del día, Elo y cierre del fantasy.
+      # Publica de verdad solo con la variable X_PUBLICAR=1; si no, deja las imágenes como artefacto para revisarlas.
+      - name: Recuperar estado del bot de X
+        if: steps.pub.outputs.si == '1'
+        uses: actions/cache/restore@v4
+        with:
+          path: xestado
+          key: xbot-${{ github.run_id }}
+          restore-keys: xbot-
+
+      - name: Bot de X
+        if: steps.pub.outputs.si == '1'
+        continue-on-error: true   # si falla, la web se publica igual
+        env:
+          X_PUBLICAR: ${{ vars.X_PUBLICAR }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+        run: |
+          python3 -m pip install --quiet pillow
+          rm -rf xestado/salida
+          python3 -I xbot/xbot.py datos xestado
+
+      - name: Guardar estado del bot de X
+        if: steps.pub.outputs.si == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: xestado
+          key: xbot-${{ github.run_id }}
+
+      - name: Imágenes del bot de X (para revisar)
+        if: steps.pub.outputs.si == '1'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: xbot-imagenes
+          path: xestado/salida
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Publicar en GitHub Pages
         if: steps.pub.outputs.si == '1'
         uses: actions/upload-pages-artifact@v3
