@@ -516,7 +516,7 @@ const PUSH_APP=/*PUSH*/"";
 const SUPA=/*SUPA*/null; /* {url,key} de Supabase para el fantasy (lo pone build.py); null = sin fantasy */ /* App ID de OneSignal (lo pone build.py); vacío = sin avisos */
 
 /* ---------- Carga de datos reales (Padel API) ---------- */
-const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^https:\/\/[^\s"'<>]+$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
+const P={};for(const id in D.P){const [name,sn,nat,side,c,rank,pts,photo]=D.P[id];P[id]={id:+id,name,sn,nat,side,cat:c?'women':'men',rank,pts,photo:/^(https:\/\/[^\s"'<>]+|fotos\/jugadores\/\d+\.(webp|png|jpg))$/.test(photo||'')?photo:null,elo:1500,hist:[1500],ms:[],lastT:null}}
 const LV={major:'Major',p1:'P1',p2:'P2',finals:'Finals',fip_platinum:'FIP Platinum',fip_gold:'FIP Gold',fip_silver:'FIP Silver'};
 const LC={major:'var(--gold)',p1:'var(--orange)',p2:'var(--cyan)',finals:'var(--violet)',fip_platinum:'var(--mint)',fip_gold:'#ff7eb6',fip_silver:'#9aa1c7'};
 const okUrl=u=>/^https:\/\/[^\s"'<>()]+$/.test(u||'')?u:null;

@@ -209,6 +209,18 @@ print('youtube', len(yt_videos), 'emisiones,', enlazados, 'partidos enlazados')
 
 has={m[1] for m in M}
 T=[t for t in T if t[0] in has or t[9] or t[8]=='pending']
+# Fotos propias (fotos/jugadores/<id>.webp|png|jpg) para quien no tiene foto en la API o la tiene peor
+propias = 0
+for pid, p in P.items():
+    for ext in ('webp', 'png', 'jpg'):
+        ruta = f'fotos/jugadores/{pid}.{ext}'
+        if os.path.exists(ruta):
+            p[7] = ruta
+            propias += 1
+            break
+sin_foto = sorted((p[5], p[0], pid) for pid, p in P.items() if not p[7] and p[5] and p[5] <= 100)
+print('fotos propias', propias, '· top 100 sin foto:', ', '.join(f'{n} (id {i}, n.º {r})' for r, n, i in sin_foto) or 'ninguno')
+
 data = {'otp': os.environ.get('FANTASY_CODIGO') == '1', 'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M, 'Q': Q}
 # Copia de los datos de la app para manager.py (valores y puntos del fantasy)
 json.dump(data, open(os.path.join(d_meta, 'app.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
