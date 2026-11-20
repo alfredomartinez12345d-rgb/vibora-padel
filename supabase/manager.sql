@@ -5,7 +5,7 @@
 -- del fantasy anterior (supabase/fantasy.sql), que ya está instalada.
 --
 -- Reglas:
---   · Ligas de hasta 10 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
+--   · Ligas de hasta 50 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
 --   · Cada jugador solo puede ser de un mánager dentro de la liga.
 --   · Al entrar, un sobre con 4 jugadores (2 de relleno, 1 bueno del 21 al 40
 --     y 1 estrella del 7 al 20; el top 6 sale muy poco) y 120 M de patrimonio.
@@ -172,7 +172,7 @@ language sql immutable as $$
     when 'patrimonio' then 150      -- valor del sobre + caja al entrar
     when 'caja_min'   then 10       -- caja mínima al entrar
     when 'plantilla'  then 6        -- jugadores como máximo
-    when 'miembros'   then 10       -- mánagers por liga
+    when 'miembros'   then 50       -- mánagers por liga
     when 'mercado'    then 8        -- jugadores libres en el mercado diario
     when 'credito'    then 0.2      -- se puede pujar hasta caja + 20 % de la plantilla
     when 'clausula'   then 1.25     -- cláusula inicial = 1,25 × lo pagado
@@ -255,7 +255,8 @@ create or replace function public.m_libres(p_liga uuid) returns setof public.m_j
 language sql stable security definer set search_path = public as $$
   select j.* from m_jugadores j, m_ligas l
   where l.id = p_liga and j.lado is not null and (l.genero = 'X' or j.genero = l.genero)
-    and coalesce(j.rank, 999) <= m_cfg('top')   -- solo el top 100 de cada ranking
+    -- solo el top 100 de cada ranking; en ligas de más de 16 mánagers entran todos para que haya jugadores para todos
+    and (coalesce(j.rank, 999) <= m_cfg('top') or (select count(*) from m_miembros m where m.liga = p_liga) > 16)
     and not exists (select 1 from m_plantilla p where p.liga = p_liga and p.jugador = j.id)
 $$;
 
@@ -300,6 +301,9 @@ declare
 begin
   select genero into g from m_ligas where id = p_liga;
   est := m_escoger(p_liga, 1, 20, case when g = 'X' then null else g end, null, null);
+  -- en ligas grandes se acaban las estrellas: entonces el mejor del sobre sale del 21-40 o de más abajo
+  if est is null then est := m_escoger(p_liga, 21, 40, case when g = 'X' then null else g end, null, null); end if;
+  if est is null then est := m_escoger(p_liga, 41, 999, case when g = 'X' then null else g end, null, null); end if;
   if est is null then raise exception 'No quedan jugadores libres para el sobre.'; end if;
   select genero, lado into ge, le from m_jugadores where id = est;
   bue := m_escoger(p_liga, 21, 40, case when g = 'X' then (case ge when 'M' then 'F' else 'M' end) else g end, null, array[est]);
@@ -445,7 +449,7 @@ begin
   if l.id is null then raise exception 'No hay ninguna liga con ese código.'; end if;
   if exists (select 1 from m_miembros where liga = l.id and user_id = auth.uid()) then return l.id; end if;
   if (select count(*) from m_miembros where liga = l.id) >= m_cfg('miembros') then
-    raise exception 'Esta liga ya está llena (10 mánagers).';
+    raise exception 'Esta liga ya está llena (% mánagers).', m_cfg('miembros');
   end if;
   insert into m_miembros (liga, user_id, caja) values (l.id, auth.uid(), 0);
   perform m_dar_sobre(l.id, auth.uid());
@@ -530,6 +534,8 @@ begin
                  order by m.unido)
                  from m_miembros m join perfiles pf on pf.id = m.user_id where m.liga = p_liga),
     'pujas', (select coalesce(jsonb_agg(jsonb_build_object('jugador', jugador, 'cantidad', cantidad)), '[]') from m_pujas where liga = p_liga and user_id = yo),
+    -- cuántas pujas tiene cada jugador (de todos los mánagers); las cantidades siguen siendo secretas
+    'npujas', (select coalesce(jsonb_object_agg(jugador, n), '{}') from (select jugador, count(*) n from m_pujas where liga = p_liga group by jugador) x),
     'fotos', (select coalesce(jsonb_agg(jsonb_build_object('user', f.user_id, 'torneo', f.torneo, 'jugadores', f.jugadores,
                  'capitan', f.capitan, 'negativo', f.negativo, 'puntos', m_pts_foto(f))), '[]') from m_fotos f where f.liga = p_liga),
     'torneos', (select coalesce(jsonb_agg(jsonb_build_object('id', t.id, 'nombre', t.nombre, 'inicio', t.inicio) order by t.inicio), '[]')
