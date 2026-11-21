@@ -642,7 +642,7 @@ html[data-tema="dia"] .vbox .vivo{color:#5E6A00}
 .tp.p4{background:linear-gradient(180deg,#2A68C8,#163F86) padding-box,linear-gradient(#2A68C8,#2A68C8) border-box}
 .tp .num{font-style:normal;-webkit-text-stroke:0;color:rgba(255,255,255,.22);font-weight:900}.tp .inf em{color:var(--pelota)}.tp::after{animation:none}
 header.top{flex-wrap:nowrap;gap:8px}
-header.top .hbtn{width:38px;height:38px;border-radius:6px}
+header.top .hbtn{width:36px;height:36px;border-radius:6px}header.top .brand{font-size:26px}header.top>div{gap:6px!important}
 #cats{flex-wrap:nowrap;flex:none}#cats button{padding:7px 10px;font-size:13px;white-space:nowrap}
 .mxlogo img{box-shadow:0 8px 30px rgba(0,0,0,.5)!important}
 @media (max-width:370px){#cats button{padding:7px 7px}}
@@ -660,6 +660,17 @@ html[data-tema="dia"] .lp .nom,html[data-tema="dia"] .lp .txt small,html[data-te
 .mxpista .cr,.mxbench .cr{touch-action:none;-webkit-user-select:none;user-select:none}
 .mxghost{position:fixed;z-index:95;pointer-events:none;transform:scale(1.08) rotate(-2deg);box-shadow:0 22px 40px rgba(0,0,0,.6)!important;opacity:.95;margin:0}
 .cr.encima{outline:3px solid var(--pelota)!important;outline-offset:2px}
+/* favoritos en la cabecera */
+#favbtn{position:relative}#favbtn.on{color:var(--pelota);border-color:var(--pelota)}
+#favn{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;background:var(--pelota);color:#0A1120;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+#favn[hidden]{display:none}
+/* modo fantasy: la app se limpia (sin la barra de abajo ni Masculino/Femenino) y se vuelve con un toque */
+#salirfx{display:none}
+body.modofx #cats,body.modofx header.top .hbtn:not(#salirfx),body.modofx nav.bot{display:none!important}
+body.modofx #salirfx{display:inline-flex;width:auto;padding:0 14px;font-weight:600;font-size:14px;gap:4px;margin-left:auto;color:var(--ink)}
+body.modofx header.top{justify-content:space-between}
+body.modofx .brand::after{content:"Fantasy";font-size:.55em;color:var(--pelota);margin-left:6px;align-self:flex-end;padding-bottom:4px}
+body.modofx .mxtabs{bottom:calc(8px + env(safe-area-inset-bottom))!important}
 /* selector de tema */
 .tsel{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
 .tsel .in{width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--line);border-radius:10px 10px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
@@ -687,15 +698,15 @@ html[data-tema="dia"] .lp .nom,html[data-tema="dia"] .lp .txt small,html[data-te
 </script>
 <div class="shell">
   <header class="top">
-    <a class="brand" href="#inicio"><i></i>Víbora</a>
-    <div style="display:flex;gap:8px;align-items:center"><a class="hbtn" href="#buscar" aria-label="Buscar jugador"><svg class="ic" viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3Zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg></a><button type="button" class="hbtn" id="temabtn" aria-label="Cambiar el aspecto"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.6-1.3-.6-2.1 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Zm-5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></button><div class="seg" id="cats"></div></div>
+    <a class="brand" href="#inicio"><i></i>Víbora</a><a class="hbtn" id="salirfx" href="#inicio" aria-label="Volver a la app">‹ Volver a Víbora</a>
+    <div style="display:flex;gap:8px;align-items:center"><a class="hbtn" href="#buscar" aria-label="Buscar jugador"><svg class="ic" viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3Zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg></a><a class="hbtn" id="favbtn" href="#favoritos" aria-label="Tus favoritos"><svg class="ic" viewBox="0 0 24 24"><path d="m12 2.5 2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8L12 2.5Z"/></svg><span id="favn" hidden></span></a><button type="button" class="hbtn" id="temabtn" aria-label="Cambiar el aspecto"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.6-1.3-.6-2.1 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Zm-5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></button><div class="seg" id="cats"></div></div>
   </header>
   <main id="app"></main>
   <nav class="bot" aria-label="Secciones">
     <a href="#inicio" data-tab="inicio"><svg class="ic" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-8Z"/></svg>Inicio</a>
     <a href="#torneos" data-tab="torneos"><svg class="ic" viewBox="0 0 24 24"><path d="M7 3v2H5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2V3h-2v2H9V3H7Zm-1 7h12v8H6v-8Z"/></svg>Torneos</a>
     <a href="#ranking" data-tab="ranking"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h3v8H5v-8Zm5.5-8h3v16h-3V4ZM16 9h3v11h-3V9Z"/></svg>Ranking</a>
-    <a href="#records" data-tab="records"><svg class="ic" viewBox="0 0 24 24"><path d="m12 2 2.9 6.300 6.900.800-5.100 4.700 1.400 6.800L12 17.200 5.900 20.600l1.400-6.800L2.200 9.100l6.900-.8L12 2Z"/></svg>Récords</a>
+    <a href="#records" data-tab="records"><svg class="ic" viewBox="0 0 24 24"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3Zm0 4H6v1a2 2 0 0 0 1.2 1.8A5 5 0 0 1 7 9V7Zm10 0v2c0 .3 0 .6-.1.8A2 2 0 0 0 18 8V7h-1ZM5 21h14v1H5v-1Z"/></svg>Récords</a>
     <a href="#fantasy" data-tab="fantasy" id="navfx" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M8 3 4 5.5 2 10l3 1.5V21h14v-9.5l3-1.5-2-4.5L16 3h-2.2a1.8 1.8 0 0 1-3.6 0H8Z"/></svg>Fantasy</a>
   </nav>
 </div>
@@ -1222,6 +1233,12 @@ partido([id]){const m=MM[id];if(!m)return V.inicio();const t=tb(m.t);let extra='
   else extra='<p class="sub">Las parejas saldrán de las rondas anteriores.</p>';
   return `<a class="back" href="#torneo-${t.id}">‹ ${t.name}</a>${hero}
   <div class="card score"><div class="mc-meta">${lvp(t)}${pill(m)}<span>${[RN[m.round],m.st<3?fd(m.date):'',m.court].filter(Boolean).join(' · ')}</span></div>${rows(m,true)}</div>${ytBtn(m,true)}${extra}${NOTE}`},
+favoritos(){const fl=[...favs].filter(i=>P[i]);
+  if(!fl.length)return `<h1>Tus favoritos</h1><div class="card"><h2>Todavía no tienes favoritos</h2><p class="sub" style="margin-top:6px">Entra en la ficha de cualquier jugador y toca la estrella ★. Aquí verás sus resultados y su próximo partido de un vistazo.</p></div><a class="btn pri" href="#ranking" style="text-align:center;padding:12px">Ver el ranking</a>${NOTE}`;
+  const sig=i=>M.filter(m=>m.st===3&&(m.a.includes(i)||m.b.includes(i))&&m.a.length&&m.b.length).sort(chrono)[0];
+  const grupo=c=>{const xs=fl.filter(i=>P[i].cat===c);return xs.length?`<section><h2>${c==='men'?'Masculino':'Femenino'}</h2><div class="card" style="padding:4px 14px">${xs.map(i=>{const x=playerMatches(i).slice(-1)[0],n=sig(i);
+    return pline(i,`<span class="chip ${eloDelta(P[i])>=0?'up':'down'}">${Math.round(P[i].elo)}</span>`,n?`Próximo: ${RN[n.round]||''} · ${tb(n.t).name.replace(/ 20\d\d$/,'')}`:x?`${x.won?'Ganó':'Perdió'} ${scoreStr(x.m,x.s)} · ${tb(x.m.t).name.replace(/ 20\d\d$/,'')}`:'Sin partidos con resultado')}).join('')}</div></section>`:''};
+  return `<h1>Tus favoritos</h1><p class="sub">Toca la estrella ★ en la ficha de un jugador para añadirlo o quitarlo.</p>${grupo('men')}${grupo('women')}${NOTE}`},
 buscar(){return `<h1>Buscar</h1><input type="search" id="q" placeholder="Nombre del jugador" autocomplete="off" aria-label="Buscar jugador"><div id="qres">${searchRes('')}</div>${NOTE}`},
 records(){const ps=pairStats(cat);
   const sec=(t,e,arr,val,sub)=>arr.length?`<section><h2>${t}</h2><p class="sub">${e}</p><div class="rk">${arr.map((o,i)=>`<a class="${i<1?'t1':i<3?'t2':''}" href="#pareja-${key(o.pr)}"><span class="n">${i+1}</span>${duo(o.pr)}<span class="tx"><b>${pl(o.pr)}</b><span>${sub(o)}</span></span><span class="big">${val(o)}</span></a>`).join('')}</div></section>`:'';
@@ -1313,7 +1330,9 @@ const mxCache={};
 function mxTorneo(pid,tid){const k=pid+':'+tid;if(mxCache[k])return mxCache[k];
   const ms=P[pid]?[...(P[pid].qs||[]).filter(m=>m.t===tid),...P[pid].ms.filter(m=>m.t===tid)].sort(chronoQ):[];let primero=true;const res=[];
   for(const m of ms){const r=mxPartido(m,sideOf(m,pid),primero);if(!r)continue;primero=false;res.push({m,...r,p:Object.values(r.c).reduce((a,b)=>a+b,0)})}
-  return mxCache[k]={tot:res.reduce((a,x)=>a+x.p,0),res,jugo:ms.length>0,vivo:ms.some(m=>m.st===3)}}
+  const base=res.reduce((a,x)=>a+x.p,0),mult=mxMult(tid);
+  return mxCache[k]={tot:base*mult,base,mult,res,jugo:ms.length>0,vivo:ms.some(m=>m.st===3)}}
+function mxMult(tid){const t=tb(tid);return t&&t.level==='major'?2:1}
 function mxUlt3(id){return SEAS().filter(t=>t.status!=='pending').slice(-3).map(t=>{const r=mxTorneo(id,t.id);return r.jugo?r.tot:'–'})}
 function cromo(id,o={}){const t=mxTier(id),f=P[id]&&P[id].photo,cl=o.cls||'',i=o.icon||'';
   return `<button type="button" class="cr ${t} ${cl}" data-mxj="${id}" ${o.at||''}>${o.x2?'<span class="x2">🏆 PALA DE ORO ×2</span>':''}${o.sinPrecio?'':`<span class="pr">${mxM(mxVal(id))}</span>`}${i?`<span class="ic">${i}</span>`:''}
@@ -1448,12 +1467,12 @@ function mxActTxt(a){const j=a.jugador?`<b>${esc(mxNom(a.jugador))}</b>`:'',q=`<
     echa:['🚪',`${q} ha echado a ${o} de la liga`],sale:['👋',`${q} se ha ido de la liga`]}[a.tipo]||['•',a.tipo]}
 function hace(ts){const s=(Date.now()-new Date(ts))/1000;return s<3600?`hace ${Math.max(1,Math.round(s/60))} min`:s<86400?`hace ${Math.round(s/3600)} h`:s<172800?'ayer':fd(new Date(ts).toISOString().slice(0,10))}
 function mxTabVest(){const L=mx.L,act=mx.todo?L.actividad:L.actividad.slice(0,5);
-  const nom=u=>{const m=L.miembros.find(x=>x.id===u);if(m)return m.nombre;const o=(L.ofertas||[]).find(z=>z.de===u||z.para===u);return o?(o.de===u?o.de_nombre:o.para_nombre)||'Alguien':'Alguien'},yo=L.yo.id,of=L.ofertas||[];
+  const nom=u=>{if(u==null)return 'La liga';const m=L.miembros.find(x=>x.id===u);if(m)return m.nombre;const o=(L.ofertas||[]).find(z=>z.de===u||z.para===u);return o?(o.de===u?o.de_nombre:o.para_nombre)||'Alguien':'Alguien'},yo=L.yo.id,of=L.ofertas||[];
   const rec=of.filter(o=>o.para===yo&&o.estado==='pendiente'),env=of.filter(o=>o.de===yo&&o.estado==='pendiente'),hist=of.filter(o=>o.estado!=='pendiente').slice(0,5);
   const EST={aceptada:'✅ Aceptada',rechazada:'❌ Rechazada',cancelada:'Cancelada',caducada:'⌛ Caducada'};
   const sub=mx.vsub||'rec';
   return `${mxPushOn()?'':mxPushCard()}<div class="mxseg"><button type="button" data-mxvsub="rec" aria-pressed="${sub==='rec'}">Recibidas (${rec.length})</button><button type="button" data-mxvsub="env" aria-pressed="${sub==='env'}">Enviadas (${env.length})</button></div>
-  ${sub==='rec'?(rec.length?rec.map(o=>`<div class="card" style="display:flex;flex-direction:column;gap:8px"><span><b>${esc(nom(o.de))}</b> ofrece <b>${mxM(o.cantidad)}</b> por <b>${esc(mxNom(o.jugador))}</b> <span class="sub">· caduca ${falta(new Date(new Date(o.creada).getTime()+48*3600e3))==='0 min'?'ya':'en '+falta(new Date(new Date(o.creada).getTime()+48*3600e3))}</span></span>
+  ${sub==='rec'?(rec.length?rec.map(o=>`<div class="card" style="display:flex;flex-direction:column;gap:8px"><span><b>${esc(nom(o.de))}</b> ofrece <b>${mxM(o.cantidad)}</b> por <b>${esc(mxNom(o.jugador))}</b> <span class="sub">· caduca ${(c=>falta(c)==='0 min'?'ya':'en '+falta(c))(o.de==null?new Date(L.liga.cierre):new Date(new Date(o.creada).getTime()+48*3600e3))}</span>${o.de==null?'<br><span class="sub">Si la aceptas, lo vendes ya y vuelve al mercado. Si no, mañana te llega otra.</span>':''}</span>
     <div class="mxtwo"><button type="button" class="btn ok" data-mx="aceptar" data-of="${o.id}">✓ Aceptar</button><button type="button" class="btn no" data-mx="rechazar" data-of="${o.id}">✕ Rechazar</button></div></div>`).join(''):'<div class="card sub" style="text-align:center">No tienes ofertas pendientes.</div>')
    :(env.length?env.map(o=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>Ofreces <b>${mxM(o.cantidad)}</b> a <b>${esc(nom(o.para))}</b> por <b>${esc(mxNom(o.jugador))}</b></span><button type="button" class="btn no" data-mx="cancelaroferta" data-of="${o.id}">Cancelar</button></div>`).join(''):'<div class="card sub" style="text-align:center">No has hecho ofertas. Toca a un mánager en la clasificación y luego a uno de sus jugadores.</div>')}
   ${hist.length?`<div class="card mxfeed">${hist.map(o=>`<div><span>${o.de===yo?'📤':'📥'}</span><span>${o.de===yo?'A '+esc(nom(o.para)):'De '+esc(nom(o.de))}: ${esc(mxNom(o.jugador))} por ${mxM(o.cantidad)}</span><span class="t">${EST[o.estado]||o.estado}</span></div>`).join('')}</div>`:''}
@@ -1489,7 +1508,7 @@ function mxTabla(id,tid,cap){const r=mxTorneo(id,tid),n={},c={};['vict','vq','ca
   return `<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-family:var(--display);font-size:20px;text-transform:uppercase">${esc(t.name||'')}</b><b style="color:${tot<0?'var(--red)':tot?'var(--mint)':'var(--orange)'}">${tot} pts</b></div>
   <table class="st8"><thead><tr><th></th><th>Dato</th><th>Pts</th></tr></thead><tbody>
   ${r.res.some(x=>x.m.q)?fila('🎟️','Victorias en la previa',`${n.vq} de ${r.res.filter(x=>x.m.q).length}`,c.vq):''}${fila('🏆','Victorias',`${n.vict} de ${r.res.filter(x=>!x.m.q).length}`,c.vict)}${fila('👑','Campeón',n.camp?'Sí':'No',c.camp)}${fila('🎾','Sets ganados',n.sets,c.sets)}${fila('🧱','Ganados sin ceder set',n.sin,c.sin)}
-  ${fila('🍩','Sets 6-0',n.rosco,c.rosco)}${fila('⚡','Sorpresas (mejor Elo)',n.sorp+(n.grande?` · ${n.grande} grande${n.grande>1?'s':''}`:''),c.sorp)}${fila('❌','Cae en su primer partido',n.primero?'Sí':'No',c.primero)}${fila('🕳️','Sets 0-6 perdidos',n.cero,c.cero)}
+  ${fila('🍩','Sets 6-0',n.rosco,c.rosco)}${fila('⚡','Sorpresas (mejor Elo)',n.sorp+(n.grande?` · ${n.grande} grande${n.grande>1?'s':''}`:''),c.sorp)}${fila('❌','Cae en su primer partido',n.primero?'Sí':'No',c.primero)}${fila('🕳️','Sets 0-6 perdidos',n.cero,c.cero)}${r.mult>1?fila('✖️','Major: todo puntúa doble',`${r.base} × ${r.mult}`,r.tot-r.base):''}
   </tbody></table><div class="mxtot"><span>Total<small>${fin}${cap?' · ×2 Pala de Oro':''}</small></span><b>${tot} pts</b></div>`}
 function mxFicha(id,h){const ts=SEAS(),def=(ts.filter(t=>mxTorneo(id,t.id).jugo).slice(-1)[0]||{}).id,sel=h.tor||def;
   const tot=ts.reduce((a,t)=>a+mxTorneo(id,t.id).tot,0);
@@ -1500,8 +1519,8 @@ function mxHojaHtml(h){const L=mx.L,id=h.id;
     <tr><td>🎟️ Gana un partido de previa</td><td></td><td>+2</td></tr><tr><td>🏆 Gana un partido hasta octavos</td><td></td><td>+3</td></tr><tr><td>🏆 Gana en cuartos · semis · final</td><td></td><td>+5 · +8 · +12</td></tr><tr><td>👑 Campeón del torneo</td><td></td><td>+5</td></tr>
     <tr><td>🎾 Cada set ganado</td><td></td><td>+1</td></tr><tr><td>🧱 Gana 2-0 sin ceder set</td><td></td><td>+1</td></tr><tr><td>🍩 Set ganado 6-0</td><td></td><td>+2</td></tr>
     <tr><td>⚡ Sorpresa: gana a mejor Elo</td><td></td><td>+2 / +4</td></tr><tr class="neg"><td>❌ Pierde su primer partido</td><td></td><td>−2</td></tr><tr class="neg"><td>🕳️ Set perdido 0-6</td><td></td><td>−1</td></tr>
-    <tr class="z"><td>Se retira o no juega</td><td></td><td>0</td></tr><tr><td><b>Pala de Oro</b></td><td></td><td style="color:var(--gold)">×2</td></tr></tbody></table>
-    <p class="sub">Todos los torneos Premier valen igual. Al acabar cada torneo cobras 0,2 M por punto. Si empieza el torneo y estás en negativo, no puntúas.</p>
+    <tr class="z"><td>Se retira o no juega</td><td></td><td>0</td></tr><tr><td><b>Torneo Major</b> (todo)</td><td></td><td style="color:var(--gold)">×2</td></tr><tr><td><b>Pala de Oro</b></td><td></td><td style="color:var(--gold)">×2</td></tr></tbody></table>
+    <p class="sub">Los Major puntúan doble (lo que sumas y lo que restas); P1, P2 y Finals, normal. Al acabar cada torneo cobras 0,2 M por punto. Si empieza el torneo y estás en negativo, no puntúas.</p>
     <button type="button" class="btn" data-mx="guia" style="align-self:center">🧭 Ver la guía del fantasy</button>`;
   if(h.tipo==='invitar'){const url=location.origin+location.pathname+'#fantasy-'+L.liga.codigo;
     return `<h3>Invitar a la liga</h3><p class="sub">Comparte este código o el enlace: tus amigos entran directamente.</p><div class="mxcod" style="letter-spacing:10px">${esc(L.liga.codigo)}</div>
@@ -1516,7 +1535,7 @@ function mxHojaHtml(h){const L=mx.L,id=h.id;
     return `${mxCab(id,`<span>Pagaste: ${mxM(reg.precio)}</span>${cl?`<span>Cláusula: <b style="color:var(--ink)">${mxM(reg.clausula)}</b></span>`:''}${reg.venta!=null?`<span style="color:var(--cyan)">En venta · mínimo ${mxM(reg.venta)}</span>`:''}`)}
     ${!blo?`<div class="mxtwo"><button type="button" class="btn" data-mx="mover">🔁 Cambiar de sitio</button><button type="button" class="btn" data-mx="capitan">${enAli&&mx.borr.j[0]===id?'🏆 Ya es Pala de Oro':'🏆 Pala de Oro'}</button></div>`:''}${mxFicha(id,h)}
     ${cl?`<div class="mxlbl">🛡️ Blindar cláusula</div><div class="mxtwo"><input id="mxbl" class="mxnum" type="number" min="0.5" step="0.5" inputmode="decimal" placeholder="M a invertir" aria-label="Millones para blindar"><button type="button" class="btn gold" data-mx="blindar">Blindar</button></div><p class="sub" style="font-size:12px">Cada 1 M sube la cláusula 2 M, hasta ${mxM(Math.round(mxVal(id)*1.5*10)/10)}.</p>`:''}
-    <div class="mxlbl">Vender</div>${reg.venta!=null?`<button type="button" class="btn" data-mx="quitarventa">Quitar de la venta</button>`:`<div class="mxtwo"><input id="mxmin" class="mxnum" type="number" min="${mxVal(id)}" step="0.5" inputmode="decimal" value="${mxVal(id)}" aria-label="Precio mínimo"><button type="button" class="btn azul" data-mx="ponerventa">Poner en venta</button></div>`}
+    <div class="mxlbl">Vender</div>${(o=>o?`<div class="card" style="border-color:var(--pelota);display:flex;flex-direction:column;gap:8px"><span>🏷️ <b>La liga te ofrece ${mxM(o.cantidad)}</b> por ${esc(mxNom(id))} <span class="sub">· caduca en ${falta(L.liga.cierre)}</span></span><div class="mxtwo"><button type="button" class="btn ok" data-mx="aceptar" data-of="${o.id}">✓ Aceptar</button><button type="button" class="btn no" data-mx="rechazar" data-of="${o.id}">✕ Rechazar</button></div></div>`:'')(mxPend().find(o=>o.de==null&&o.jugador===id))}${reg.venta!=null?`<button type="button" class="btn" data-mx="quitarventa">Quitar de la venta</button><p class="sub" style="font-size:12px">Está en venta: los mánagers pueden pujar y, cada día al cerrar el mercado, la liga te hace una oferta (su valor ± 10 %) que aceptas o rechazas.</p>`:`<div class="mxtwo"><input id="mxmin" class="mxnum" type="number" min="${mxVal(id)}" step="0.5" inputmode="decimal" value="${mxVal(id)}" aria-label="Precio mínimo"><button type="button" class="btn azul" data-mx="ponerventa">Poner en venta</button></div>`}
     <button type="button" class="btn rojo" data-mx="venderya" style="align-self:stretch">Vender ya · ${mxM(mxVal(id))}</button>`}
   if(dueño){const prot=new Date(reg.protegido)>new Date(),hoy=L.yo.clausulazo_hoy,venga=(L.venganza||[]).includes(id),lleno=yo.jugadores.length>=6,faltan=reg.clausula-L.yo.caja;
     const motivo=!cl?'':blo?'Torneo en juego':prot?'Protegido hasta '+new Date(reg.protegido).toLocaleString('es-ES',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}):hoy?'Ya hiciste un clausulazo hoy':venga?'Te lo quitaron hace poco':lleno?'No tienes hueco':faltan>0?'Te faltan '+mxM(faltan):'';
@@ -1659,7 +1678,7 @@ async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
   if(a==='pujar'){const v=numDe('mxpuja');if(!(v>0))return toast('Escribe cuántos millones pujas');if(await mxRpc('m_pujar',{p_liga:mx.liga,p_jugador:id,p_cantidad:v},'Puja hecha: '+mxM(v))){mx.hoja=null;await mxRecargar()}return}
   if(a==='retirar'){if(await mxRpc('m_retirar_puja',{p_liga:mx.liga,p_jugador:id},'Puja retirada')){mx.hoja=null;await mxRecargar()}return}
   if(a==='venderya'){if(!confirm(`¿Vender ya a ${mxNom(id)} por ${mxM(mxVal(id))}? No se puede deshacer.`))return;if(await mxRpc('m_vender_ya',{p_liga:mx.liga,p_jugador:id},'Vendido por '+mxM(mxVal(id)))){mx.hoja=null;mx.sel=null;await mxRecargar()}return}
-  if(a==='ponerventa'){const v=numDe('mxmin');if(await mxRpc('m_poner_venta',{p_liga:mx.liga,p_jugador:id,p_minimo:v},'En venta hasta que cierre el mercado')){mx.hoja=null;await mxRecargar()}return}
+  if(a==='ponerventa'){const v=numDe('mxmin');if(await mxRpc('m_poner_venta',{p_liga:mx.liga,p_jugador:id,p_minimo:v},'En venta: al cerrar el mercado te llegará la oferta de la liga')){mx.hoja=null;await mxRecargar()}return}
   if(a==='quitarventa'){if(await mxRpc('m_poner_venta',{p_liga:mx.liga,p_jugador:id,p_minimo:null},'Ya no está en venta')){mx.hoja=null;await mxRecargar()}return}
   if(a==='blindar'){const v=numDe('mxbl');if(!(v>0))return toast('Escribe cuántos millones inviertes');const r=await mxRpc('m_blindar',{p_liga:mx.liga,p_jugador:id,p_cantidad:v});if(r){toast('Cláusula blindada hasta '+mxM(r));mx.hoja=null;await mxRecargar()}return}
   if(a==='ofertar'){const v=numDe('mxof');if(!(v>0))return toast('Escribe cuántos millones ofreces');if(await mxRpc('m_ofertar',{p_liga:mx.liga,p_jugador:id,p_cantidad:v},'Oferta enviada: '+mxM(v))){mx.hoja=null;await mxRecargar()}return}
@@ -1738,12 +1757,15 @@ if(SUPA){const n=document.getElementById('navfx');if(n)n.hidden=false;document.q
 
 /* ---------- Rutas: solo #nombre con letras, cifras y guiones ---------- */
 function route(){const h=(location.hash||'#inicio').slice(1).split('-');return{v:V[h[0]]?h[0]:'inicio',args:h.slice(1).map(Number)}}
-const TAB={inicio:'inicio',partido:'inicio',torneos:'torneos',torneo:'torneos',ranking:'ranking',jugador:'ranking',pareja:'ranking',h2h:'h2h',buscar:'',records:'records',fantasy:'fantasy'};
+const TAB={favoritos:'',inicio:'inicio',partido:'inicio',torneos:'torneos',torneo:'torneos',ranking:'ranking',jugador:'ranking',pareja:'ranking',h2h:'h2h',buscar:'',records:'records',fantasy:'fantasy'};
 function render(){const r=route();
   if(r.v==='jugador'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='pareja'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='partido'&&MM[r.args[0]])cat=MM[r.args[0]].cat;
   document.getElementById('app').innerHTML=V[r.v](r.args);
-  document.getElementById('cats').innerHTML=[['men','Masculino'],['women','Femenino']].map(([k,l])=>`<button type="button" data-cat="${k}" aria-pressed="${cat===k}">${l}</button>`).join('');
-  document.querySelectorAll('nav.bot a').forEach(a=>{if(a.dataset.tab===TAB[r.v])a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')})}
+  document.getElementById('cats').innerHTML=[['men','Masc.','Masculino'],['women','Fem.','Femenino']].map(([k,l,a])=>`<button type="button" data-cat="${k}" aria-pressed="${cat===k}" aria-label="${a}">${l}</button>`).join('');
+  document.querySelectorAll('nav.bot a').forEach(a=>{if(a.dataset.tab===TAB[r.v])a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  const fn=document.getElementById('favn'),nf=[...favs].filter(i=>P[i]).length;if(fn){fn.hidden=!nf;fn.textContent=nf}
+  document.getElementById('favbtn').classList.toggle('on',r.v==='favoritos');
+  document.body.classList.toggle('modofx',r.v==='fantasy')}
 window.addEventListener('hashchange',()=>{document.getElementById('app').className='';render();window.scrollTo(0,0)});
 document.addEventListener('click',e=>{if(e.target.closest('#temabtn')){temaAbrir();return}const b=e.target.closest('[data-rank]');if(b){rankTab=b.dataset.rank;render();return}
   const tv=e.target.closest('[data-tv]');if(tv){tView=tv.dataset.tv;render();return}

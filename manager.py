@@ -123,6 +123,14 @@ for m in ms:
             if p is not None:
                 d[j] = d.get(j, 0) + p
 
+# Los Major puntúan doble (también lo que se resta)
+MULT = {'major': 2}
+for t, d in puntos.items():
+    f = MULT.get(str(T[t][2] or '') if t in T else '', 1)
+    if f != 1:
+        for j in d:
+            d[j] *= f
+
 # --- Valores -----------------------------------------------------------------------------------
 CURVA = [(1, 90), (3, 70), (5, 56), (7, 48), (10, 40), (15, 30), (20, 24), (30, 16), (40, 10), (60, 5), (100, 3)]
 
