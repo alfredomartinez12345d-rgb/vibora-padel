@@ -8,7 +8,7 @@
 --   · Ligas de hasta 50 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
 --   · Cada jugador solo puede ser de un mánager dentro de la liga.
 --   · Al entrar, un sobre con 4 jugadores (2 de relleno, 1 bueno del 21 al 40
---     y 1 estrella del 7 al 20; el top 6 sale muy poco) y 120 M de patrimonio.
+--     y 1 estrella; el top 6 sale muy poco) que vale entre 45 y 60 M, y 100 M para fichar.
 --   · Plantilla de 6 como máximo; se alinean 4: 2 revés + 2 drive (y en mixta,
 --     2 chicos + 2 chicas), con una Pala de Oro que puntúa doble.
 --   · Mercado diario de 8 jugadores libres; cierra cada día a la hora en que se
@@ -17,6 +17,8 @@
 --     jugador de otro al momento; el dueño puede blindarlas.
 --   · Cuando empieza un torneo Premier se congelan las alineaciones (GitHub);
 --     al acabar se cobran 0,2 M por punto. Si empiezas en negativo, 0 puntos.
+--     Los Major puntúan doble.
+--   · Lo que pongas en venta recibe cada día una oferta de la liga (valor ± 10 %).
 -- Los valores, el bloqueo y los puntos los escribe GitHub con la clave
 -- service_role; los usuarios solo actúan a través de las funciones m_*.
 -- ============================================================================
@@ -164,13 +166,19 @@ create table if not exists public.m_ofertas (
   resuelta  timestamptz
 );
 create index if not exists m_ofertas_liga on public.m_ofertas (liga, estado);
+-- Las ofertas de la propia liga (por lo que está en venta) no tienen «de»
+alter table public.m_ofertas alter column de drop not null;
 
 -- --- Reglas en un solo sitio ---------------------------------------------------
 create or replace function public.m_cfg(k text) returns numeric
 language sql immutable as $$
   select case k
-    when 'patrimonio' then 150      -- valor del sobre + caja al entrar
-    when 'caja_min'   then 10       -- caja mínima al entrar
+    when 'patrimonio' then 150      -- (antiguo) valor del sobre + caja al entrar
+    when 'caja_min'   then 10       -- (antiguo) caja mínima al entrar
+    when 'caja_ini'   then 100      -- dinero para fichar al entrar
+    when 'sobre_min'  then 45       -- valor mínimo del sobre inicial
+    when 'sobre_max'  then 60       -- valor máximo del sobre inicial
+    when 'liga_oferta' then 0.10    -- la liga ofrece por lo que está en venta: valor ± 10 %
     when 'plantilla'  then 6        -- jugadores como máximo
     when 'miembros'   then 50       -- mánagers por liga
     when 'mercado'    then 8        -- jugadores libres en el mercado diario
@@ -297,37 +305,47 @@ create or replace function public.m_dar_sobre(p_liga uuid, p_user uuid) returns 
 language plpgsql security definer set search_path = public as $$
 declare
   g char; est int; bue int; r1 int; r2 int; ge char; gb char; le char; lb char;
-  lados char[]; generos char[]; elegidos int[]; v numeric;
+  lados char[]; generos char[]; elegidos int[]; v numeric; mejor int[]; mejor_d numeric := 1e9; d numeric; intento int;
+  vmin numeric := m_cfg('sobre_min'); vmax numeric := m_cfg('sobre_max');
 begin
   select genero into g from m_ligas where id = p_liga;
-  est := m_escoger(p_liga, 1, 20, case when g = 'X' then null else g end, null, null);
-  -- en ligas grandes se acaban las estrellas: entonces el mejor del sobre sale del 21-40 o de más abajo
-  if est is null then est := m_escoger(p_liga, 21, 40, case when g = 'X' then null else g end, null, null); end if;
-  if est is null then est := m_escoger(p_liga, 41, 999, case when g = 'X' then null else g end, null, null); end if;
-  if est is null then raise exception 'No quedan jugadores libres para el sobre.'; end if;
-  select genero, lado into ge, le from m_jugadores where id = est;
-  bue := m_escoger(p_liga, 21, 40, case when g = 'X' then (case ge when 'M' then 'F' else 'M' end) else g end, null, array[est]);
-  if bue is null then bue := m_escoger(p_liga, 21, 999, case when g = 'X' then (case ge when 'M' then 'F' else 'M' end) else g end, null, array[est]); end if;
-  select genero, lado into gb, lb from m_jugadores where id = bue;
-  -- Lados y géneros que faltan para 2 revés + 2 drive (y 2 + 2 en mixta)
-  lados := m_quitar_uno(m_quitar_uno(array['R','R','D','D']::char[], le), lb);
-  if g = 'X' then generos := array['M','F']; else generos := array[g, g]; end if;
-  if random() < 0.5 then lados := array[lados[2], lados[1]]; end if;
-  elegidos := array[est, bue];
-  r1 := m_escoger(p_liga, 41, 100, generos[1], lados[1], elegidos);
-  if r1 is null then r1 := m_escoger(p_liga, 21, 999, generos[1], lados[1], elegidos); end if;
-  elegidos := elegidos || r1;
-  r2 := m_escoger(p_liga, 41, 100, generos[2], lados[2], elegidos);
-  if r2 is null then r2 := m_escoger(p_liga, 21, 999, generos[2], lados[2], elegidos); end if;
-  if r1 is null or r2 is null then raise exception 'No quedan jugadores libres para el sobre.'; end if;
-  elegidos := array[r1, r2, bue, est];   -- orden del sobre: de peor a mejor
+  -- Se prueban varios sobres hasta que su valor quede entre 45 y 60 M (si no, el más cercano)
+  for intento in 1..40 loop
+    est := m_escoger(p_liga, 1, 20, case when g = 'X' then null else g end, null, null);
+    -- en ligas grandes se acaban las estrellas: entonces el mejor del sobre sale del 21-40 o de más abajo
+    if est is null then est := m_escoger(p_liga, 21, 40, case when g = 'X' then null else g end, null, null); end if;
+    if est is null then est := m_escoger(p_liga, 41, 999, case when g = 'X' then null else g end, null, null); end if;
+    exit when est is null;
+    select genero, lado into ge, le from m_jugadores where id = est;
+    bue := m_escoger(p_liga, 21, 40, case when g = 'X' then (case ge when 'M' then 'F' else 'M' end) else g end, null, array[est]);
+    if bue is null then bue := m_escoger(p_liga, 21, 999, case when g = 'X' then (case ge when 'M' then 'F' else 'M' end) else g end, null, array[est]); end if;
+    continue when bue is null;
+    select genero, lado into gb, lb from m_jugadores where id = bue;
+    -- Lados y géneros que faltan para 2 revés + 2 drive (y 2 + 2 en mixta)
+    lados := m_quitar_uno(m_quitar_uno(array['R','R','D','D']::char[], le), lb);
+    if g = 'X' then generos := array['M','F']; else generos := array[g, g]; end if;
+    if random() < 0.5 then lados := array[lados[2], lados[1]]; end if;
+    elegidos := array[est, bue];
+    r1 := m_escoger(p_liga, 41, 100, generos[1], lados[1], elegidos);
+    if r1 is null then r1 := m_escoger(p_liga, 21, 999, generos[1], lados[1], elegidos); end if;
+    continue when r1 is null;
+    elegidos := elegidos || r1;
+    r2 := m_escoger(p_liga, 41, 100, generos[2], lados[2], elegidos);
+    if r2 is null then r2 := m_escoger(p_liga, 21, 999, generos[2], lados[2], elegidos); end if;
+    continue when r2 is null;
+    select sum(valor) into v from m_jugadores where id = any(array[r1, r2, bue, est]);
+    d := greatest(vmin - v, v - vmax, 0);
+    if d < mejor_d then mejor_d := d; mejor := array[r1, r2, bue, est]; end if;   -- orden del sobre: de peor a mejor
+    exit when d = 0;
+  end loop;
+  if mejor is null then raise exception 'No quedan jugadores libres para el sobre.'; end if;
+  elegidos := mejor;
   insert into m_plantilla (liga, jugador, user_id, precio, clausula, protegido)
     select p_liga, j.id, p_user, j.valor, round(j.valor * m_cfg('clausula'), 1), now() + make_interval(days => m_cfg('proteccion')::int)
     from m_jugadores j where j.id = any(elegidos);
-  select sum(valor) into v from m_jugadores where id = any(elegidos);
-  update m_miembros set caja = greatest(m_cfg('patrimonio') - v, m_cfg('caja_min')), sobre = elegidos
+  update m_miembros set caja = m_cfg('caja_ini'), sobre = elegidos
     where liga = p_liga and user_id = p_user;
-  insert into m_alineacion (liga, user_id, jugadores, capitan) values (p_liga, p_user, elegidos, est)
+  insert into m_alineacion (liga, user_id, jugadores, capitan) values (p_liga, p_user, elegidos, elegidos[4])
     on conflict (liga, user_id) do update set jugadores = excluded.jugadores, capitan = excluded.capitan;
   return elegidos;
 end $$;
@@ -375,14 +393,14 @@ begin
     hechos := hechos || b.jugador;
     ganadas := ganadas || (b.user_id::text || ':' || b.jugador);
   end loop;
-  -- Lo que estaba en venta y nadie compró, lo compra el sistema por su valor
+  -- Lo que sigue en venta recibe cada día una oferta de la propia liga: su valor ± 10 %.
+  -- La de ayer caduca; el dueño la acepta o la rechaza desde el vestuario.
+  update m_ofertas set estado = 'cancelada', resuelta = now() where liga = p_liga and de is null and estado = 'pendiente';
   for vend in select p.*, j.valor from m_plantilla p join m_jugadores j on j.id = p.jugador
               where p.liga = p_liga and p.venta is not null loop
-    update m_miembros set caja = caja + vend.valor where liga = p_liga and user_id = vend.user_id;
-    perform m_quitar_de_alineacion(p_liga, vend.user_id, vend.jugador);
-    delete from m_plantilla where liga = p_liga and jugador = vend.jugador;
-    perform m_log(p_liga, 'vende', vend.user_id, null, vend.jugador, vend.valor);
-    perform m_push(array[vend.user_id], '🏷️ Sin ofertas', 'Nadie pujó por ' || m_jn(vend.jugador) || ': te lo compra la liga por ' || m_fmt(vend.valor) || '.');
+    val := round(vend.valor * (1 - m_cfg('liga_oferta') + random()::numeric * 2 * m_cfg('liga_oferta')), 1);
+    insert into m_ofertas (liga, de, para, jugador, cantidad) values (p_liga, null, vend.user_id, vend.jugador, greatest(val, 0.5));
+    perform m_push(array[vend.user_id], '🏷️ Oferta de la liga', 'La liga te ofrece ' || m_fmt(greatest(val, 0.5)) || ' por ' || m_jn(vend.jugador) || ' en «' || l.nombre || '». Tienes hasta mañana para aceptarla.');
   end loop;
   -- Pujas perdidas: un aviso por mánager con todos los jugadores
   for r in select pu.user_id, string_agg(m_jn(pu.jugador), ', ') as js from m_pujas pu
@@ -729,6 +747,20 @@ begin
   if o.id is null or o.para is distinct from auth.uid() then raise exception 'Esa oferta no es para ti.'; end if;
   if o.estado <> 'pendiente' then raise exception 'Esa oferta ya no está pendiente.'; end if;
   if o.creada < now() - make_interval(hours => m_cfg('oferta_h')::int) then raise exception 'Esa oferta ha caducado.'; end if;
+  if o.de is null then   -- oferta de la propia liga: se vende y el jugador vuelve a quedar libre
+    if not p_aceptar then update m_ofertas set estado = 'rechazada', resuelta = now() where id = o.id; return; end if;
+    if not exists (select 1 from m_plantilla where liga = o.liga and jugador = o.jugador and user_id = auth.uid()) then
+      raise exception 'Ese jugador ya no es tuyo.';
+    end if;
+    update m_miembros set caja = caja + o.cantidad where liga = o.liga and user_id = auth.uid();
+    perform m_quitar_de_alineacion(o.liga, auth.uid(), o.jugador);
+    delete from m_plantilla where liga = o.liga and jugador = o.jugador;
+    update m_ofertas set estado = 'aceptada', resuelta = now() where id = o.id;
+    update m_ofertas set estado = 'cancelada', resuelta = now() where liga = o.liga and jugador = o.jugador and estado = 'pendiente';
+    delete from m_pujas where liga = o.liga and jugador = o.jugador;
+    perform m_log(o.liga, 'vende', auth.uid(), null, o.jugador, o.cantidad);
+    return;
+  end if;
   if not p_aceptar then
     update m_ofertas set estado = 'rechazada', resuelta = now() where id = o.id;
     perform m_push(array[o.de], '❌ Oferta rechazada', m_un(o.para) || ' no acepta tu oferta por ' || m_jn(o.jugador) || '.');
