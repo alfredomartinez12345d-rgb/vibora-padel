@@ -1376,10 +1376,10 @@ function mxAviso(){let visto=false;try{visto=localStorage.getItem('vibora-aviso-
   <p class="sub" style="margin:6px 0 10px">Ahora juegas en ligas con tus amigos: abres un sobre con 4 jugadores, fichas en el mercado cada día y puedes robar cracks con clausulazos. Tu equipo antiguo ya no cuenta: <b style="color:var(--ink)">crea tu liga o únete con el código de un amigo</b>. Tu nombre de mánager sigue siendo tuyo.</p>
   <button type="button" class="btn" data-mx="aviso-ok">Entendido</button></div>`}
 function mxComo(msg,logo){return `<div class="mxhead"><div class="tt"><h1>¿Cómo quieres jugar?</h1></div></div>${msg}${mxAviso()}
-  <button type="button" class="card mxop" disabled><span>🌍</span><span><b>Unirme a una liga pública</b><small>Muy pronto: la Liga Víbora para todos</small></span></button>
+  <button type="button" class="card mxop" data-mx="publica" style="border-color:var(--mint)"><span>🌍</span><span><b>Unirme a una liga pública</b><small>Con un toque, sin código: juega contra mánagers de todas partes</small></span></button>
   <button type="button" class="card mxop" data-mx="v-crear" style="border-color:var(--blue)"><span>➕</span><span><b>Crear liga con amigos</b><small>Eliges los jugadores y compartes el código</small></span></button>
   <button type="button" class="card mxop" data-mx="v-unirse"><span>🔑</span><span><b>Unirme a la liga de mis amigos</b><small>Con código o con el enlace de WhatsApp</small></span></button>
-  ${mx.ligas.length?'<button type="button" class="btn" data-mx="v-inicio">← Mis ligas</button>':''}${logo}`}
+  ${mx.ligas.length?'<button type="button" class="btn" data-mx="v-inicio">← Mis ligas</button>':mxPushCard()}${logo}`}
 function mxCrear(msg){const c=mx.crear;return `<div class="mxhead"><div class="tt"><h1>Crear liga con amigos</h1></div></div>${msg}
   <form class="card fxform" data-fx="crear"><label class="mxlbl" for="mxnl">Nombre de la liga</label><input id="mxnl" required minlength="3" maxlength="30" placeholder="LOS DEL JUEVES" style="text-transform:uppercase;font-family:var(--display);font-size:20px;font-weight:700">
   <span class="mxlbl">¿A quién se puede fichar?</span><div class="mxseg">${['M','X','F'].map(g=>`<button type="button" data-mxg="${g}" aria-pressed="${c.g===g}">${GEN[g]}</button>`).join('')}</div>
@@ -1401,7 +1401,7 @@ function mxMisLigas(msg){const anon=mx.ses.user&&mx.ses.user.is_anonymous,pend=m
     <p class="sub" style="margin:8px 0">Así no la pierdes si cambias de móvil o borras la app.</p>
     ${pend?`<p class="fxmsg ok">Revisa tu correo (${esc(pend)}) y pulsa el enlace.</p>`:`<form class="fxform" data-fx="vincular"><input id="fxmail2" type="email" required autocomplete="email" placeholder="tu@correo.com"><button class="btn" type="submit">Guardar con mi email</button></form>`}</details>`:'';
   return `<div class="mxhead"><div class="tt"><small>${esc(mx.perfil.nombre)}</small><h1>Mis ligas</h1></div><a class="back" href="#fantasy" data-fx="salir">Salir</a></div>${msg}
-  <div class="list" style="display:flex;flex-direction:column;gap:10px">${mx.ligas.map(l=>`<button type="button" class="card mxl" data-mxliga="${l.id}"><span style="font-size:22px">🔒</span><span class="nm"><b>${esc(l.nombre)}</b><small>${GEN[l.genero]} · 👥 ${l.miembros}/58 mánagers${l.clausulas?' · 💥':''}</small></span><span class="pos">${l.puesto}º<small>de ${l.miembros}</small></span></button>`).join('')}</div>
+  <div class="list" style="display:flex;flex-direction:column;gap:10px">${mx.ligas.map(l=>`<button type="button" class="card mxl" data-mxliga="${l.id}"><span style="font-size:22px">${l.publica?'🌍':'🔒'}</span><span class="nm"><b>${esc(l.nombre)}</b><small>${GEN[l.genero]} · 👥 ${l.miembros}/58 mánagers${l.clausulas?' · 💥':''}</small></span><span class="pos">${l.puesto}º<small>de ${l.miembros}</small></span></button>`).join('')}</div>
   <button type="button" class="btn" data-mx="v-como" style="align-self:stretch;padding:12px">+ Unirme o crear otra liga</button>${mxPushCard()}${guardar}`}
 
 function mxLigaView(msg){const L=mx.L,yo=L.yo,tab=mx.tab,tit={clas:'Clasificación',plan:'Plantilla',merc:'Mercado',vest:'Vestuario'}[tab];
@@ -1661,6 +1661,7 @@ async function fxAccion(a,el){const sb=mx.sb;if(!sb)return;mx.msg=null;const err
   else if(a==='salir'){if(mx.ses.user&&mx.ses.user.is_anonymous&&!confirm('Tu cuenta no tiene email: si sales, no podrás recuperarla. ¿Salir igualmente?'))return;await sb.auth.signOut();mx.vista='inicio';try{localStorage.removeItem('vibora-liga')}catch(e){}rerender()}
   }catch(e){err(e)}}
 async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
+  if(a==='publica'){const id=await mxRpc('m_unirse_publica',{});if(!id)return;gcEvent('fantasy/publica','Fantasy: liga pública');mx.prev=null;await mxLigas();mx.tor=null;await mxAbrir(id,'clas');return}
   if(a==='v-crear'||a==='v-unirse'||a==='v-como'||a==='v-inicio'){mx.vista=a.slice(2);mx.msg=null;mx.L=null;mx.liga=null;try{localStorage.removeItem('vibora-liga')}catch(e){}rerender();return}
   if(a==='cerrar'){mx.hoja=null;mxHojaPintar();return}
   if(a==='aviso-ok'){try{localStorage.setItem('vibora-aviso-mx','1')}catch(e){}mx.antiguo=false;rerender();return}

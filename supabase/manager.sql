@@ -145,6 +145,13 @@ alter table public.m_jugadores add column if not exists ref_torneo int;
 
 -- Avisos al móvil (OneSignal): configuración y control para no repetir avisos
 alter table public.m_ligas  add column if not exists aviso10 timestamptz;          -- último «cierra en 10 min» enviado
+alter table public.m_ligas  add column if not exists publica boolean not null default false;   -- liga pública (sin dueño, entra cualquiera)
+alter table public.m_miembros add column if not exists visto timestamptz;            -- última vez que abrió la liga
+-- A quién ya se le ha recordado que no tiene liga (solo una vez)
+create table if not exists public.m_recordado (
+  user_id uuid primary key references public.perfiles on delete cascade,
+  cuando  timestamptz not null default now()
+);
 alter table public.m_estado add column if not exists proximo int;                  -- próximo torneo Premier (lo pone GitHub)
 alter table public.m_estado add column if not exists proximo_nombre text;
 alter table public.m_estado add column if not exists proximo_bloqueo timestamptz;  -- cuándo se congelan las alineaciones
@@ -176,6 +183,7 @@ language sql immutable as $$
     when 'patrimonio' then 150      -- (antiguo) valor del sobre + caja al entrar
     when 'caja_min'   then 10       -- (antiguo) caja mínima al entrar
     when 'caja_ini'   then 100      -- dinero para fichar al entrar
+    when 'inactivo_dias' then 21    -- días sin entrar para salir de una liga pública
     when 'sobre_min'  then 45       -- valor mínimo del sobre inicial
     when 'sobre_max'  then 60       -- valor máximo del sobre inicial
     when 'liga_oferta' then 0.10    -- la liga ofrece por lo que está en venta: valor ± 10 %
@@ -477,6 +485,39 @@ begin
   return l.id;
 end $$;
 
+-- Liga pública: entra en la que tenga sitio (se llenan por orden); si están todas llenas, se crea otra
+create or replace function public.m_unirse_publica()
+returns uuid language plpgsql security definer set search_path = public as $$
+declare id_ uuid; cod text; n int; ahora timestamptz := date_trunc('minute', now());
+begin
+  if auth.uid() is null or not exists (select 1 from perfiles where id = auth.uid()) then
+    raise exception 'Elige antes tu nombre de mánager.';
+  end if;
+  -- si ya está en una pública, a esa
+  select l.id into id_ from m_ligas l join m_miembros m on m.liga = l.id where l.publica and m.user_id = auth.uid() limit 1;
+  if id_ is not null then return id_; end if;
+  perform pg_advisory_xact_lock(hashtext('vibora-liga-publica'));   -- que dos a la vez no creen dos ligas
+  select l.id into id_ from m_ligas l
+    where l.publica and (select count(*) from m_miembros m where m.liga = l.id) < m_cfg('miembros')
+    order by l.creada limit 1;
+  if id_ is null then
+    select count(*) + 1 into n from m_ligas where publica;
+    loop
+      cod := (select string_agg(substr('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 1 + floor(random() * 32)::int, 1), '')
+              from generate_series(1, 6));
+      exit when not exists (select 1 from m_ligas where codigo = cod);
+    end loop;
+    insert into m_ligas (nombre, codigo, genero, clausulas, hora, cierre, creador, publica)
+      values ('LIGA VÍBORA ' || n, cod, 'X', true, (ahora at time zone 'Europe/Madrid')::time, ahora + interval '1 day', null, true)
+      returning id into id_;
+    perform m_nuevo_mercado(id_);
+  end if;
+  insert into m_miembros (liga, user_id, caja, visto) values (id_, auth.uid(), 0, now());
+  perform m_dar_sobre(id_, auth.uid());
+  perform m_log(id_, 'entra', auth.uid(), null, null, null);
+  return id_;
+end $$;
+
 create or replace function public.m_salir(p_liga uuid) returns void
 language plpgsql security definer set search_path = public as $$
 begin
@@ -485,7 +526,7 @@ begin
   delete from m_miembros where liga = p_liga and user_id = auth.uid();
   if not exists (select 1 from m_miembros where liga = p_liga) then delete from m_ligas where id = p_liga; return; end if;
   update m_ligas set creador = (select user_id from m_miembros where liga = p_liga order by unido limit 1)
-    where id = p_liga and creador = auth.uid();
+    where id = p_liga and creador = auth.uid() and not publica;
   perform m_log(p_liga, 'sale', auth.uid(), null, null, null);
 end $$;
 
@@ -513,15 +554,16 @@ language sql stable security definer set search_path = public as $$
     from m_puntos p where p.torneo = f.torneo and p.jugador = any(f.jugadores)), 0) end
 $$;
 
+drop function if exists public.m_mis_ligas();
 create or replace function public.m_mis_ligas()
-returns table (id uuid, nombre text, genero char, clausulas boolean, miembros bigint, puesto bigint, total numeric, sobre_visto boolean)
+returns table (id uuid, nombre text, genero char, clausulas boolean, miembros bigint, puesto bigint, total numeric, sobre_visto boolean, publica boolean)
 language sql stable security definer set search_path = public as $$
   with mias as (select liga, sobre_visto from m_miembros where user_id = auth.uid()),
   tot as (
     select m.liga, m.user_id, coalesce((select sum(m_pts_foto(f)) from m_fotos f where f.liga = m.liga and f.user_id = m.user_id), 0) as total
     from m_miembros m where m.liga in (select liga from mias)),
   pos as (select liga, user_id, total, rank() over (partition by liga order by total desc) as puesto, count(*) over (partition by liga) as n from tot)
-  select l.id, l.nombre, l.genero, l.clausulas, p.n, p.puesto, p.total, mi.sobre_visto
+  select l.id, l.nombre, l.genero, l.clausulas, p.n, p.puesto, p.total, mi.sobre_visto, l.publica
   from mias mi join m_ligas l on l.id = mi.liga join pos p on p.liga = l.id and p.user_id = auth.uid()
   order by l.creada
 $$;
@@ -532,10 +574,11 @@ language plpgsql security definer set search_path = public as $$
 declare yo uuid := auth.uid(); bloq boolean := m_bloqueado(); r jsonb;
 begin
   perform m_soy(p_liga);
+  update m_miembros set visto = now() where liga = p_liga and user_id = yo and (visto is null or visto < now() - interval '1 hour');
   perform m_procesar(p_liga);
   select jsonb_build_object(
     'liga', (select jsonb_build_object('id', l.id, 'nombre', l.nombre, 'codigo', l.codigo, 'genero', l.genero,
-              'clausulas', l.clausulas, 'cierre', l.cierre, 'mercado', l.mercado, 'creador', l.creador) from m_ligas l where l.id = p_liga),
+              'clausulas', l.clausulas, 'cierre', l.cierre, 'mercado', l.mercado, 'creador', l.creador, 'publica', l.publica) from m_ligas l where l.id = p_liga),
     'ofertas', (select coalesce(jsonb_agg(jsonb_build_object('id', o.id, 'de', o.de, 'para', o.para,
                  'de_nombre', (select nombre from perfiles where id = o.de), 'para_nombre', (select nombre from perfiles where id = o.para), 'jugador', o.jugador, 'cantidad', o.cantidad,
                  'estado', case when o.estado = 'pendiente' and o.creada < now() - make_interval(hours => m_cfg('oferta_h')::int) then 'caducada' else o.estado end,
@@ -899,6 +942,24 @@ begin
     perform m_push((select array_agg(user_id) from m_miembros where liga = l.id), '⏰ El mercado cierra en 10 minutos',
                    'Últimos minutos para pujar en «' || l.nombre || '».');
   end loop;
+  -- Ligas públicas: quien lleva 3 semanas sin abrirla sale (sus jugadores vuelven a quedar libres)
+  for r in select m.liga, m.user_id, lg.nombre from m_miembros m join m_ligas lg on lg.id = m.liga
+           where lg.publica and coalesce(m.visto, m.unido) < now() - make_interval(days => m_cfg('inactivo_dias')::int) limit 50 loop
+    delete from m_pujas where liga = r.liga and user_id = r.user_id;
+    delete from m_miembros where liga = r.liga and user_id = r.user_id;
+    perform m_log(r.liga, 'sale', r.user_id, null, null, null);
+    perform m_push(array[r.user_id], '👋 Has salido de «' || r.nombre || '»',
+                   'Llevabas 3 semanas sin entrar y hemos dejado tu plaza a otro. Puedes volver a una liga pública cuando quieras.');
+  end loop;
+  -- Quien tiene nombre de mánager desde hace un día y no está en ninguna liga: un aviso (solo una vez)
+  for r in select p.id from perfiles p
+           where p.creado < now() - interval '1 day'
+             and not exists (select 1 from m_miembros m where m.user_id = p.id)
+             and not exists (select 1 from m_recordado x where x.user_id = p.id) limit 200 loop
+    insert into m_recordado (user_id) values (r.id) on conflict do nothing;
+    perform m_push(array[r.id], '🐍 Aún no tienes equipo',
+                   'Entra en una liga pública con un toque, abre tu sobre y juega el próximo torneo.');
+  end loop;
   -- Recordatorio unas horas antes de que se bloqueen las alineaciones
   select * into e from m_estado where id = 1;
   if e.proximo is not null and not e.bloqueado and e.aviso_bloqueo is distinct from e.proximo
@@ -932,6 +993,7 @@ alter table public.m_actividad  enable row level security;
 alter table public.m_ofertas    enable row level security;
 alter table public.m_config     enable row level security;
 alter table public.m_avisos     enable row level security;
+alter table public.m_recordado  enable row level security;
 -- Lectura libre de lo que es público; el resto, solo a través de las funciones
 drop policy if exists leer on public.m_jugadores; create policy leer on public.m_jugadores for select using (true);
 drop policy if exists leer on public.m_estado;    create policy leer on public.m_estado    for select using (true);
@@ -945,12 +1007,12 @@ revoke execute on function public.m_soy(uuid), public.m_valor_plantilla(uuid, uu
   public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(),
   public.m_push(uuid[], text, text), public.m_tick() from public, anon, authenticated;
 grant execute on function public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
-revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_salir(uuid),
+revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
   public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean) from public, anon;
-grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_salir(uuid),
+grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
