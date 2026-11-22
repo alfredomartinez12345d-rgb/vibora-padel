@@ -745,3 +745,6 @@ Cuadro femenino => Women’s draw
 · Cuadro femenino => · Women’s draw
 masculino => men’s
 femenino => women’s
+re: Previa · Ronda (\d+) => Qualifying · Round $1
+Previa => Qualifying
+Previa leída de la web oficial de Premier Padel. => Qualifying read from the official Premier Padel website.

@@ -144,7 +144,72 @@ for f in sorted(glob.glob(os.path.join(d_matches, 't*_qualy_*.json'))):
             sets.append([a_, b_])
         Q.append([m['id'], t, 1 if m['category'] == 'women' else 0, m['round'], m.get('played_at'), ST[m['status']], teams[0], teams[1], sets,
                   {'team_1': 0, 'team_2': 1}.get(m.get('winner'))])
-print('previas', len(Q), 'partidos')
+# Previas leídas de la web oficial de Premier Padel (previa/previa.js), para cuando Padel API no las da
+PAIS3 = {'ARG': 'AR', 'ESP': 'ES', 'ITA': 'IT', 'FRA': 'FR', 'POR': 'PT', 'BRA': 'BR', 'MEX': 'MX', 'CHI': 'CL', 'CHL': 'CL',
+         'URU': 'UY', 'PAR': 'PY', 'BEL': 'BE', 'NED': 'NL', 'GER': 'DE', 'SUI': 'CH', 'SWE': 'SE', 'FIN': 'FI', 'DEN': 'DK',
+         'NOR': 'NO', 'GBR': 'GB', 'USA': 'US', 'CAN': 'CA', 'VEN': 'VE', 'COL': 'CO', 'PER': 'PE', 'ECU': 'EC', 'QAT': 'QA',
+         'KUW': 'KW', 'KSA': 'SA', 'UAE': 'AE', 'EGY': 'EG', 'MAR': 'MA', 'RSA': 'ZA', 'AUS': 'AU', 'JPN': 'JP', 'POL': 'PL',
+         'AUT': 'AT', 'IRL': 'IE', 'CRO': 'HR', 'LAT': 'LV', 'LTU': 'LT', 'EST': 'EE', 'HUN': 'HU', 'ROU': 'RO', 'SRB': 'RS',
+         'CZE': 'CZ', 'GRE': 'GR', 'TUR': 'TR', 'PAN': 'PA', 'CRC': 'CR', 'DOM': 'DO', 'PUR': 'PR', 'BOL': 'BO', 'LUX': 'LU',
+         'MON': 'MC', 'AND': 'AD', 'BHR': 'BH', 'OMA': 'OM', 'IND': 'IN', 'CHN': 'CN', 'THA': 'TH', 'SGP': 'SG', 'NZL': 'NZ'}
+
+
+def _norm(x):
+    import unicodedata
+    return re.sub(r'[^a-z ]', '', unicodedata.normalize('NFD', (x or '').lower()).encode('ascii', 'ignore').decode()).split()
+
+
+def _jugador_pp(j):
+    """Jugador de la web de Premier Padel → id de Padel API (por nombre); si no está, uno nuevo solo para mostrarlo."""
+    mujer = 1 if j.get('genero') == 'female' else 0
+    f, a = _norm(j.get('nombre')), _norm(j.get('apellido'))
+    completo = ' '.join(f + a)
+    cands = [i for i, p in P.items() if p[4] == mujer and ' '.join(_norm(p[0])) == completo]
+    if not cands and f and a:   # mismo nombre de pila y primer apellido (p. ej. «Emilio Sánchez Chamero» = «Emilio Sanchez»)
+        cands = [i for i, p in P.items() if p[4] == mujer and _norm(p[0])[:1] == f[:1] and a[0] in _norm(p[0])[1:]]
+    if len(cands) == 1:
+        return cands[0]
+    nid = 9000000 + int(j['id'])
+    if nid not in P:
+        nom = ' '.join(x for x in (j.get('nombre'), j.get('apellido')) if x)
+        P[nid] = [nom, j.get('apellido') or nom, PAIS3.get(j.get('pais') or '', None), None, mujer, None, None, None]   # sin ranking: no entra en las clasificaciones
+    return nid
+
+
+f_pp = os.path.join(d_matches, 'pp_previa.json')
+ya = {(m[1], tuple(sorted(m[6] + m[7]))) for m in Q}
+n_pp = 0
+for tor in (leer(f_pp) if os.path.exists(f_pp) else {}).values():
+    # el torneo de Padel API que empieza ese día (o el anterior/siguiente)
+    try:
+        d0 = datetime.date.fromisoformat(tor['start'])
+    except Exception:
+        continue
+    t = next((i for i, x in tmeta.items() if not str(x.get('level') or '').startswith('fip') and x.get('start_date')
+              and abs((datetime.date.fromisoformat(x['start_date'][:10]) - d0).days) <= 1), None)
+    if t is None:
+        continue
+    for x in tor.get('partidos', {}).values():
+        eq = x.get('equipos') or []
+        if len(eq) != 2 or any(len(e.get('jugadores') or []) != 2 for e in eq):
+            continue
+        a, b = [[_jugador_pp(j) for j in e['jugadores']] for e in eq]
+        if (t, tuple(sorted(a + b))) in ya:
+            continue
+        sets = []
+        for k in range(3):
+            s1, s2 = eq[0]['sets'][k][0], eq[1]['sets'][k][0]
+            if s1 is None or s2 is None or (s1 == 0 and s2 == 0 and x.get('estado') != 'F'):
+                continue
+            sets.append([int(s1), int(s2)])
+        g = str(x.get('ganador') or '0')
+        st = 0 if x.get('estado') == 'F' and g in ('1', '2') else 3
+        mujer = 1 if eq[0]['jugadores'][0].get('genero') == 'female' else 0
+        ronda = 100 + int(re.sub(r'\D', '', x.get('ronda') or '') or 0)   # Q1 → 101 (nunca se confunde con la final, que es 1)
+        Q.append([90000000 + int(x['id']), t, mujer, ronda, x.get('fecha'), st, a, b, sets if st == 0 else [],
+                  {'1': 0, '2': 1}.get(g) if st == 0 else None])
+        n_pp += 1
+print('previas', len(Q), 'partidos (' + str(n_pp), 'de la web de Premier Padel)')
 
 tids = {m['_t'] for m in raw.values()} | set(tmeta)
 T = []

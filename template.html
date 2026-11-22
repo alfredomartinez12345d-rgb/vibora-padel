@@ -1152,9 +1152,15 @@ torneos(){const hayFip=T.some(isFipT);if(!hayFip)circ='premier';
 torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter(m=>m.t===id&&inCat(m));
   const rs=[...new Set(ms.map(m=>m.round))].sort((a,b)=>a-b);
   circ=isFipT(t)?'fip':'premier';const head=`<a class="back" href="#torneos">‹ ${isFipT(t)?'Torneos FIP':'Temporada'}</a><div class="thead">${poster(t)}<div><h1>${t.name}</h1><p class="sub">${lvp(t)} ${tinfo(t)} · Cuadro ${cat==='men'?'masculino':'femenino'}</p></div></div>`;
+  /* Previa: partidos de las rondas de clasificación (Q1, Q2…), en orden; no tienen página propia */
+  const qs=Q.filter(m=>m.t===id&&inCat(m)).sort((x,y)=>x.round-y.round||(x.date<y.date?-1:x.date>y.date?1:x.id-y.id));
+  const qmc=m=>mc(m,'Previa · Ronda '+(m.round-100)).replace('<a class="mc"','<div class="mc"').replace(/ href="#partido-\d+"/,'').replace(/<\/a>$/,'</div>');
+  const previaV=()=>{const rq=[...new Set(qs.map(m=>m.round))];
+    return rq.map(r=>`<section><h2>Previa · Ronda ${r-100}</h2><div class="list">${qs.filter(m=>m.round===r).map(qmc).join('')}</div></section>`).join('')+'<p class="note">Previa leída de la web oficial de Premier Padel.</p>'};
+  if(!rs.length&&qs.length)return head+'<div class="seg"><button type="button" aria-pressed="true">Previa</button></div>'+previaV()+NOTE;
   if(!rs.length)return head+'<p class="sub">No hay partidos de esta categoría en el torneo.</p>'+NOTE;
   const sched=ms.filter(m=>m.st===3),fm=ms.find(m=>m.round===1&&m.w!=null);
-  const od=oopDays(id),tabsL=[['br','Cuadro'],['li','Lista']];if(Object.keys(od).length)tabsL.push(['hr','Horarios']);if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
+  const od=oopDays(id),tabsL=[['br','Cuadro'],['li','Lista']];if(qs.length)tabsL.push(['pv','Previa']);if(Object.keys(od).length)tabsL.push(['hr','Horarios']);if(sched.length)tabsL.push(['qn','Quiniela']);if(fm)tabsL.push(['cm','Camino al título']);
   const tv=tabsL.some(x=>x[0]===tView)?tView:'br';
   const views=`<div class="seg">${tabsL.map(([k,l])=>`<button type="button" data-tv="${k}" aria-pressed="${tv===k}">${l}</button>`).join('')}</div>`;
   const maxR=rs[rs.length-1],find=(r,i)=>ms.find(x=>x.round===r&&x.idx===i);
@@ -1163,6 +1169,7 @@ torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter
   if(tv==='hr'){const ks=Object.keys(od).sort(),def=(oopDay(id)||{}).k,dk=ks.includes((oopSel[id]||{}).d)?oopSel[id].d:def;
     const dias=`<div class="seg oopseg">${ks.map(k=>{const d=new Date(k+'T12:00:00');return `<button type="button" data-oopd="${id}|${k}" aria-pressed="${k===dk}">${d.toLocaleDateString(LOC,{weekday:'short'})} ${d.getDate()} <small>${od[k].length}</small></button>`}).join('')}</div>`;
     return `${head}${views}${dias}<section><h2 style="font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">${dayName(dk)} · ${od[dk].length} partidos</h2>${oopBoard(id,od[dk])}</section>${OOPNOTE}${NOTE}`}
+  if(tv==='pv')return `${head}${views}${previaV()}${NOTE}`;
   if(tv==='li')return `${head}${views}${rs.map(r=>`<section><h2>${RN[r]}</h2><div class="list">${ms.filter(m=>m.round===r).sort(ord).map(m=>mc(m,m.court||RN[r])).join('')}</div></section>`).join('')}${NOTE}`;
   if(tv==='cm'){const pr=fm.w?fm.b:fm.a,k=key(pr),path=ms.filter(m=>key(m.a)===k||key(m.b)===k).sort((x,y)=>y.round-x.round);
     return `${head}${views}<div class="card" style="display:flex;gap:14px;align-items:center">${duo(pr,'lg')}<div><h2>${IC.trophy} Campeones</h2><a href="#pareja-${k}"><div class="big">${pl(pr)}</div></a><p class="sub">${path.length} partidos para levantar el título</p></div></div><div class="list">${path.map(m=>mc(m,RN[m.round])).join('')}</div>${NOTE}`}
