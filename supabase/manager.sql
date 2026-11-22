@@ -956,8 +956,6 @@ grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
   public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean) to authenticated;
 
--- Una vez: quien tenga jugadores fuera del top 100 recibe otros a cambio (se puede repetir sin problema)
-select public.m_reemplazar_fuera() as jugadores_cambiados;
 
 -- Reloj de cada minuto (solo si la extensión pg_cron está activada: Database → Extensions)
 do $$ begin
