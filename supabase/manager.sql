@@ -790,16 +790,17 @@ begin
   if m_bloqueado() then raise exception 'Se está jugando un torneo: las alineaciones están bloqueadas.'; end if;
   select genero into g from m_ligas where id = p_liga;
   n := coalesce(array_length(p_jugadores, 1), 0);
-  if n <> 4 or (select count(distinct x) from unnest(p_jugadores) x) <> 4 then raise exception 'La alineación tiene que tener 4 jugadores distintos.'; end if;
-  if (select count(*) from m_plantilla where liga = p_liga and user_id = auth.uid() and jugador = any(p_jugadores)) <> 4 then
+  -- se puede guardar incompleta (1 a 3 jugadores): el hueco vacío suma 0
+  if n < 1 or n > 4 or (select count(distinct x) from unnest(p_jugadores) x) <> n then raise exception 'La alineación tiene que tener entre 1 y 4 jugadores distintos.'; end if;
+  if (select count(*) from m_plantilla where liga = p_liga and user_id = auth.uid() and jugador = any(p_jugadores)) <> n then
     raise exception 'Solo puedes alinear jugadores de tu plantilla.';
   end if;
   select count(*) filter (where lado = 'R'), count(*) filter (where lado = 'D'),
          count(*) filter (where genero = 'M'), count(*) filter (where genero = 'F')
     into r, d, hm, mu from m_jugadores where id = any(p_jugadores);
-  if r <> 2 or d <> 2 then raise exception 'Necesitas 2 jugadores de revés y 2 de drive.'; end if;
-  if g = 'X' and (hm <> 2 or mu <> 2) then raise exception 'En esta liga tienes que alinear 2 chicos y 2 chicas.'; end if;
-  if p_capitan is null or not (p_capitan = any(p_jugadores)) then raise exception 'Elige tu Pala de Oro entre los 4 titulares.'; end if;
+  if r > 2 or d > 2 then raise exception 'Como mucho 2 jugadores de revés y 2 de drive.'; end if;
+  if g = 'X' and (hm > 2 or mu > 2) then raise exception 'En esta liga, como mucho 2 chicos y 2 chicas.'; end if;
+  if p_capitan is null or not (p_capitan = any(p_jugadores)) then raise exception 'Elige tu Pala de Oro entre los titulares.'; end if;
   insert into m_alineacion (liga, user_id, jugadores, capitan) values (p_liga, auth.uid(), p_jugadores, p_capitan)
     on conflict (liga, user_id) do update set jugadores = excluded.jugadores, capitan = excluded.capitan;
 end $$;

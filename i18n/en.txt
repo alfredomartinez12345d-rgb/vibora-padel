@@ -786,3 +786,7 @@ No puedes escribirte a ti mismo. => You can’t write to yourself.
 Solo puedes borrar tus mensajes. => You can only delete your own messages.
 Ese mensaje ya no existe. => That message no longer exists.
 No te puedes bloquear a ti mismo. => You can’t block yourself.
+La alineación tiene que tener entre 1 y 4 jugadores distintos. => The line-up has to have between 1 and 4 different players.
+Como mucho 2 jugadores de revés y 2 de drive. => At most 2 left-side and 2 right-side players.
+En esta liga, como mucho 2 chicos y 2 chicas. => In this league, at most 2 men and 2 women.
+Elige tu Pala de Oro entre los titulares. => Choose your Golden Racket from the starters.
