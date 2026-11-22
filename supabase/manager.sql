@@ -5,7 +5,7 @@
 -- del fantasy anterior (supabase/fantasy.sql), que ya está instalada.
 --
 -- Reglas:
---   · Ligas de hasta 50 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
+--   · Ligas de hasta 60 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
 --   · Cada jugador solo puede ser de un mánager dentro de la liga.
 --   · Al entrar, un sobre con 4 jugadores (2 de relleno, 1 bueno del 21 al 40
 --     y 1 estrella; el top 6 sale muy poco) que vale entre 45 y 60 M, y 100 M para fichar.
@@ -180,7 +180,7 @@ language sql immutable as $$
     when 'sobre_max'  then 60       -- valor máximo del sobre inicial
     when 'liga_oferta' then 0.10    -- la liga ofrece por lo que está en venta: valor ± 10 %
     when 'plantilla'  then 6        -- jugadores como máximo
-    when 'miembros'   then 50       -- mánagers por liga
+    when 'miembros'   then 60       -- mánagers por liga
     when 'mercado'    then 8        -- jugadores libres en el mercado diario
     when 'credito'    then 0.2      -- se puede pujar hasta caja + 20 % de la plantilla
     when 'clausula'   then 1.25     -- cláusula inicial = 1,25 × lo pagado
@@ -338,7 +338,7 @@ begin
     if d < mejor_d then mejor_d := d; mejor := array[r1, r2, bue, est]; end if;   -- orden del sobre: de peor a mejor
     exit when d = 0;
   end loop;
-  if mejor is null then raise exception 'No quedan jugadores libres para el sobre.'; end if;
+  if mejor is null then raise exception 'Esta liga ya no tiene jugadores libres para repartir más sobres. Las ligas solo masculinas o solo femeninas tienen menos jugadores: para ligas muy grandes, crea una liga mixta.'; end if;
   elegidos := mejor;
   insert into m_plantilla (liga, jugador, user_id, precio, clausula, protegido)
     select p_liga, j.id, p_user, j.valor, round(j.valor * m_cfg('clausula'), 1), now() + make_interval(days => m_cfg('proteccion')::int)
