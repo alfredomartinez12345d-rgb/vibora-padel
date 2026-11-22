@@ -1450,7 +1450,7 @@ function mxLigaView(msg){const L=mx.L,yo=L.yo,tab=mx.tab,tit={clas:'Clasificaci�
   const falta=k=>({R:'un revés',D:'un drive',M:'un chico',F:'una chica'})[k];
   const motivo=gu.length<4?`tienes ${gu.length} de 4 en la pista`:['R','D',...(vg.X?['M','F']:[])].filter(k=>vg.n[k]<2).map(k=>'te falta '+falta(k)).join(' y ');
   const avisoAli=blo?'':sucio?`<div class="card mxali" style="border-color:var(--gold)"><span>💾 <b>Tienes cambios sin guardar</b> en tu alineación.</span>${mxValida(mx.borr.j).ok?'<button type="button" class="btn pri" data-mx="alinear">Guardar</button>':'<button type="button" class="btn" data-mxtab="plan">Revisar</button>'}</div>`
-    :!vg.ok?`<div class="card mxali" style="border-color:var(--red)"><span>⚠️ <b>Tu alineación está incompleta:</b> ${motivo}. Si empieza el torneo así, puntúas menos.</span>${mx.tab!=='plan'?'<button type="button" class="btn" data-mxtab="plan">Arreglar</button>':''}</div>`:'';
+    :!vg.full?`<div class="card mxali" style="border-color:var(--red)"><span>⚠️ <b>Tu alineación está incompleta:</b> ${motivo}. Si empieza el torneo así, puntúas menos.</span>${mx.tab!=='plan'?'<button type="button" class="btn" data-mxtab="plan">Arreglar</button>':''}</div>`:'';
   const pj=(L.pujas||[]).reduce((a,p)=>a+(+p.cantidad),0),queda=yo.caja-pj;
   const puj=pj?`<button type="button" class="mxpuj" data-mxtab="merc"><span>🛒 En pujas <b style="color:var(--red)">−${mxM(pj)}</b></span><span>Si las ganas todas: <b style="color:${queda<0?'var(--red)':'var(--mint)'}">${mxM(queda)}</b></span></button>`:'';
   return `${head}${puj}${avisoAli}${msg}${neg}${body}${tabs}`}
@@ -1463,7 +1463,8 @@ function mxTabClas(){const L=mx.L,ts=mxTorneos();let sel=mx.tor;if(sel!=='total'
   <div style="display:flex;flex-direction:column;gap:8px">${filas.map((f,i)=>`<button type="button" class="mxrow${f.m.id===L.yo.id?' yo':''}" data-mxriv="${f.m.id}"><span class="n">${i+1}</span>${mxAv(f.m.nombre,f.m.id)}<span class="tx"><b>${esc(f.m.nombre)}${f.m.id===L.yo.id?' (tú)':''}${f.m.id===L.liga.creador?' <span title="Creó la liga">👑</span>':''}</b><small>${f.m.jugadores.length} jugadores · ${mxM(f.m.valor)}</small></span><span class="pt">${sel==='total'?'':'+'}${Math.round(f.pts)}</span></button>`).join('')}</div>
   ${!ts.length?`<p class="sub">Los puntos empiezan a contar cuando empiece el próximo torneo Premier. Las alineaciones se bloquean ese día.</p>`:''}`}
 function mxValida(j){const n={R:0,D:0,M:0,F:0};j.forEach(i=>{n[mxLado(i)]++;n[mxGen(i)]++});const X=mx.L.liga.genero==='X';
-  return{n,ok:j.length===4&&n.R===2&&n.D===2&&(!X||n.M===2&&n.F===2),X}}
+  /* ok: se puede guardar (también incompleta); full: las 4 posiciones cubiertas */
+  return{n,ok:j.length>=1&&n.R<=2&&n.D<=2&&(!X||n.M<=2&&n.F<=2),full:j.length===4&&n.R===2&&n.D===2&&(!X||n.M===2&&n.F===2),X}}
 function mxTabPlan(){const L=mx.L,yo=mxYo(),sub=mx.sub,blo=L.estado&&L.estado.bloqueado;
   const seg=`<div class="mxseg"><button type="button" data-mxsub="ali" aria-pressed="${sub==='ali'}">Alineación</button><button type="button" data-mxsub="pts" aria-pressed="${sub==='pts'}">Puntos</button></div>`;
   if(sub==='pts')return seg+mxPuntos();
