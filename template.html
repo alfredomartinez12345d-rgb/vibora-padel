@@ -1385,7 +1385,7 @@ function mxCrear(msg){const c=mx.crear;return `<div class="mxhead"><div class="t
   <span class="mxlbl">¿A quién se puede fichar?</span><div class="mxseg">${['M','X','F'].map(g=>`<button type="button" data-mxg="${g}" aria-pressed="${c.g===g}">${GEN[g]}</button>`).join('')}</div>
   <span class="sub" style="font-size:12px">Se refiere a los jugadores profesionales del fantasy. A la liga se puede apuntar cualquiera.</span>
   <div style="display:flex;justify-content:space-between;align-items:center"><span class="mxlbl">💥 Clausulazos</span><span class="mxseg mxsino"><button type="button" data-mxc="1" data-v="1" aria-pressed="${c.c}">Sí</button><button type="button" data-mxc="0" data-v="0" aria-pressed="${!c.c}">No</button></span></div>
-  <span class="sub" style="font-size:12px">Máximo 68 mánagers. Cada jugador solo puede ser de uno.</span>
+  <span class="sub" style="font-size:12px">Máximo 58 mánagers. Cada jugador solo puede ser de uno.</span>
   <button class="btn mxyel" type="submit"${mx.ocupado?' disabled':''}>➕ Crear liga</button><span class="sub" style="font-size:12px;text-align:center">⚠ Lo que se puede fichar y los clausulazos no se pueden cambiar después.</span></form>
   <button type="button" class="btn" data-mx="v-como">← Volver</button>`}
 function mxUnirse(msg){const p=mx.prev;return `<div class="mxhead"><div class="tt"><h1>Unirme a la liga de mis amigos</h1></div></div>${msg}
@@ -1393,7 +1393,7 @@ function mxUnirse(msg){const p=mx.prev;return `<div class="mxhead"><div class="t
   <input id="mxcod" class="mxcod" maxlength="6" minlength="6" required autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(mx.cod)}" placeholder="······">
   <span class="sub" style="font-size:12px">Te lo pasa quien creó la liga (lo tiene en «🔗 Invitar»). Si te mandan el enlace por WhatsApp, entras sin escribir nada.</span>
   ${p?`<div class="card" style="background:var(--surface2);display:flex;flex-direction:column;gap:8px"><b style="font-family:var(--display);font-style:italic;font-size:26px;text-transform:uppercase;line-height:1">🔒 ${esc(p.nombre)}</b>
-    <div class="mxprev"><span>Jugadores</span><b>${GEN[p.genero]}</b></div><div class="mxprev"><span>Clausulazos</span><b style="color:${p.clausulas?'var(--mint)':'var(--red)'}">💥 ${p.clausulas?'Sí':'No'}</b></div><div class="mxprev"><span>Mánagers</span><b>👥 ${p.miembros} de 68</b></div></div>`:p===false?'<p class="fxmsg">No hay ninguna liga con ese código.</p>':''}
+    <div class="mxprev"><span>Jugadores</span><b>${GEN[p.genero]}</b></div><div class="mxprev"><span>Clausulazos</span><b style="color:${p.clausulas?'var(--mint)':'var(--red)'}">💥 ${p.clausulas?'Sí':'No'}</b></div><div class="mxprev"><span>Mánagers</span><b>👥 ${p.miembros} de 58</b></div></div>`:p===false?'<p class="fxmsg">No hay ninguna liga con ese código.</p>':''}
   <button class="btn mxyel" type="submit"${!p||p.lleno||mx.ocupado?' disabled':''}>${p&&p.lleno?'Liga llena':'🔑 Unirme'}</button></form>
   <button type="button" class="btn" data-mx="v-como">← Volver</button>`}
 function mxMisLigas(msg){const anon=mx.ses.user&&mx.ses.user.is_anonymous,pend=mx.ses.user&&mx.ses.user.new_email;
@@ -1401,7 +1401,7 @@ function mxMisLigas(msg){const anon=mx.ses.user&&mx.ses.user.is_anonymous,pend=m
     <p class="sub" style="margin:8px 0">Así no la pierdes si cambias de móvil o borras la app.</p>
     ${pend?`<p class="fxmsg ok">Revisa tu correo (${esc(pend)}) y pulsa el enlace.</p>`:`<form class="fxform" data-fx="vincular"><input id="fxmail2" type="email" required autocomplete="email" placeholder="tu@correo.com"><button class="btn" type="submit">Guardar con mi email</button></form>`}</details>`:'';
   return `<div class="mxhead"><div class="tt"><small>${esc(mx.perfil.nombre)}</small><h1>Mis ligas</h1></div><a class="back" href="#fantasy" data-fx="salir">Salir</a></div>${msg}
-  <div class="list" style="display:flex;flex-direction:column;gap:10px">${mx.ligas.map(l=>`<button type="button" class="card mxl" data-mxliga="${l.id}"><span style="font-size:22px">🔒</span><span class="nm"><b>${esc(l.nombre)}</b><small>${GEN[l.genero]} · 👥 ${l.miembros}/68 mánagers${l.clausulas?' · 💥':''}</small></span><span class="pos">${l.puesto}º<small>de ${l.miembros}</small></span></button>`).join('')}</div>
+  <div class="list" style="display:flex;flex-direction:column;gap:10px">${mx.ligas.map(l=>`<button type="button" class="card mxl" data-mxliga="${l.id}"><span style="font-size:22px">🔒</span><span class="nm"><b>${esc(l.nombre)}</b><small>${GEN[l.genero]} · 👥 ${l.miembros}/58 mánagers${l.clausulas?' · 💥':''}</small></span><span class="pos">${l.puesto}º<small>de ${l.miembros}</small></span></button>`).join('')}</div>
   <button type="button" class="btn" data-mx="v-como" style="align-self:stretch;padding:12px">+ Unirme o crear otra liga</button>${mxPushCard()}${guardar}`}
 
 function mxLigaView(msg){const L=mx.L,yo=L.yo,tab=mx.tab,tit={clas:'Clasificación',plan:'Plantilla',merc:'Mercado',vest:'Vestuario'}[tab];

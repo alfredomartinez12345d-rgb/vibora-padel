@@ -5,7 +5,7 @@
 -- del fantasy anterior (supabase/fantasy.sql), que ya está instalada.
 --
 -- Reglas:
---   · Ligas de hasta 68 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
+--   · Ligas de hasta 58 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
 --   · Cada jugador solo puede ser de un mánager dentro de la liga.
 --   · Al entrar, un sobre con 4 jugadores (2 de relleno, 1 bueno del 21 al 40
 --     y 1 estrella; el top 6 sale muy poco) que vale entre 45 y 60 M, y 100 M para fichar.
@@ -180,7 +180,7 @@ language sql immutable as $$
     when 'sobre_max'  then 60       -- valor máximo del sobre inicial
     when 'liga_oferta' then 0.10    -- la liga ofrece por lo que está en venta: valor ± 10 %
     when 'plantilla'  then 6        -- jugadores como máximo
-    when 'miembros'   then 68       -- mánagers por liga
+    when 'miembros'   then 58       -- mánagers por liga
     when 'mercado'    then 8        -- jugadores libres en el mercado diario
     when 'credito'    then 0.2      -- se puede pujar hasta caja + 20 % de la plantilla
     when 'clausula'   then 1.25     -- cláusula inicial = 1,25 × lo pagado
