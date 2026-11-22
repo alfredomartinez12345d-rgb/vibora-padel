@@ -340,10 +340,12 @@ begin
   end loop;
   if mejor is null then raise exception 'Esta liga ya no tiene jugadores libres para repartir más sobres. Las ligas solo masculinas o solo femeninas tienen menos jugadores: para ligas muy grandes, crea una liga mixta.'; end if;
   elegidos := mejor;
+  -- Si el sobre vale menos de 45 M (en ligas grandes se acaban los buenos), la diferencia va a la caja
+  select sum(valor) into v from m_jugadores where id = any(elegidos);
   insert into m_plantilla (liga, jugador, user_id, precio, clausula, protegido)
     select p_liga, j.id, p_user, j.valor, round(j.valor * m_cfg('clausula'), 1), now() + make_interval(days => m_cfg('proteccion')::int)
     from m_jugadores j where j.id = any(elegidos);
-  update m_miembros set caja = m_cfg('caja_ini'), sobre = elegidos
+  update m_miembros set caja = m_cfg('caja_ini') + greatest(vmin - coalesce(v, vmin), 0), sobre = elegidos
     where liga = p_liga and user_id = p_user;
   insert into m_alineacion (liga, user_id, jugadores, capitan) values (p_liga, p_user, elegidos, elegidos[4])
     on conflict (liga, user_id) do update set jugadores = excluded.jugadores, capitan = excluded.capitan;
