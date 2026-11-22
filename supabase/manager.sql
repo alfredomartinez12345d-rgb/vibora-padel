@@ -799,13 +799,15 @@ begin
   if not found then raise exception 'Esa oferta ya no está pendiente.'; end if;
 end $$;
 
--- Cambia los jugadores que ya no están en el top 100 por otros del 41 al 100 (mismo lado y género), gratis
+-- Cambia los jugadores que ya no están en el top 100 por otros del 41 al 100 (mismo lado y género), gratis (solo en ligas de hasta 16)
 create or replace function public.m_reemplazar_fuera() returns int
 language plpgsql security definer set search_path = public as $$
 declare r record; nuevo int; n int := 0;
 begin
   for r in select p.liga, p.user_id, p.jugador, j.genero, j.lado from m_plantilla p join m_jugadores j on j.id = p.jugador
-           where coalesce(j.rank, 999) > m_cfg('top') loop
+           where coalesce(j.rank, 999) > m_cfg('top')
+             -- en ligas de más de 16 mánagers se permiten jugadores fuera del top 100: no se tocan
+             and (select count(*) from m_miembros m where m.liga = p.liga) <= 16 loop
     nuevo := m_escoger(r.liga, 41, 100, r.genero, r.lado, null);
     if nuevo is null then nuevo := m_escoger(r.liga, 1, 100, r.genero, r.lado, null); end if;
     continue when nuevo is null;
