@@ -748,3 +748,4 @@ femenino => women’s
 re: Previa · Ronda (\d+) => Qualifying · Round $1
 Previa => Qualifying
 Previa leída de la web oficial de Premier Padel. => Qualifying read from the official Premier Padel website.
+🔓 Excepción: abierta hasta las => 🔓 Exception: open until

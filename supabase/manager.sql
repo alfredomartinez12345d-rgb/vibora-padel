@@ -156,6 +156,7 @@ alter table public.m_estado add column if not exists proximo int;               
 alter table public.m_estado add column if not exists proximo_nombre text;
 alter table public.m_estado add column if not exists proximo_bloqueo timestamptz;  -- cuándo se congelan las alineaciones
 alter table public.m_estado add column if not exists aviso_bloqueo int;            -- torneo del que ya se avisó
+alter table public.m_estado add column if not exists abierto_hasta timestamptz;    -- excepción: con el torneo empezado, se puede alinear y negociar hasta esta hora
 create table if not exists public.m_config (clave text primary key, valor text);
 create table if not exists public.m_avisos (user_id uuid primary key references public.perfiles on delete cascade, activo boolean not null default true);
 insert into public.m_config values ('onesignal_app', '6f1f07fb-b432-4b84-9fb0-3367f1be7e51'),
@@ -203,7 +204,8 @@ $$;
 
 -- --- Ayudantes -------------------------------------------------------------------
 create or replace function public.m_bloqueado() returns boolean
-language sql stable as $$ select coalesce((select bloqueado from public.m_estado where id = 1), false) $$;
+language sql stable as $$
+  select coalesce((select bloqueado and not coalesce(abierto_hasta > now(), false) from public.m_estado where id = 1), false) $$;
 
 create or replace function public.m_soy(p_liga uuid) returns void
 language plpgsql stable security definer set search_path = public as $$
@@ -584,7 +586,7 @@ begin
                  'estado', case when o.estado = 'pendiente' and o.creada < now() - make_interval(hours => m_cfg('oferta_h')::int) then 'caducada' else o.estado end,
                  'creada', o.creada) order by o.creada desc), '[]')
                 from m_ofertas o where o.liga = p_liga and (o.de = yo or o.para = yo) and o.creada > now() - interval '7 days'),
-    'estado', (select to_jsonb(e) from m_estado e where id = 1),
+    'estado', (select to_jsonb(e) || jsonb_build_object('bloqueado', m_bloqueado()) from m_estado e where id = 1),
     'yo', (select jsonb_build_object('id', yo, 'avisos', coalesce((select activo from m_avisos where user_id = yo), false), 'caja', caja, 'sobre', sobre, 'sobre_visto', sobre_visto,
               'clausulazo_hoy', clausulazo = (now() at time zone 'Europe/Madrid')::date)
            from m_miembros where liga = p_liga and user_id = yo),
@@ -870,12 +872,12 @@ begin
 end $$;
 
 -- --- Lo que hace GitHub (clave service_role) ------------------------------------------------
-create or replace function public.m_bloquear(p_torneo int, p_nombre text) returns int
+-- Foto de las alineaciones de todos para un torneo (con p_rehacer, sustituye la que hubiera)
+create or replace function public.m_foto(p_torneo int, p_rehacer boolean) returns int
 language plpgsql security definer set search_path = public as $$
 declare n int;
 begin
-  update m_estado set bloqueado = true, torneo = p_torneo, torneo_nombre = p_nombre, actualizado = now() where id = 1;
-  insert into m_torneos (id, nombre) values (p_torneo, p_nombre) on conflict (id) do nothing;
+  if p_rehacer then delete from m_fotos where torneo = p_torneo; end if;
   insert into m_fotos (liga, user_id, torneo, jugadores, capitan, negativo)
     select a.liga, a.user_id, p_torneo,
            coalesce((select array_agg(x) from unnest(a.jugadores) x
@@ -884,6 +886,48 @@ begin
     from m_alineacion a join m_miembros m on m.liga = a.liga and m.user_id = a.user_id
   on conflict (liga, user_id, torneo) do nothing;
   get diagnostics n = row_count;
+  return n;
+end $$;
+
+-- Excepción: con el torneo ya empezado, dejar alinear, ofertar y traspasar hasta p_hasta. Al llegar esa hora
+-- (lo mira m_procesar_todas cada minuto) se rehace la foto de las alineaciones y vuelve el bloqueo.
+-- Uso en el SQL Editor: select m_excepcion('2026-11-22 23:59 Europe/Madrid');
+create or replace function public.m_excepcion(p_hasta timestamptz) returns text
+language plpgsql security definer set search_path = public as $$
+declare e m_estado;
+begin
+  select * into e from m_estado where id = 1;
+  if not e.bloqueado then return 'No hay ningún torneo bloqueado: no hace falta excepción.'; end if;
+  if p_hasta <= now() then raise exception 'La hora tiene que ser futura.'; end if;
+  update m_estado set abierto_hasta = p_hasta where id = 1;
+  perform m_push((select array_agg(distinct user_id) from m_miembros), '🔓 Alineaciones abiertas',
+    'Excepción en el ' || coalesce(e.torneo_nombre, 'torneo') || ': puedes cambiar tu alineación y hacer ofertas hasta las '
+    || to_char(p_hasta at time zone 'Europe/Madrid', 'HH24:MI') || ' (hora de España).');
+  return 'Abierto hasta ' || to_char(p_hasta at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ' (hora de España)';
+end $$;
+
+-- Al acabar la excepción: nueva foto de las alineaciones y otra vez bloqueado
+create or replace function public.m_cerrar_excepcion() returns void
+language plpgsql security definer set search_path = public as $$
+declare e m_estado;
+begin
+  select * into e from m_estado where id = 1 for update;
+  if e.abierto_hasta is null or e.abierto_hasta > now() then return; end if;
+  update m_estado set abierto_hasta = null where id = 1;
+  if e.bloqueado and e.torneo is not null then
+    perform m_foto(e.torneo, true);
+    perform m_push((select array_agg(distinct user_id) from m_fotos where torneo = e.torneo),
+                   '🔒 Alineaciones cerradas', 'Tu equipo para el ' || coalesce(e.torneo_nombre, 'torneo') || ' queda bloqueado. ¡Suerte!');
+  end if;
+end $$;
+
+create or replace function public.m_bloquear(p_torneo int, p_nombre text) returns int
+language plpgsql security definer set search_path = public as $$
+declare n int;
+begin
+  update m_estado set bloqueado = true, torneo = p_torneo, torneo_nombre = p_nombre, actualizado = now() where id = 1;
+  insert into m_torneos (id, nombre) values (p_torneo, p_nombre) on conflict (id) do nothing;
+  n := m_foto(p_torneo, false);
   perform m_push((select array_agg(distinct user_id) from m_fotos where torneo = p_torneo and not negativo),
                  '🔒 Empieza el ' || p_nombre, 'Tu equipo queda bloqueado. ¡Suerte!');
   perform m_push((select array_agg(distinct user_id) from m_fotos where torneo = p_torneo and negativo),
@@ -917,6 +961,7 @@ create or replace function public.m_procesar_todas() returns int
 language plpgsql security definer set search_path = public as $$
 declare l uuid; n int := 0;
 begin
+  perform m_cerrar_excepcion();
   for l in select id from m_ligas where cierre <= now() loop
     perform m_procesar(l); n := n + 1;
   end loop;
@@ -1004,9 +1049,10 @@ drop policy if exists leer on public.m_puntos;    create policy leer on public.m
 revoke execute on function public.m_soy(uuid), public.m_valor_plantilla(uuid, uuid), public.m_quitar_de_alineacion(uuid, uuid, int),
   public.m_log(uuid, text, uuid, uuid, int, numeric), public.m_libres(uuid), public.m_escoger(uuid, int, int, char, char, int[]),
   public.m_nuevo_mercado(uuid), public.m_dar_sobre(uuid, uuid), public.m_procesar(uuid), public.m_pts_foto(public.m_fotos),
-  public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(),
+  public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_cerrar_excepcion(),
+  public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(),
   public.m_push(uuid[], text, text), public.m_tick() from public, anon, authenticated;
-grant execute on function public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
+grant execute on function public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_cerrar_excepcion(), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
 revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
