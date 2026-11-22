@@ -384,11 +384,20 @@ nav.bot a[hidden]{display:none}
 .mxpuj{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;width:100%;font:inherit;font-size:13px;color:var(--muted);background:rgba(255,93,108,.08);border:1px solid rgba(255,93,108,.35);border-radius:12px;padding:8px 12px;cursor:pointer;text-align:left}
 .mxpuj b{font-family:var(--display);font-size:16px}
 .mxcaja.neg{color:var(--red);border-color:var(--red)}
-.mxtabs{position:sticky;bottom:calc(88px + env(safe-area-inset-bottom));z-index:5;display:grid;grid-template-columns:repeat(5,1fr);background:rgba(20,23,46,.95);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:18px;padding:4px;margin-top:auto}
+.mxtabs{position:sticky;bottom:calc(88px + env(safe-area-inset-bottom));z-index:5;display:grid;grid-template-columns:repeat(6,1fr);background:rgba(20,23,46,.95);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:18px;padding:4px;margin-top:auto}
 .mxtabs button{font:inherit;font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:12px;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
 .mxtabs button i{font-style:normal;font-size:19px;line-height:1;height:20px;display:flex;align-items:center;opacity:.8}
 .mxtabs button[aria-current="page"]{color:#fff;background:var(--surface2)}.mxtabs button[aria-current="page"] i{opacity:1}
 .mxtabs .ico{width:20px;height:20px}
+.mxchat{display:flex;flex-direction:column;gap:6px;max-height:calc(100dvh - 360px);min-height:220px;overflow-y:auto;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overscroll-behavior:contain}
+.mxmsg{max-width:82%;align-self:flex-start;background:var(--surface2);border-radius:14px 14px 14px 4px;padding:7px 10px;font-size:14px;line-height:1.35;color:var(--ink);cursor:pointer;word-wrap:break-word;overflow-wrap:anywhere;white-space:pre-wrap;border:0;text-align:left;font-family:inherit}
+.mxmsg.yo{align-self:flex-end;background:var(--blue);color:#fff;border-radius:14px 14px 4px 14px}
+.mxmsg small{display:block;font-size:11px;opacity:.7;margin-top:2px}.mxmsg b{display:block;font-size:12px;color:var(--cyan);margin-bottom:1px}
+.mxmsg.del{font-style:italic;opacity:.6}
+.mxmacc{display:flex;gap:6px;flex-wrap:wrap;align-self:flex-start}.mxmacc.yo{align-self:flex-end}
+.mxmacc button{font:inherit;font-size:12px;padding:5px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.mxchatf{display:flex;gap:8px}.mxchatf input{flex:1;min-width:0;font:inherit;font-size:16px;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.mxdia{align-self:center;font-size:11px;color:var(--muted);padding:2px 8px}
 .mxdot{position:absolute;top:0;right:14%;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:999px;padding:0 5px;line-height:15px}
 .mxrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);width:100%;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
 .mxrow.yo{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
@@ -1432,11 +1441,11 @@ function mxMisLigas(msg){const anon=mx.ses.user&&mx.ses.user.is_anonymous,pend=m
   <div class="list" style="display:flex;flex-direction:column;gap:10px">${mx.ligas.map(l=>`<button type="button" class="card mxl" data-mxliga="${l.id}"><span style="font-size:22px">${l.publica?'🌍':'🔒'}</span><span class="nm"><b>${esc(l.nombre)}</b><small>${GEN[l.genero]} · 👥 ${l.miembros}/58 mánagers${l.clausulas?' · 💥':''}</small></span><span class="pos">${l.puesto}º<small>de ${l.miembros}</small></span></button>`).join('')}</div>
   <button type="button" class="btn" data-mx="v-como" style="align-self:stretch;padding:12px">+ Unirme o crear otra liga</button>${mxPushCard()}${guardar}`}
 
-function mxLigaView(msg){const L=mx.L,yo=L.yo,tab=mx.tab,tit={clas:'Clasificación',plan:'Plantilla',merc:'Mercado',vest:'Vestuario'}[tab];
+function mxLigaView(msg){const L=mx.L,yo=L.yo,tab=mx.tab,tit={clas:'Clasificación',plan:'Plantilla',merc:'Mercado',vest:'Vestuario',chat:'Chat'}[tab];
   const head=`<div class="mxhead"><div class="tt"><small>${esc(L.liga.nombre)}</small><h1>${tit}</h1></div>${tab==='clas'?'<button type="button" class="mxpill" data-mx="invitar">🔗 Invitar</button>':''}<button type="button" class="mxpill" data-mx="reglas" aria-label="Cómo puntúa">ⓘ</button><span class="mxcaja${yo.caja<0?' neg':''}">${mxM(yo.caja)}</span></div>`;
   const neg=yo.caja<0?`<div class="card" style="border-color:var(--red)"><b>⚠ Estás en ${mxM(yo.caja)}</b><p class="sub" style="margin-top:4px">Si empieza el torneo así, no puntúas en todo el torneo. Vende a alguien desde tu plantilla.</p></div>`:'';
-  const body=tab==='clas'?mxTabClas():tab==='plan'?mxTabPlan():tab==='merc'?mxTabMerc():mxTabVest();
-  const tabs=`<nav class="mxtabs" aria-label="Secciones de la liga">${[['ligas','🏟️','Ligas'],['clas','🏆','Clasif.'],['plan',PALA,'Plantilla'],['merc','🛒','Mercado'],['vest',CAMI,'Vestuario']].map(([k,i,l])=>`<button type="button" data-mxtab="${k}"${tab===k?' aria-current="page"':''} style="position:relative"><i>${i}</i>${l}${k==='vest'&&mxPend().length?`<span class="mxdot">${mxPend().length}</span>`:''}</button>`).join('')}</nav>`;
+  const body=tab==='clas'?mxTabClas():tab==='plan'?mxTabPlan():tab==='merc'?mxTabMerc():tab==='chat'?mxTabChat():mxTabVest();
+  const tabs=`<nav class="mxtabs" aria-label="Secciones de la liga">${[['ligas','🏟️','Ligas'],['clas','🏆','Clasif.'],['plan',PALA,'Plantilla'],['merc','🛒','Mercado'],['vest',CAMI,'Vestuario'],['chat','💬','Chat']].map(([k,i,l])=>`<button type="button" data-mxtab="${k}"${tab===k?' aria-current="page"':''} style="position:relative"><i>${i}</i>${l}${k==='vest'&&mxPend().length?`<span class="mxdot">${mxPend().length}</span>`:''}${k==='chat'&&L.chat_sin_leer?`<span class="mxdot" id="mxchatdot">${L.chat_sin_leer>99?'99+':L.chat_sin_leer}</span>`:''}</button>`).join('')}</nav>`;
   const blo=L.estado&&L.estado.bloqueado,gu=mx.borr.guardada||[],vg=mxValida(gu),sucio=JSON.stringify(gu)!==JSON.stringify(mx.borr.j);mx.borr.sucio=sucio;
   const falta=k=>({R:'un revés',D:'un drive',M:'un chico',F:'una chica'})[k];
   const motivo=gu.length<4?`tienes ${gu.length} de 4 en la pista`:['R','D',...(vg.X?['M','F']:[])].filter(k=>vg.n[k]<2).map(k=>'te falta '+falta(k)).join(' y ');
@@ -1494,6 +1503,49 @@ function mxActTxt(a){const j=a.jugador?`<b>${esc(mxNom(a.jugador))}</b>`:'',q=`<
     traspaso:['🤝',`${q} ha traspasado a ${j} a ${o} por ${c}`],cambio:['🔁',`${q} recibe a ${j} a cambio de un jugador fuera del top 100`],
     echa:['🚪',`${q} ha echado a ${o} de la liga`],sale:['👋',`${q} se ha ido de la liga`]}[a.tipo]||['•',a.tipo]}
 function hace(ts){const s=(Date.now()-new Date(ts))/1000;return s<3600?`hace ${Math.max(1,Math.round(s/60))} min`:s<86400?`hace ${Math.round(s/3600)} h`:s<172800?'ayer':fd(new Date(ts).toISOString().slice(0,10))}
+/* ---------- Chat: el de la liga (todos) y los privados (dos mánagers de la liga) ---------- */
+mx.chat={v:'liga',datos:null,lista:null,sel:null,carga:0};
+const mxChatCanal=()=>mx.chat.v==='liga'?null:mx.chat.v==='priv'?undefined:mx.chat.v;   /* null: liga · uuid: privado · undefined: lista */
+function mxHoraMsg(ts){const d=new Date(ts),h=d.toLocaleTimeString(LOC,{hour:'2-digit',minute:'2-digit'});return new Date().toDateString()===d.toDateString()?h:fd(d.toISOString().slice(0,10))+' '+h}
+function mxChatMsgs(){const L=mx.L,d=mx.chat.datos,yo=L.yo.id,priv=mx.chat.v!=='liga';if(!d)return '<p class="sub" style="text-align:center;padding:30px 0">Cargando…</p>';
+  if(!d.mensajes.length)return `<p class="sub" style="text-align:center;padding:30px 8px">${priv?'Todavía no os habéis escrito. ¡Rompe el hielo!':'Todavía no hay mensajes en la liga. ¡Escribe el primero!'}</p>`;
+  let dia='';return d.mensajes.map(m=>{const mio=m.de===yo,k=new Date(m.creado).toDateString(),sep=k!==dia?(dia=k,`<span class="mxdia">${new Date().toDateString()===k?'Hoy':fd(new Date(m.creado).toISOString().slice(0,10))}</span>`):'';
+    const sel=mx.chat.sel===m.id&&!m.borrado,nom=m.nombre||'Alguien';
+    const acc=sel?`<div class="mxmacc${mio?' yo':''}">${mio?`<button type="button" data-mx="chat-borrar" data-id="${m.id}">🗑️ Borrar</button>`:`<button type="button" data-mx="chat-denunciar" data-id="${m.id}">🚩 Denunciar</button><button type="button" data-mx="chat-bloquear" data-u="${m.de}" data-n="${esc(nom)}">🚫 Bloquear a ${esc(nom)}</button>${priv?'':`<button type="button" data-mx="chat-con" data-u="${m.de}">✉️ Escribirle en privado</button>`}`}</div>`:'';
+    return `${sep}<button type="button" class="mxmsg${mio?' yo':''}${m.borrado?' del':''}" data-mx="chat-sel" data-id="${m.id}">${!mio&&!priv?`<b>${esc(nom)}</b>`:''}${m.borrado?'Mensaje borrado':esc(m.texto)}<small>${mxHoraMsg(m.creado)}</small></button>${acc}`}).join('')}
+function mxTabChat(){const L=mx.L,c=mx.chat,li=c.lista,v=c.v,pr=li?li.privados.reduce((a,x)=>a+x.sin_leer,0):0,nl=li?li.liga.sin_leer:0;
+  if(Date.now()-c.carga>4000)setTimeout(()=>mxChatCargar(),0);
+  const seg=`<div class="mxseg"><button type="button" data-mx="chat-liga" aria-pressed="${v==='liga'}">💬 La liga${nl?` (${nl})`:''}</button><button type="button" data-mx="chat-priv" aria-pressed="${v!=='liga'}">✉️ Privados${pr?` (${pr})`:''}</button></div>`;
+  const form=(ph,dis)=>`<form class="mxchatf" id="mxchatf"><input id="mxchatt" maxlength="500" autocomplete="off" enterkeyhint="send" placeholder="${ph}"${dis?' disabled':''}><button class="btn pri" type="submit"${dis?' disabled':''}>Enviar</button></form>`;
+  if(v==='liga')return `${seg}<div class="mxchat" id="mxchatbox">${mxChatMsgs()}</div>${form('Escribe a toda la liga…')}<p class="sub" style="font-size:12px">Lo ven todos los mánagers de «${esc(L.liga.nombre)}». Toca un mensaje para denunciarlo o bloquear a quien lo escribió.</p>`;
+  if(v==='priv'){const ya=new Set((li?li.privados:[]).map(x=>x.con)),otros=L.miembros.filter(m=>m.id!==L.yo.id&&!ya.has(m.id));
+    const conv=li?li.privados.map(x=>`<button type="button" class="mxrow" data-mx="chat-con" data-u="${x.con}">${mxAv(x.nombre||'?',x.con)}<span class="tx"><b>${esc(x.nombre||'Alguien')}</b><small>${x.mio?'Tú: ':''}${x.texto==null?'<i>Mensaje borrado</i>':esc(x.texto.slice(0,60))}</small></span>${x.sin_leer?`<span class="mxdot" style="position:static">${x.sin_leer}</span>`:''}</button>`).join(''):'';
+    return `${seg}${li&&!li.privados.length?'<p class="sub" style="text-align:center;padding:14px 0">Aún no tienes conversaciones privadas.</p>':''}<div style="display:flex;flex-direction:column;gap:8px">${conv}</div>
+    ${otros.length?`<details class="card"><summary><b>✉️ Escribir a…</b></summary><div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">${otros.map(m=>`<button type="button" class="mxrow" data-mx="chat-con" data-u="${m.id}">${mxAv(m.nombre,m.id)}<span class="tx"><b>${esc(m.nombre)}</b></span></button>`).join('')}</div></details>`:''}`}
+  const m=L.miembros.find(x=>x.id===v),nom=m?m.nombre:((li&&li.privados.find(x=>x.con===v))||{}).nombre||'Mánager',d=c.datos||{};
+  return `${seg}<div style="display:flex;align-items:center;gap:10px"><button type="button" class="mxpill" data-mx="chat-priv">←</button>${mxAv(nom,v)}<b style="flex:1">${esc(nom)}</b>${d.bloqueado?`<button type="button" class="mxpill" data-mx="chat-desbloquear" data-u="${v}">Desbloquear</button>`:`<button type="button" class="mxpill" data-mx="chat-bloquear" data-u="${v}" data-n="${esc(nom)}">🚫 Bloquear</button>`}</div>
+  <div class="mxchat" id="mxchatbox">${mxChatMsgs()}</div>${d.bloqueado?'<p class="sub">Has bloqueado a este mánager: no ves sus mensajes y no te puede escribir.</p>':d.me_bloquea?'<p class="sub">Este mánager no acepta tus mensajes.</p>':!m?'<p class="sub">Este mánager ya no está en la liga.</p>':form('Escribe a '+nom+'…')}`}
+/* Carga sin repintar toda la pantalla (para no perder lo que se está escribiendo) */
+async function mxChatCargar(){const c=mx.chat,liga=mx.liga;if(!mx.sb||!liga)return;c.carga=Date.now();const canal=mxChatCanal();
+  const [l,d]=await Promise.all([mx.sb.rpc('m_chats',{p_liga:liga}),canal===undefined?Promise.resolve(null):mx.sb.rpc('m_chat',{p_liga:liga,p_con:canal,p_antes:null})]);
+  if(mx.liga!==liga||mx.tab!=='chat'||mxChatCanal()!==canal)return;
+  if(l&&!l.error)c.lista=l.data;if(d&&!d.error)c.datos=d.data;
+  const box=document.getElementById('mxchatbox'),abajo=!box||box.scrollHeight-box.scrollTop-box.clientHeight<80,nuevo=!box||box.dataset.n!==String((c.datos&&c.datos.mensajes.length)||0)+(c.datos&&c.datos.mensajes.length?c.datos.mensajes[c.datos.mensajes.length-1].id:'');
+  if(mx.L)mx.L.chat_sin_leer=0;
+  const t=document.getElementById('mxchatt'),val=t?t.value:'',foco=t&&document.activeElement===t;
+  /* si solo han llegado mensajes, se cambia la lista y los contadores; si cambia el estado (bloqueos), toda la pantalla */
+  const k=canal===undefined?'lista':(c.datos&&c.datos.bloqueado?'b':'')+(c.datos&&c.datos.me_bloquea?'m':'');
+  if(box&&k===c.k){box.innerHTML=mxChatMsgs();const sg=document.querySelector('.mxseg [data-mx="chat-priv"]');if(sg){const li=c.lista,pr=li?li.privados.reduce((a,x)=>a+x.sin_leer,0):0,nl=li?li.liga.sin_leer:0;
+    sg.textContent='✉️ Privados'+(pr?` (${pr})`:'');sg.previousElementSibling.textContent='💬 La liga'+(nl?` (${nl})`:'')}}
+  else{c.k=k;rerender()}
+  const t2=document.getElementById('mxchatt');if(t2&&t2!==t){t2.value=val;if(foco)t2.focus()}
+  const dot=document.getElementById('mxchatdot');if(dot)dot.remove();
+  const b2=document.getElementById('mxchatbox');if(b2){if(abajo||nuevo&&abajo)b2.scrollTop=b2.scrollHeight;b2.dataset.n=String((c.datos&&c.datos.mensajes.length)||0)+(c.datos&&c.datos.mensajes.length?c.datos.mensajes[c.datos.mensajes.length-1].id:'')}}
+setInterval(()=>{if(!document.hidden&&route().v==='fantasy'&&mx.L&&mx.tab==='chat'&&!mx.hoja)mxChatCargar()},7000);
+async function mxChatEnviar(){const t=document.getElementById('mxchatt');if(!t)return;const txt=t.value.trim();if(!txt)return;const canal=mxChatCanal();if(canal===undefined)return;
+  t.value='';const r=await mx.sb.rpc('m_chat_enviar',{p_liga:mx.liga,p_para:canal,p_texto:txt});
+  if(r.error){toast(r.error.message||'No se ha podido enviar.');t.value=txt;return}gcEvent('fantasy/chat','Fantasy: mensaje');mx.chat.sel=null;await mxChatCargar();
+  const b=document.getElementById('mxchatbox');if(b)b.scrollTop=b.scrollHeight;const t2=document.getElementById('mxchatt');if(t2)t2.focus()}
 function mxTabVest(){const L=mx.L,act=mx.todo?L.actividad:L.actividad.slice(0,5);
   const nom=u=>{if(u==null)return 'La liga';const m=L.miembros.find(x=>x.id===u);if(m)return m.nombre;const o=(L.ofertas||[]).find(z=>z.de===u||z.para===u);return o?(o.de===u?o.de_nombre:o.para_nombre)||'Alguien':'Alguien'},yo=L.yo.id,of=L.ofertas||[];
   const rec=of.filter(o=>o.para===yo&&o.estado==='pendiente'),env=of.filter(o=>o.de===yo&&o.estado==='pendiente'),hist=of.filter(o=>o.estado!=='pendiente').slice(0,5);
@@ -1555,7 +1607,7 @@ function mxHojaHtml(h){const L=mx.L,id=h.id;
     <div class="mxtwo"><button type="button" class="btn" data-mx="copiar">Copiar código</button><button type="button" class="btn ok" data-mx="compartir">WhatsApp / compartir</button></div><p class="sub" style="font-size:12px;word-break:break-all">${esc(url)}</p>`}
   if(h.tipo==='rival'){const m=L.miembros.find(x=>x.id===h.u);if(!m)return '';
     return `<h3>Plantilla de ${esc(m.nombre)}</h3><p class="sub">${m.jugadores.length} jugadores · ${mxM(m.valor)}${m.id===L.yo.id?'':' · la alineación no se ve hasta que empieza el torneo'}</p>
-    <div class="mxcards c3">${m.jugadores.map(p=>cromo(p.id)).join('')}</div>${m.id!==L.yo.id?'<p class="sub" style="font-size:12px">Toca un jugador para negociar o pagar su cláusula.</p>':''}
+    <div class="mxcards c3">${m.jugadores.map(p=>cromo(p.id)).join('')}</div>${m.id!==L.yo.id?`<p class="sub" style="font-size:12px">Toca un jugador para negociar o pagar su cláusula.</p><button type="button" class="btn" data-mx="chat-con" data-u="${m.id}" style="align-self:stretch">💬 Escribir a ${esc(m.nombre)}</button>`:''}
     ${L.liga.creador===L.yo.id&&m.id!==L.yo.id?`<button type="button" class="btn rojo" data-mx="echar" data-u="${m.id}" style="align-self:stretch">🚪 Echar a ${esc(m.nombre)} de la liga</button>`:''}`}
   const reg=mxReg(id),dueño=mxDueño(id),mio=dueño&&dueño.id===L.yo.id,yo=mxYo(),blo=L.estado&&L.estado.bloqueado,cl=L.liga.clausulas;
   if(h.tipo==='pts')return `${mxCab(id)}${mxTabla(id,h.tor,h.cap)}`;
@@ -1689,6 +1741,16 @@ async function fxAccion(a,el){const sb=mx.sb;if(!sb)return;mx.msg=null;const err
   else if(a==='salir'){if(mx.ses.user&&mx.ses.user.is_anonymous&&!confirm('Tu cuenta no tiene email: si sales, no podrás recuperarla. ¿Salir igualmente?'))return;await sb.auth.signOut();mx.vista='inicio';try{localStorage.removeItem('vibora-liga')}catch(e){}rerender()}
   }catch(e){err(e)}}
 async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
+  if(a.startsWith('chat-')){const c=mx.chat;
+    if(a==='chat-liga'||a==='chat-priv'){c.v=a==='chat-liga'?'liga':'priv';c.datos=null;c.sel=null;c.carga=0;rerender();return}
+    if(a==='chat-con'){mx.hoja=null;mxHojaPintar();mx.tab='chat';c.v=x.dataset.u;c.datos=null;c.sel=null;c.carga=0;rerender();scrollTo(0,0);return}
+    if(a==='chat-sel'){const i=+x.dataset.id;c.sel=c.sel===i?null:i;const b=document.getElementById('mxchatbox'),y=b?b.scrollTop:0;if(b){b.innerHTML=mxChatMsgs();b.scrollTop=y}return}
+    if(a==='chat-borrar'){if(!confirm('¿Borrar este mensaje?'))return;if(await mxRpc('m_chat_borrar',{p_mensaje:+x.dataset.id},'Mensaje borrado')){c.sel=null;mxChatCargar()}return}
+    if(a==='chat-denunciar'){if(!confirm('¿Denunciar este mensaje? Lo revisará Víbora.'))return;if(await mxRpc('m_chat_denunciar',{p_mensaje:+x.dataset.id},'Denuncia enviada. ¡Gracias!')){c.sel=null;mxChatCargar()}return}
+    if(a==='chat-bloquear'){if(!confirm(`¿Bloquear a ${x.dataset.n||'este mánager'}? No verás sus mensajes y no te podrá escribir en privado.`))return;
+      if(await mxRpc('m_chat_bloquear',{p_user:x.dataset.u,p_si:true},'Bloqueado')){c.sel=null;c.datos=null;c.carga=0;rerender()}return}
+    if(a==='chat-desbloquear'){if(await mxRpc('m_chat_bloquear',{p_user:x.dataset.u,p_si:false},'Desbloqueado')){c.datos=null;c.carga=0;rerender()}return}
+    return}
   if(a==='publica'){const id=await mxRpc('m_unirse_publica',{});if(!id)return;gcEvent('fantasy/publica','Fantasy: liga pública');mx.prev=null;await mxLigas();mx.tor=null;await mxAbrir(id,'clas');return}
   if(a==='v-crear'||a==='v-unirse'||a==='v-como'||a==='v-inicio'){mx.vista=a.slice(2);mx.msg=null;mx.L=null;mx.liga=null;try{localStorage.removeItem('vibora-liga')}catch(e){}rerender();return}
   if(a==='cerrar'){mx.hoja=null;mxHojaPintar();return}
@@ -1755,7 +1817,7 @@ function mxSoltar(e){const d=crDrag;crDrag=null;if(!d||!d.on)return;d.g.remove()
 document.addEventListener('pointerup',mxSoltar);
 document.addEventListener('pointercancel',()=>{const d=crDrag;crDrag=null;if(d&&d.on){d.g.remove();d.el.style.opacity='';rerender()}});
 document.addEventListener('click',e=>{if(Date.now()-mxNoClick<400){e.stopPropagation();e.preventDefault()}},true);
-document.addEventListener('submit',e=>{const f=e.target.closest('[data-fx]');if(f){e.preventDefault();fxAccion(f.dataset.fx,f)}});
+document.addEventListener('submit',e=>{if(e.target.id==='mxchatf'){e.preventDefault();mxChatEnviar();return}const f=e.target.closest('[data-fx]');if(f){e.preventDefault();fxAccion(f.dataset.fx,f)}});
 document.addEventListener('click',e=>{const t=e.target;let x;
   if((x=t.closest('[data-pk]'))){const k=x.dataset.pk;if(k==='abrir')mxAbrirSobre();else mxCerrarSobre();return}
   if(t.id==='mxsheet'){mx.hoja=null;mxHojaPintar();return}
