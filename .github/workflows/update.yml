@@ -67,10 +67,10 @@ jobs:
         env:
           PADEL_API_TOKEN: ${{ secrets.PADEL_API_TOKEN }}
         run: |
-          mkdir -p previo && { mv datos/avisos.json previo/ 2>/dev/null || true; }
+          mkdir -p previo && { mv datos/avisos.json datos/pp_previa.json previo/ 2>/dev/null || true; }
           rm -rf datos
           bash descargar.sh
-          mv previo/avisos.json datos/ 2>/dev/null || true
+          mv previo/avisos.json previo/pp_previa.json datos/ 2>/dev/null || true
 
       - name: ¿Hay que publicar?
         id: pub
@@ -80,6 +80,30 @@ jobs:
           else
             echo "Nada nuevo que publicar."
           fi
+
+      # Previa de los torneos Premier: Padel API solo la da en sus planes de pago, así que se lee de la página
+      # pública del torneo en premierpadel.com con un navegador (previa/previa.js). Solo los primeros días del torneo.
+      - name: Navegador para la previa
+        id: previa
+        if: steps.pub.outputs.si == '1'
+        run: |
+          if python3 -I previa/toca.py datos; then echo "si=1" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Guardar el navegador entre ejecuciones
+        if: steps.previa.outputs.si == '1'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.49.1
+
+      - name: Leer la previa de premierpadel.com
+        if: steps.previa.outputs.si == '1'
+        continue-on-error: true   # si falla, la web se publica igual con lo que ya había
+        timeout-minutes: 6
+        run: |
+          npm install --no-save --no-package-lock --prefix previa playwright@1.49.1 > /dev/null
+          previa/node_modules/.bin/playwright install --with-deps chromium > /dev/null
+          node previa/previa.js datos
 
       # Emisiones de YouTube del canal oficial para enlazar cada partido a su pista; sin clave no hace nada
       - name: Buscar emisiones en YouTube
