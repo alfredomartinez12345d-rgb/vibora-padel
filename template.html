@@ -712,6 +712,26 @@ body.modofx .mxtabs{bottom:calc(8px + env(safe-area-inset-bottom))!important}
 </div>
 <script>
 const D=/*DATA*/null;
+/* ---------- Idioma: español o inglés. Se elige en «Aspecto»; si no, el del móvil. Los textos en inglés están en i18n/en.txt ---------- */
+const EN_DIC=/*EN*/null;
+let LANG='es';try{LANG=localStorage.getItem('vibora-lang')||(/^(es|ca|gl|eu)\b/i.test(navigator.language||'es')?'es':'en')}catch(e){}
+if(!EN_DIC||LANG!=='en')LANG='es';
+const EN=LANG==='en',LOC=EN?'en-GB':'es-ES';document.documentElement.lang=LANG;
+/* «re: patrón => sustitución» son expresiones regulares (para frases con números); el resto, textos tal cual */
+const TRPAT=EN?Object.keys(EN_DIC).filter(k=>k.startsWith('re:')).map(k=>[new RegExp(k.slice(3).trim(),'gu'),EN_DIC[k]]):[];
+const TRRE=EN?new RegExp(Object.keys(EN_DIC).filter(k=>!k.startsWith('re:')&&(k.length>=3||k==='en')).sort((a,b)=>b.length-a.length)
+  .map(k=>{const L=/^[\p{L}\p{N}]/u.test(k),R=/[\p{L}\p{N}]$/u.test(k);return (L?'(?<![\\p{L}\\p{N}])':'')+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+(R?'(?![\\p{L}\\p{N}])':'')}).join('|'),'gu'):null;
+function tr(s){if(!EN||typeof s!=='string'||!s)return s;const t=s.trim();if(!t)return s;const e=EN_DIC[t];if(e!=null)return s.replace(t,e);
+  for(const [re,v] of TRPAT)s=s.replace(re,v);const e2=EN_DIC[s.trim()];if(e2!=null)return s.replace(s.trim(),e2);return s.replace(TRRE,m=>EN_DIC[m]??m).replace(/«/g,'“').replace(/»/g,'”')}
+const TR_AT=['placeholder','title','aria-label','alt'];
+function trAt(n){for(const a of TR_AT){const v=n.getAttribute(a);if(v){const t=tr(v);if(t!==v)n.setAttribute(a,t)}}}
+function trTree(n){if(n.nodeType===3){const v=n.nodeValue,t=tr(v);if(t!==v)n.nodeValue=t;return}
+  if(n.nodeType!==1||n.tagName==='SCRIPT'||n.tagName==='STYLE'||n.tagName==='TEXTAREA')return;trAt(n);for(let c=n.firstChild;c;c=c.nextSibling)trTree(c)}
+if(EN){trTree(document.body);document.title=tr(document.title);
+  new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')trTree(m.target);else if(m.type==='attributes')trAt(m.target);else m.addedNodes.forEach(trTree)}})
+    .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:TR_AT});
+  for(const f of ['alert','confirm','prompt']){const o=window[f].bind(window);window[f]=(m,...r)=>o(tr(String(m)),...r)}}
+function idiomaPoner(l){try{localStorage.setItem('vibora-lang',l)}catch(e){}location.reload()}
 const PUSH_APP=/*PUSH*/"";
 const SUPA=/*SUPA*/null; /* {url,key} de Supabase para el fantasy (lo pone build.py); null = sin fantasy */ /* App ID de OneSignal (lo pone build.py); vacío = sin avisos */
 
@@ -728,7 +748,7 @@ const MM={};M.forEach(m=>MM[m.id]=m);
 const isFipT=t=>!!t&&String(t.level||'').startsWith('fip');
 const prem=m=>!isFipT(TM[m.t]); /* las estadísticas solo cuentan Premier Padel */
 const RN={1:'Final',2:'Semifinales',4:'Cuartos',8:'Octavos',16:'Dieciseisavos',32:'Primera ronda'};
-const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MES=EN?['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']:['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const fd=s=>s?(+s.slice(8,10))+' '+MES[+s.slice(5,7)-1]:'';
 const pl=pr=>pr.map(i=>P[i].sn).join(' / ');
 const key=pr=>[...pr].sort((a,b)=>a-b).join('-');
@@ -965,8 +985,8 @@ const BELL='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 
 
 /* ---------- Orden de juego: horas en la zona del que mira ---------- */
 const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-const hhmm=d=>d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-const dayName=k=>new Date(k+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+const hhmm=d=>d.toLocaleTimeString(LOC,{hour:'2-digit',minute:'2-digit'});
+const dayName=k=>new Date(k+'T12:00:00').toLocaleDateString(LOC,{weekday:'long',day:'numeric',month:'long'});
 /* Orden de juego: los partidos de las dos categorías, como en la pista */
 /* Cada partido en el día del torneo (fecha de la API), no en el del reloj del usuario: un «no antes de las 18:00» en México
    es de madrugada en España y no debe saltar al día siguiente. Entran también los «a continuación», que no traen hora. */
@@ -1081,8 +1101,9 @@ function temaPoner(t){document.documentElement.dataset.tema=t;try{localStorage.s
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.content=t==='dia'?'#EEF3F9':t==='tv'?'#06080D':t==='pizarra'?'#0B1424':'#0A1120'}
 temaPoner(TEMA());
 function temaAbrir(){const el=document.createElement('div');el.className='tsel';el.setAttribute('role','dialog');el.setAttribute('aria-label','Aspecto de la app');
-  el.innerHTML=`<div class="in"><h3>Aspecto de la app</h3><p class="sub">Elige cómo quieres ver Víbora. Se guarda en este móvil.</p><div class="g">${TEMAS.map(([k,n,d])=>`<button type="button" data-tema="${k}" aria-pressed="${TEMA()===k}"><span class="pv lp" style="margin:0;display:block">${pistaSVG(200,78,'mini',k).svg}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div></div>`;
-  el.addEventListener('click',e=>{const b=e.target.closest('[data-tema]');if(b){temaPoner(b.dataset.tema);el.remove();render();return}if(e.target===el)el.remove()});
+  el.innerHTML=`<div class="in"><h3>Aspecto de la app</h3><p class="sub">Elige cómo quieres ver Víbora. Se guarda en este móvil.</p><div class="g">${TEMAS.map(([k,n,d])=>`<button type="button" data-tema="${k}" aria-pressed="${TEMA()===k}"><span class="pv lp" style="margin:0;display:block">${pistaSVG(200,78,'mini',k).svg}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
+  <h3 style="margin-top:16px">Idioma · Language</h3><div class="mxseg">${[['es','🇪🇸 Español'],['en','🇬🇧 English']].map(([k,n])=>`<button type="button" data-lang="${k}" aria-pressed="${LANG===k}" style="flex:1">${n}</button>`).join('')}</div></div>`;
+  el.addEventListener('click',e=>{const lg=e.target.closest('[data-lang]');if(lg){if(lg.dataset.lang!==LANG)idiomaPoner(lg.dataset.lang);return}const b=e.target.closest('[data-tema]');if(b){temaPoner(b.dataset.tema);el.remove();render();return}if(e.target===el)el.remove()});
   document.body.appendChild(el)}
 const V={
 inicio(){const nt=nextT(),last=lastPremier();
@@ -1140,7 +1161,7 @@ torneo([id]){const t=tb(id);if(!t||t.hidden)return V.torneos();const ms=M.filter
   const grid=(start,body)=>{const cols=[];for(let r=start;r>=1;r/=2)cols.push(r);
     return `<div class="brwrap"><div class="br" style="--n:${start}">${cols.map((r,c)=>`<div class="bh" style="grid-column:${c+1}">${RN[r]}</div>`+Array.from({length:r},(_,i)=>`<div class="bc ${c<cols.length-1&&i%2===0?'top':''} ${c?'in':''}" style="grid-column:${c+1};grid-row:${i*(start/r)+2}/span ${start/r}">${body(r,i)}</div>`).join('')).join('')}</div></div>`};
   if(tv==='hr'){const ks=Object.keys(od).sort(),def=(oopDay(id)||{}).k,dk=ks.includes((oopSel[id]||{}).d)?oopSel[id].d:def;
-    const dias=`<div class="seg oopseg">${ks.map(k=>{const d=new Date(k+'T12:00:00');return `<button type="button" data-oopd="${id}|${k}" aria-pressed="${k===dk}">${d.toLocaleDateString('es-ES',{weekday:'short'})} ${d.getDate()} <small>${od[k].length}</small></button>`}).join('')}</div>`;
+    const dias=`<div class="seg oopseg">${ks.map(k=>{const d=new Date(k+'T12:00:00');return `<button type="button" data-oopd="${id}|${k}" aria-pressed="${k===dk}">${d.toLocaleDateString(LOC,{weekday:'short'})} ${d.getDate()} <small>${od[k].length}</small></button>`}).join('')}</div>`;
     return `${head}${views}${dias}<section><h2 style="font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">${dayName(dk)} · ${od[dk].length} partidos</h2>${oopBoard(id,od[dk])}</section>${OOPNOTE}${NOTE}`}
   if(tv==='li')return `${head}${views}${rs.map(r=>`<section><h2>${RN[r]}</h2><div class="list">${ms.filter(m=>m.round===r).sort(ord).map(m=>mc(m,m.court||RN[r])).join('')}</div></section>`).join('')}${NOTE}`;
   if(tv==='cm'){const pr=fm.w?fm.b:fm.a,k=key(pr),path=ms.filter(m=>key(m.a)===k||key(m.b)===k).sort((x,y)=>y.round-x.round);
@@ -1167,9 +1188,9 @@ ranking(){const tabs=`<div class="seg">${[['ofi','Oficial'],['elo','Elo Víbora'
   if(rankTab==='ofi'){const rs=Object.values(P).filter(p=>p.cat===cat&&p.rank).sort((a,b)=>a.rank-b.rank).slice(0,60);
     expl=`Ranking FIP y puntos${D.rk&&D.rk.length?' según '+D.rk.join(', '):''}. Solo aparecen los jugadores inscritos en esos torneos. La última columna es la distancia con el anterior.`;
     if(!rs.length)return `<h1>Ranking ${cat==='men'?'masculino':'femenino'}</h1>${tabs}<div class="card"><h2>Sin ranking oficial</h2><p class="sub" style="margin-top:6px">Padel API solo da el ranking de los inscritos en torneos en juego o por jugar, y en esta descarga no ha llegado ninguno. Mientras tanto, mira el <a class="back" href="#ranking" data-rank="elo">Elo Víbora</a>.</p></div>${NOTE}`;
-    {const lid=rs.filter(p=>rpos(p)===1).slice(0,2),nx=rs.find(p=>rpos(p)>1),fv=p=>p.pts!=null?p.pts.toLocaleString('es-ES'):'—';
-     head4=lpRanking(lid,p=>rpos(p),fv,'puntos',nx&&lid[0].pts!=null&&nx.pts!=null?` · +${(lid[0].pts-nx.pts).toLocaleString('es-ES',{useGrouping:'always'})} sobre el siguiente`:'')+top4(rs.slice(lid.length,4),p=>rpos(p),fv,'pts')}
-    body=rs.map((p,i)=>i<4?'':`<a class="${tint(i)}" href="#jugador-${p.id}"><span class="n">${rpos(p)}</span>${av(p.id,'pop')}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.nat||''}</span></span><span class="big">${p.pts!=null?p.pts.toLocaleString('es-ES'):'—'}</span><span class="dif">${i&&p.pts!=null&&rs[i-1].pts!=null&&rs[i-1].pts!==p.pts?(rs[i-1].pts-p.pts).toLocaleString('es-ES'):'–'}</span></a>`).join('')}
+    {const lid=rs.filter(p=>rpos(p)===1).slice(0,2),nx=rs.find(p=>rpos(p)>1),fv=p=>p.pts!=null?p.pts.toLocaleString(LOC):'—';
+     head4=lpRanking(lid,p=>rpos(p),fv,'puntos',nx&&lid[0].pts!=null&&nx.pts!=null?` · +${(lid[0].pts-nx.pts).toLocaleString(LOC,{useGrouping:'always'})} sobre el siguiente`:'')+top4(rs.slice(lid.length,4),p=>rpos(p),fv,'pts')}
+    body=rs.map((p,i)=>i<4?'':`<a class="${tint(i)}" href="#jugador-${p.id}"><span class="n">${rpos(p)}</span>${av(p.id,'pop')}<span class="tx"><b>${p.name}</b><span>${flag(p.nat)} ${p.nat||''}</span></span><span class="big">${p.pts!=null?p.pts.toLocaleString(LOC):'—'}</span><span class="dif">${i&&p.pts!=null&&rs[i-1].pts!=null&&rs[i-1].pts!==p.pts?(rs[i-1].pts-p.pts).toLocaleString(LOC):'–'}</span></a>`).join('')}
   else if(rankTab==='elo'){const rs=byElo(cat).slice(0,60);
     expl='Elo calculado por Víbora con los partidos desde junio: sube o baja según a quién ganas o pierdes. La última columna es el cambio en su último torneo.';
     {const ne=p=>1+new Set(rs.filter(q=>Math.round(q.elo)>Math.round(p.elo)).map(q=>Math.round(q.elo))).size,lid=rs.filter(p=>ne(p)===1).slice(0,2),nx=rs.find(p=>ne(p)>1);
@@ -1262,7 +1283,7 @@ function searchRes(q){const n=norm(q.trim());let rs=Object.values(P).filter(p=>p
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const mx={sb:null,cargando:false,ses:null,perfil:undefined,ligas:null,J:{},est:{},vista:'inicio',liga:null,L:null,tab:'clas',sub:'ali',tor:null,ptor:null,borr:null,sel:null,
   crear:{g:'X',c:true},cod:'',prev:null,msg:null,email:'',enviado:false,todo:false,filtro:'todos',hoja:null,ocupado:false};
-const mxM=n=>{n=Math.round((+n||0)*10)/10;return n.toLocaleString('es-ES',{minimumFractionDigits:n%1?1:0,maximumFractionDigits:1})+' M'};
+const mxM=n=>{n=Math.round((+n||0)*10)/10;return n.toLocaleString(LOC,{minimumFractionDigits:n%1?1:0,maximumFractionDigits:1})+' M'};
 const GEN={M:'Solo chicos',F:'Solo chicas',X:'Chicos y chicas'};
 const PALA=`<svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><g transform="rotate(-30 16 16)" fill="#4f7cff"><path d="M16 2.5c5.2 0 8.6 4 8.6 9.3 0 5.6-3.8 9.4-6.4 10.6l-.4 3.2h-3.6l-.4-3.2C11.2 21.2 7.4 17.4 7.4 11.8 7.4 6.5 10.8 2.5 16 2.5z"/><rect x="14.3" y="25" width="3.4" height="5.5" rx="1.4"/><g fill="#14172e"><circle cx="13.3" cy="9" r="1"/><circle cx="16" cy="8" r="1"/><circle cx="18.7" cy="9" r="1"/><circle cx="12.6" cy="12.3" r="1"/><circle cx="16" cy="11.6" r="1"/><circle cx="19.4" cy="12.3" r="1"/><circle cx="14.2" cy="15.4" r="1"/><circle cx="17.8" cy="15.4" r="1"/></g></g></svg>`;
 const CAMI=`<svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path fill="#ff8a3d" d="M11.5 4 6 6.5 2.5 12l4.2 2.6 2.3-2.8V28h14V11.8l2.3 2.8 4.2-2.6L26 6.5 20.5 4c-.8 1.9-2.6 3-4.5 3s-3.7-1.1-4.5-3z"/></svg>`;
@@ -1340,10 +1361,10 @@ function cromo(id,o={}){const t=mxTier(id),f=P[id]&&P[id].photo,cl=o.cls||'',i=o
     <span class="sd">${mxGen(id)==='F'?'♀':'♂'} ${LADO[mxLado(id)]||''} · ${TIERN[t]}</span>${o.l3===false?'':`<span class="l3">${mxUlt3(id).map(x=>`<i>${x}</i>`).join('')}</span>`}${o.tag?`<span class="tag">${o.tag}</span>`:''}</button>`}
 const mxAv=(nombre,id)=>`<span class="mxav" style="--h:${[...String(id)].reduce((a,c)=>a+c.charCodeAt(0),0)%360}">${esc((nombre||'?').slice(0,2).toUpperCase())}</span>`;
 function falta(ts){let s=Math.max(0,(new Date(ts)-Date.now())/1000);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h} h ${m} min`:`${m} min`}
-const horaDe=ts=>new Date(ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+const horaDe=ts=>new Date(ts).toLocaleTimeString(LOC,{hour:'2-digit',minute:'2-digit'});
 /* Las alineaciones se congelan con la actualización del día en que empieza el torneo (01:30 UTC): se enseña en la hora de cada uno */
 function mxBloqueo(){const t=T.filter(t=>!isFipT(t)&&t.status==='pending'&&t.start).sort((a,b)=>a.start<b.start?-1:1)[0];if(!t)return null;
-  const d=new Date(t.start+'T01:30:00Z');return{t,d,txt:d.toLocaleString('es-ES',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}}
+  const d=new Date(t.start+'T01:30:00Z');return{t,d,txt:d.toLocaleString(LOC,{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}}
 
 /* Puntos de cada mánager */
 const mxPtsFoto=f=>+f.puntos||0;
@@ -1538,7 +1559,7 @@ function mxHojaHtml(h){const L=mx.L,id=h.id;
     <div class="mxlbl">Vender</div>${(o=>o?`<div class="card" style="border-color:var(--pelota);display:flex;flex-direction:column;gap:8px"><span>🏷️ <b>La liga te ofrece ${mxM(o.cantidad)}</b> por ${esc(mxNom(id))} <span class="sub">· caduca en ${falta(L.liga.cierre)}</span></span><div class="mxtwo"><button type="button" class="btn ok" data-mx="aceptar" data-of="${o.id}">✓ Aceptar</button><button type="button" class="btn no" data-mx="rechazar" data-of="${o.id}">✕ Rechazar</button></div></div>`:'')(mxPend().find(o=>o.de==null&&o.jugador===id))}${reg.venta!=null?`<button type="button" class="btn" data-mx="quitarventa">Quitar de la venta</button><p class="sub" style="font-size:12px">Está en venta: los mánagers pueden pujar y, cada día al cerrar el mercado, la liga te hace una oferta (su valor ± 10 %) que aceptas o rechazas.</p>`:`<div class="mxtwo"><input id="mxmin" class="mxnum" type="number" min="${mxVal(id)}" step="0.5" inputmode="decimal" value="${mxVal(id)}" aria-label="Precio mínimo"><button type="button" class="btn azul" data-mx="ponerventa">Poner en venta</button></div>`}
     <button type="button" class="btn rojo" data-mx="venderya" style="align-self:stretch">Vender ya · ${mxM(mxVal(id))}</button>`}
   if(dueño){const prot=new Date(reg.protegido)>new Date(),hoy=L.yo.clausulazo_hoy,venga=(L.venganza||[]).includes(id),lleno=yo.jugadores.length>=6,faltan=reg.clausula-L.yo.caja;
-    const motivo=!cl?'':blo?'Torneo en juego':prot?'Protegido hasta '+new Date(reg.protegido).toLocaleString('es-ES',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}):hoy?'Ya hiciste un clausulazo hoy':venga?'Te lo quitaron hace poco':lleno?'No tienes hueco':faltan>0?'Te faltan '+mxM(faltan):'';
+    const motivo=!cl?'':blo?'Torneo en juego':prot?'Protegido hasta '+new Date(reg.protegido).toLocaleString(LOC,{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}):hoy?'Ya hiciste un clausulazo hoy':venga?'Te lo quitaron hace poco':lleno?'No tienes hueco':faltan>0?'Te faltan '+mxM(faltan):'';
     return `${mxCab(id,`<span>Dueño: <b style="color:var(--ink)">${esc(dueño.nombre)}</b></span>${cl?`<span>Cláusula: <b style="color:var(--ink)">${mxM(reg.clausula)}</b></span>`:''}${reg.venta!=null?`<span style="color:var(--cyan)">En venta · mínimo ${mxM(reg.venta)}</span>`:''}`)}
     ${reg.venta!=null?mxPujaHtml(id,Math.max(mxVal(id),+reg.venta)):''}
     ${cl?`<button type="button" class="btn gold" data-mx="clausula" style="align-self:stretch;white-space:nowrap"${motivo?' disabled':''}>${motivo?esc(motivo):'💥 Pagar cláusula · '+mxM(reg.clausula)}</button>`:''}

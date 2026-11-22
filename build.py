@@ -231,7 +231,17 @@ push = re.sub(r'[^0-9a-fA-F-]', '', os.environ.get('ONESIGNAL_APP_ID', ''))
 s_url = os.environ.get('SUPABASE_URL', '').strip().rstrip('/')
 s_key = os.environ.get('SUPABASE_ANON_KEY', '').strip()
 supa = {'url': s_url, 'key': s_key} if re.fullmatch(r'https://[a-z0-9-]+\.supabase\.co', s_url) and re.fullmatch(r'[A-Za-z0-9._-]{20,}', s_key) else None
-html = open(tpl, encoding='utf-8').read().replace('/*DATA*/null', js).replace('/*PUSH*/""', json.dumps(push)).replace('/*SUPA*/null', json.dumps(supa))
+# Textos en inglés (i18n/en.txt: «español => inglés», una línea por texto)
+en = {}
+f_en = os.path.join(os.path.dirname(os.path.abspath(tpl)), 'i18n', 'en.txt')
+if os.path.exists(f_en):
+    for linea in open(f_en, encoding='utf-8'):
+        if ' => ' in linea and not linea.startswith('#'):
+            a, b = linea.rstrip('\n').split(' => ', 1)
+            if a.strip() and b.strip():
+                en[a.strip()] = b.strip()
+js_en = json.dumps(en, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+html = open(tpl, encoding='utf-8').read().replace('/*EN*/null', js_en).replace('/*DATA*/null', js).replace('/*PUSH*/""', json.dumps(push)).replace('/*SUPA*/null', json.dumps(supa))
 open(out, 'w', encoding='utf-8').write(html)
 print('ranking de', rk_from, 'jugadores con ranking', sum(1 for p in P.values() if p[5] is not None))
 print('players', len(P), 'tournaments', len(T), 'matches', len(M), 'hidden tournaments', sorted(hidden_t), 'other statuses', other, 'bytes', len(html.encode()))
