@@ -152,10 +152,48 @@ create table if not exists public.m_recordado (
   user_id uuid primary key references public.perfiles on delete cascade,
   cuando  timestamptz not null default now()
 );
+
+-- Chat: el de la liga (para = null) y los privados entre dos mánagers de la misma liga
+create table if not exists public.m_mensajes (
+  id      bigserial primary key,
+  liga    uuid not null references public.m_ligas on delete cascade,
+  de      uuid not null references public.perfiles on delete cascade,
+  para    uuid references public.perfiles on delete cascade,
+  texto   text not null check (char_length(texto) between 1 and 500),
+  creado  timestamptz not null default now(),
+  borrado boolean not null default false
+);
+create index if not exists m_mensajes_liga on public.m_mensajes (liga, id desc);
+create index if not exists m_mensajes_para on public.m_mensajes (para, liga, id desc);
+-- Hasta qué mensaje ha leído cada uno en cada conversación (canal = 'liga' o el id del otro mánager)
+create table if not exists public.m_chat_leido (
+  liga    uuid not null references public.m_ligas on delete cascade,
+  user_id uuid not null references public.perfiles on delete cascade,
+  canal   text not null,
+  ultimo  bigint not null default 0,
+  aviso   timestamptz,          -- último aviso al móvil por esta conversación (como mucho uno cada 5 min)
+  primary key (liga, user_id, canal)
+);
+-- Bloqueos: quien bloquea no ve los mensajes del bloqueado y este no le puede escribir por privado
+create table if not exists public.m_chat_bloqueos (
+  user_id   uuid not null references public.perfiles on delete cascade,
+  bloqueado uuid not null references public.perfiles on delete cascade,
+  creado    timestamptz not null default now(),
+  primary key (user_id, bloqueado)
+);
+-- Denuncias (se revisan en Supabase: select * from m_chat_denuncias)
+create table if not exists public.m_chat_denuncias (
+  id      bigserial primary key,
+  mensaje bigint not null references public.m_mensajes on delete cascade,
+  quien   uuid not null references public.perfiles on delete cascade,
+  creada  timestamptz not null default now(),
+  unique (mensaje, quien)
+);
 alter table public.m_estado add column if not exists proximo int;                  -- próximo torneo Premier (lo pone GitHub)
 alter table public.m_estado add column if not exists proximo_nombre text;
 alter table public.m_estado add column if not exists proximo_bloqueo timestamptz;  -- cuándo se congelan las alineaciones
 alter table public.m_estado add column if not exists aviso_bloqueo int;            -- torneo del que ya se avisó
+alter table public.m_estado add column if not exists abierto_hasta timestamptz;    -- excepción: con el torneo empezado, se puede alinear y negociar hasta esta hora
 create table if not exists public.m_config (clave text primary key, valor text);
 create table if not exists public.m_avisos (user_id uuid primary key references public.perfiles on delete cascade, activo boolean not null default true);
 insert into public.m_config values ('onesignal_app', '6f1f07fb-b432-4b84-9fb0-3367f1be7e51'),
@@ -203,7 +241,8 @@ $$;
 
 -- --- Ayudantes -------------------------------------------------------------------
 create or replace function public.m_bloqueado() returns boolean
-language sql stable as $$ select coalesce((select bloqueado from public.m_estado where id = 1), false) $$;
+language sql stable as $$
+  select coalesce((select bloqueado and not coalesce(abierto_hasta > now(), false) from public.m_estado where id = 1), false) $$;
 
 create or replace function public.m_soy(p_liga uuid) returns void
 language plpgsql stable security definer set search_path = public as $$
@@ -546,6 +585,129 @@ begin
   delete from m_miembros where liga = p_liga and user_id = p_user;
 end $$;
 
+-- --- Chat ------------------------------------------------------------------------------
+-- Escribir: p_para null = chat de la liga; si no, privado a ese mánager
+create or replace function public.m_chat_enviar(p_liga uuid, p_para uuid, p_texto text) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare t text := btrim(regexp_replace(coalesce(p_texto, ''), '[[:cntrl:]]+', ' ', 'g')); id_ bigint; c m_chat_leido; l text;
+begin
+  perform m_soy(p_liga);
+  if t = '' then raise exception 'Escribe algo.'; end if;
+  if char_length(t) > 500 then raise exception 'Como mucho 500 caracteres.'; end if;
+  if (select count(*) from m_mensajes where de = auth.uid() and creado > now() - interval '1 minute') >= 10 then
+    raise exception 'Vas muy rápido: espera un poco antes de escribir más.';
+  end if;
+  if p_para is not null then
+    if p_para = auth.uid() then raise exception 'No puedes escribirte a ti mismo.'; end if;
+    if not exists (select 1 from m_miembros where liga = p_liga and user_id = p_para) then raise exception 'Ese mánager ya no está en la liga.'; end if;
+    if exists (select 1 from m_chat_bloqueos where user_id = p_para and bloqueado = auth.uid()) then
+      raise exception 'Este mánager no acepta tus mensajes.';
+    end if;
+  end if;
+  insert into m_mensajes (liga, de, para, texto) values (p_liga, auth.uid(), p_para, t) returning id into id_;
+  -- lo propio cuenta como leído
+  insert into m_chat_leido (liga, user_id, canal, ultimo) values (p_liga, auth.uid(), coalesce(p_para::text, 'liga'), id_)
+    on conflict (liga, user_id, canal) do update set ultimo = excluded.ultimo;
+  -- aviso al móvil del privado (como mucho uno cada 5 minutos por conversación)
+  if p_para is not null then
+    select * into c from m_chat_leido where liga = p_liga and user_id = p_para and canal = auth.uid()::text;
+    if c.aviso is null or c.aviso < now() - interval '5 minutes' then
+      insert into m_chat_leido (liga, user_id, canal, aviso) values (p_liga, p_para, auth.uid()::text, now())
+        on conflict (liga, user_id, canal) do update set aviso = now();
+      select nombre into l from m_ligas where id = p_liga;
+      perform m_push(array[p_para], '💬 ' || m_un(auth.uid()) || ' · ' || l, left(t, 120));
+    end if;
+  end if;
+  return id_;
+end $$;
+
+-- Mensajes de una conversación (los 60 últimos, o los anteriores a p_antes) y la marca como leída
+create or replace function public.m_chat(p_liga uuid, p_con uuid, p_antes bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare yo uuid := auth.uid(); r jsonb; mx bigint;
+begin
+  perform m_soy(p_liga);
+  select coalesce(jsonb_agg(x order by x.id), '[]'), max(x.id) into r, mx from (
+    select m.id, m.de, m.para, case when m.borrado then null else m.texto end as texto, m.borrado, m.creado,
+           (select nombre from perfiles where id = m.de) as nombre
+    from m_mensajes m
+    where m.liga = p_liga and (p_antes is null or m.id < p_antes)
+      and (case when p_con is null then m.para is null
+                else (m.de = yo and m.para = p_con) or (m.de = p_con and m.para = yo) end)
+      and not exists (select 1 from m_chat_bloqueos b where b.user_id = yo and b.bloqueado = m.de)
+    order by m.id desc limit 60) x;
+  if mx is not null and p_antes is null then
+    insert into m_chat_leido (liga, user_id, canal, ultimo) values (p_liga, yo, coalesce(p_con::text, 'liga'), mx)
+      on conflict (liga, user_id, canal) do update set ultimo = greatest(m_chat_leido.ultimo, excluded.ultimo);
+  end if;
+  return jsonb_build_object('mensajes', r,
+    'bloqueado', p_con is not null and exists (select 1 from m_chat_bloqueos where user_id = yo and bloqueado = p_con),
+    'me_bloquea', p_con is not null and exists (select 1 from m_chat_bloqueos where user_id = p_con and bloqueado = yo));
+end $$;
+
+-- Conversaciones de la liga: la de todos y los privados, con lo último y lo que no has leído
+create or replace function public.m_chats(p_liga uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare yo uuid := auth.uid();
+begin
+  perform m_soy(p_liga);
+  return jsonb_build_object(
+    'liga', (select jsonb_build_object(
+        'sin_leer', (select count(*) from m_mensajes m where m.liga = p_liga and m.para is null and m.de <> yo and not m.borrado
+                      and m.id > coalesce((select ultimo from m_chat_leido where liga = p_liga and user_id = yo and canal = 'liga'), 0)
+                      and not exists (select 1 from m_chat_bloqueos b where b.user_id = yo and b.bloqueado = m.de)),
+        'ultimo', (select jsonb_build_object('nombre', (select nombre from perfiles where id = m.de), 'texto', case when m.borrado then null else m.texto end, 'creado', m.creado)
+                   from m_mensajes m where m.liga = p_liga and m.para is null
+                     and not exists (select 1 from m_chat_bloqueos b where b.user_id = yo and b.bloqueado = m.de)
+                   order by m.id desc limit 1))),
+    'privados', (select coalesce(jsonb_agg(c order by c->>'creado' desc), '[]') from (
+        select jsonb_build_object('con', o.otro, 'nombre', (select nombre from perfiles where id = o.otro),
+                 'texto', case when u.borrado then null else u.texto end, 'mio', u.de = yo, 'creado', u.creado,
+                 'sin_leer', (select count(*) from m_mensajes m where m.liga = p_liga and m.de = o.otro and m.para = yo and not m.borrado
+                               and m.id > coalesce((select ultimo from m_chat_leido where liga = p_liga and user_id = yo and canal = o.otro::text), 0))) as c
+        from (select distinct case when de = yo then para else de end as otro from m_mensajes
+              where liga = p_liga and para is not null and (de = yo or para = yo)) o
+        cross join lateral (select * from m_mensajes m where m.liga = p_liga and ((m.de = yo and m.para = o.otro) or (m.de = o.otro and m.para = yo))
+                            order by m.id desc limit 1) u
+        where not exists (select 1 from m_chat_bloqueos b where b.user_id = yo and b.bloqueado = o.otro)) z));
+end $$;
+
+-- Mensajes sin leer en toda la liga (para el globo de la pestaña)
+create or replace function public.m_chat_sin_leer(p_liga uuid, p_yo uuid) returns int
+language sql stable security definer set search_path = public as $$
+  select count(*)::int from m_mensajes m
+  where m.liga = p_liga and m.de <> p_yo and not m.borrado and (m.para is null or m.para = p_yo)
+    and not exists (select 1 from m_chat_bloqueos b where b.user_id = p_yo and b.bloqueado = m.de)
+    and m.id > coalesce((select ultimo from m_chat_leido where liga = p_liga and user_id = p_yo
+                         and canal = case when m.para is null then 'liga' else m.de::text end), 0)
+$$;
+
+create or replace function public.m_chat_borrar(p_mensaje bigint) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  update m_mensajes set borrado = true where id = p_mensaje and de = auth.uid();
+  if not found then raise exception 'Solo puedes borrar tus mensajes.'; end if;
+end $$;
+
+create or replace function public.m_chat_bloquear(p_user uuid, p_si boolean) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'Entra en el fantasy primero.'; end if;
+  if p_user = auth.uid() then raise exception 'No te puedes bloquear a ti mismo.'; end if;
+  if p_si then insert into m_chat_bloqueos (user_id, bloqueado) values (auth.uid(), p_user) on conflict do nothing;
+  else delete from m_chat_bloqueos where user_id = auth.uid() and bloqueado = p_user; end if;
+end $$;
+
+create or replace function public.m_chat_denunciar(p_mensaje bigint) returns void
+language plpgsql security definer set search_path = public as $$
+declare l uuid;
+begin
+  select liga into l from m_mensajes where id = p_mensaje;
+  if l is null then raise exception 'Ese mensaje ya no existe.'; end if;
+  perform m_soy(l);
+  insert into m_chat_denuncias (mensaje, quien) values (p_mensaje, auth.uid()) on conflict do nothing;
+end $$;
+
 -- Puntos de un mánager en un torneo (Pala de Oro doble; en negativo, 0)
 create or replace function public.m_pts_foto(f public.m_fotos) returns numeric
 language sql stable security definer set search_path = public as $$
@@ -584,7 +746,8 @@ begin
                  'estado', case when o.estado = 'pendiente' and o.creada < now() - make_interval(hours => m_cfg('oferta_h')::int) then 'caducada' else o.estado end,
                  'creada', o.creada) order by o.creada desc), '[]')
                 from m_ofertas o where o.liga = p_liga and (o.de = yo or o.para = yo) and o.creada > now() - interval '7 days'),
-    'estado', (select to_jsonb(e) from m_estado e where id = 1),
+    'estado', (select to_jsonb(e) || jsonb_build_object('bloqueado', m_bloqueado()) from m_estado e where id = 1),
+    'chat_sin_leer', m_chat_sin_leer(p_liga, yo),
     'yo', (select jsonb_build_object('id', yo, 'avisos', coalesce((select activo from m_avisos where user_id = yo), false), 'caja', caja, 'sobre', sobre, 'sobre_visto', sobre_visto,
               'clausulazo_hoy', clausulazo = (now() at time zone 'Europe/Madrid')::date)
            from m_miembros where liga = p_liga and user_id = yo),
@@ -870,12 +1033,12 @@ begin
 end $$;
 
 -- --- Lo que hace GitHub (clave service_role) ------------------------------------------------
-create or replace function public.m_bloquear(p_torneo int, p_nombre text) returns int
+-- Foto de las alineaciones de todos para un torneo (con p_rehacer, sustituye la que hubiera)
+create or replace function public.m_foto(p_torneo int, p_rehacer boolean) returns int
 language plpgsql security definer set search_path = public as $$
 declare n int;
 begin
-  update m_estado set bloqueado = true, torneo = p_torneo, torneo_nombre = p_nombre, actualizado = now() where id = 1;
-  insert into m_torneos (id, nombre) values (p_torneo, p_nombre) on conflict (id) do nothing;
+  if p_rehacer then delete from m_fotos where torneo = p_torneo; end if;
   insert into m_fotos (liga, user_id, torneo, jugadores, capitan, negativo)
     select a.liga, a.user_id, p_torneo,
            coalesce((select array_agg(x) from unnest(a.jugadores) x
@@ -884,6 +1047,48 @@ begin
     from m_alineacion a join m_miembros m on m.liga = a.liga and m.user_id = a.user_id
   on conflict (liga, user_id, torneo) do nothing;
   get diagnostics n = row_count;
+  return n;
+end $$;
+
+-- Excepción: con el torneo ya empezado, dejar alinear, ofertar y traspasar hasta p_hasta. Al llegar esa hora
+-- (lo mira m_procesar_todas cada minuto) se rehace la foto de las alineaciones y vuelve el bloqueo.
+-- Uso en el SQL Editor: select m_excepcion('2026-11-22 23:59 Europe/Madrid');
+create or replace function public.m_excepcion(p_hasta timestamptz) returns text
+language plpgsql security definer set search_path = public as $$
+declare e m_estado;
+begin
+  select * into e from m_estado where id = 1;
+  if not e.bloqueado then return 'No hay ningún torneo bloqueado: no hace falta excepción.'; end if;
+  if p_hasta <= now() then raise exception 'La hora tiene que ser futura.'; end if;
+  update m_estado set abierto_hasta = p_hasta where id = 1;
+  perform m_push((select array_agg(distinct user_id) from m_miembros), '🔓 Alineaciones abiertas',
+    'Excepción en el ' || coalesce(e.torneo_nombre, 'torneo') || ': puedes cambiar tu alineación y hacer ofertas hasta las '
+    || to_char(p_hasta at time zone 'Europe/Madrid', 'HH24:MI') || ' (hora de España).');
+  return 'Abierto hasta ' || to_char(p_hasta at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ' (hora de España)';
+end $$;
+
+-- Al acabar la excepción: nueva foto de las alineaciones y otra vez bloqueado
+create or replace function public.m_cerrar_excepcion() returns void
+language plpgsql security definer set search_path = public as $$
+declare e m_estado;
+begin
+  select * into e from m_estado where id = 1 for update;
+  if e.abierto_hasta is null or e.abierto_hasta > now() then return; end if;
+  update m_estado set abierto_hasta = null where id = 1;
+  if e.bloqueado and e.torneo is not null then
+    perform m_foto(e.torneo, true);
+    perform m_push((select array_agg(distinct user_id) from m_fotos where torneo = e.torneo),
+                   '🔒 Alineaciones cerradas', 'Tu equipo para el ' || coalesce(e.torneo_nombre, 'torneo') || ' queda bloqueado. ¡Suerte!');
+  end if;
+end $$;
+
+create or replace function public.m_bloquear(p_torneo int, p_nombre text) returns int
+language plpgsql security definer set search_path = public as $$
+declare n int;
+begin
+  update m_estado set bloqueado = true, torneo = p_torneo, torneo_nombre = p_nombre, actualizado = now() where id = 1;
+  insert into m_torneos (id, nombre) values (p_torneo, p_nombre) on conflict (id) do nothing;
+  n := m_foto(p_torneo, false);
   perform m_push((select array_agg(distinct user_id) from m_fotos where torneo = p_torneo and not negativo),
                  '🔒 Empieza el ' || p_nombre, 'Tu equipo queda bloqueado. ¡Suerte!');
   perform m_push((select array_agg(distinct user_id) from m_fotos where torneo = p_torneo and negativo),
@@ -917,6 +1122,7 @@ create or replace function public.m_procesar_todas() returns int
 language plpgsql security definer set search_path = public as $$
 declare l uuid; n int := 0;
 begin
+  perform m_cerrar_excepcion();
   for l in select id from m_ligas where cierre <= now() loop
     perform m_procesar(l); n := n + 1;
   end loop;
@@ -994,6 +1200,10 @@ alter table public.m_ofertas    enable row level security;
 alter table public.m_config     enable row level security;
 alter table public.m_avisos     enable row level security;
 alter table public.m_recordado  enable row level security;
+alter table public.m_mensajes       enable row level security;
+alter table public.m_chat_leido     enable row level security;
+alter table public.m_chat_bloqueos  enable row level security;
+alter table public.m_chat_denuncias enable row level security;
 -- Lectura libre de lo que es público; el resto, solo a través de las funciones
 drop policy if exists leer on public.m_jugadores; create policy leer on public.m_jugadores for select using (true);
 drop policy if exists leer on public.m_estado;    create policy leer on public.m_estado    for select using (true);
@@ -1004,19 +1214,20 @@ drop policy if exists leer on public.m_puntos;    create policy leer on public.m
 revoke execute on function public.m_soy(uuid), public.m_valor_plantilla(uuid, uuid), public.m_quitar_de_alineacion(uuid, uuid, int),
   public.m_log(uuid, text, uuid, uuid, int, numeric), public.m_libres(uuid), public.m_escoger(uuid, int, int, char, char, int[]),
   public.m_nuevo_mercado(uuid), public.m_dar_sobre(uuid, uuid), public.m_procesar(uuid), public.m_pts_foto(public.m_fotos),
-  public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(),
-  public.m_push(uuid[], text, text), public.m_tick() from public, anon, authenticated;
-grant execute on function public.m_bloquear(int, text), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
+  public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_cerrar_excepcion(),
+  public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(),
+  public.m_push(uuid[], text, text), public.m_tick(), public.m_chat_sin_leer(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_cerrar_excepcion(), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
 revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean) from public, anon;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint) from public, anon;
 grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean) to authenticated;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint) to authenticated;
 
 
 -- Reloj de cada minuto (solo si la extensión pg_cron está activada: Database → Extensions)
