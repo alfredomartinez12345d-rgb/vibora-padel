@@ -5,7 +5,7 @@
 -- del fantasy anterior (supabase/fantasy.sql), que ya está instalada.
 --
 -- Reglas:
---   · Ligas de hasta 50 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
+--   · Ligas de hasta 58 mánagers: solo chicos (M), solo chicas (F) o mixta (X).
 --   · Cada jugador solo puede ser de un mánager dentro de la liga.
 --   · Al entrar, un sobre con 4 jugadores (2 de relleno, 1 bueno del 21 al 40
 --     y 1 estrella; el top 6 sale muy poco) que vale entre 45 y 60 M, y 100 M para fichar.
@@ -180,7 +180,7 @@ language sql immutable as $$
     when 'sobre_max'  then 60       -- valor máximo del sobre inicial
     when 'liga_oferta' then 0.10    -- la liga ofrece por lo que está en venta: valor ± 10 %
     when 'plantilla'  then 6        -- jugadores como máximo
-    when 'miembros'   then 50       -- mánagers por liga
+    when 'miembros'   then 58       -- mánagers por liga
     when 'mercado'    then 8        -- jugadores libres en el mercado diario
     when 'credito'    then 0.2      -- se puede pujar hasta caja + 20 % de la plantilla
     when 'clausula'   then 1.25     -- cláusula inicial = 1,25 × lo pagado
@@ -338,12 +338,14 @@ begin
     if d < mejor_d then mejor_d := d; mejor := array[r1, r2, bue, est]; end if;   -- orden del sobre: de peor a mejor
     exit when d = 0;
   end loop;
-  if mejor is null then raise exception 'No quedan jugadores libres para el sobre.'; end if;
+  if mejor is null then raise exception 'Esta liga ya no tiene jugadores libres para repartir más sobres. Las ligas solo masculinas o solo femeninas tienen menos jugadores: para ligas muy grandes, crea una liga mixta.'; end if;
   elegidos := mejor;
+  -- Si el sobre vale menos de 45 M (en ligas grandes se acaban los buenos), la diferencia va a la caja
+  select sum(valor) into v from m_jugadores where id = any(elegidos);
   insert into m_plantilla (liga, jugador, user_id, precio, clausula, protegido)
     select p_liga, j.id, p_user, j.valor, round(j.valor * m_cfg('clausula'), 1), now() + make_interval(days => m_cfg('proteccion')::int)
     from m_jugadores j where j.id = any(elegidos);
-  update m_miembros set caja = m_cfg('caja_ini'), sobre = elegidos
+  update m_miembros set caja = m_cfg('caja_ini') + greatest(vmin - coalesce(v, vmin), 0), sobre = elegidos
     where liga = p_liga and user_id = p_user;
   insert into m_alineacion (liga, user_id, jugadores, capitan) values (p_liga, p_user, elegidos, elegidos[4])
     on conflict (liga, user_id) do update set jugadores = excluded.jugadores, capitan = excluded.capitan;
@@ -797,13 +799,15 @@ begin
   if not found then raise exception 'Esa oferta ya no está pendiente.'; end if;
 end $$;
 
--- Cambia los jugadores que ya no están en el top 100 por otros del 41 al 100 (mismo lado y género), gratis
+-- Cambia los jugadores que ya no están en el top 100 por otros del 41 al 100 (mismo lado y género), gratis (solo en ligas de hasta 16)
 create or replace function public.m_reemplazar_fuera() returns int
 language plpgsql security definer set search_path = public as $$
 declare r record; nuevo int; n int := 0;
 begin
   for r in select p.liga, p.user_id, p.jugador, j.genero, j.lado from m_plantilla p join m_jugadores j on j.id = p.jugador
-           where coalesce(j.rank, 999) > m_cfg('top') loop
+           where coalesce(j.rank, 999) > m_cfg('top')
+             -- en ligas de más de 16 mánagers se permiten jugadores fuera del top 100: no se tocan
+             and (select count(*) from m_miembros m where m.liga = p.liga) <= 16 loop
     nuevo := m_escoger(r.liga, 41, 100, r.genero, r.lado, null);
     if nuevo is null then nuevo := m_escoger(r.liga, 1, 100, r.genero, r.lado, null); end if;
     continue when nuevo is null;
@@ -952,8 +956,6 @@ grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
   public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean) to authenticated;
 
--- Una vez: quien tenga jugadores fuera del top 100 recibe otros a cambio (se puede repetir sin problema)
-select public.m_reemplazar_fuera() as jugadores_cambiados;
 
 -- Reloj de cada minuto (solo si la extensión pg_cron está activada: Database → Extensions)
 do $$ begin

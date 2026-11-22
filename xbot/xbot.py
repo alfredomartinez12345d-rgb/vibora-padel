@@ -130,7 +130,7 @@ def nombre_t(tid):
 # (los FIP Platinum reciben pronóstico con el Elo de ese momento, pero no lo mueven)
 elo, ultimo = {}, {}
 for m in sorted([m for m in M if cubre(m['t']) and len(m['a']) == 2 and len(m['b']) == 2],
-                key=lambda m: (m['fecha'], -m['ronda'], m['id'])):
+                key=lambda m: (m['fecha'] or '9999', -m['ronda'], m['id'])):
     ea = sum(elo.get(i, 1500) for i in m['a']) / 2
     eb = sum(elo.get(i, 1500) for i in m['b']) / 2
     m['pre'] = 1 / (1 + 10 ** ((eb - ea) / 400))
@@ -425,33 +425,48 @@ for tid in {m['t'] for m in M if premier(m['t'])}:
            "\n\n👇 El ranking completo y el de parejas, en la app (link en la bio)")
     cands.append((2, f'podio:{tid}', txt, lambda tid=tid, tops=tops: img_podio(tid, tops)))
 
-# Partidos de hoy, una vez al día por torneo: desde 2 h antes del primer partido con hora
-# (o desde las 10:00 si no hay horas), nunca antes de las 8:00 de España
+# Partidos de hoy, una vez al día por torneo. El «hoy» se cuenta en la hora local del torneo
+# (la API da las horas en hora de España: un partido a las 02:00 en España en México es la tarde anterior).
+# Sale a las 10:00 de España, o 2 h antes del primer partido si es antes (nunca antes de las 8:00).
+# Los partidos sin hora ni fecha entran si son de la siguiente ronda (las dos parejas ya decididas).
+ZONAS = {'ES': 'Europe/Madrid', 'MX': 'America/Mexico_City', 'AR': 'America/Argentina/Buenos_Aires', 'CL': 'America/Santiago',
+         'PY': 'America/Asuncion', 'BR': 'America/Sao_Paulo', 'US': 'America/New_York', 'AE': 'Asia/Dubai', 'QA': 'Asia/Qatar',
+         'KW': 'Asia/Kuwait', 'SA': 'Asia/Riyadh', 'EG': 'Africa/Cairo', 'IT': 'Europe/Rome', 'FR': 'Europe/Paris',
+         'DE': 'Europe/Berlin', 'NL': 'Europe/Amsterdam', 'BE': 'Europe/Brussels', 'GB': 'Europe/London', 'SE': 'Europe/Stockholm',
+         'FI': 'Europe/Helsinki', 'PT': 'Europe/Lisbon', 'CH': 'Europe/Zurich', 'AT': 'Europe/Vienna', 'DK': 'Europe/Copenhagen'}
+def zona_de(tid):
+    try:
+        return ZoneInfo(ZONAS.get(str((T.get(tid) or [None] * 5)[4] or '').upper(), 'Europe/Madrid'))
+    except Exception:
+        return MAD
 if AHORA.astimezone(MAD).hour >= 8:
-    hoy, primero, zona = {}, {}, {}
+    hoy, primero = {}, {}
+    pend = {}
     for m in M:
-        if cubre(m['t']) and m['hora']:
+        if cubre(m['t']) and not terminado(m) and len(m['a']) == 2 and len(m['b']) == 2:
+            pend.setdefault(m['t'], []).append(m)
+    for tid, ms in pend.items():
+        z = zona_de(tid)
+        dia_local = AHORA.astimezone(z).date()
+        siguiente = max(m['ronda'] for m in ms)          # la ronda que toca (la más temprana pendiente)
+        for m in ms:
+            h = None
             try:
-                zona.setdefault(m['t'], datetime.datetime.fromisoformat(m['hora']).tzinfo)
+                h = datetime.datetime.fromisoformat(m['hora']) if m['hora'] else None
             except ValueError:
                 pass
-    for m in M:
-        if not cubre(m['t']) or terminado(m) or len(m['a']) != 2 or len(m['b']) != 2:
-            continue
-        h = None
-        try:
-            h = datetime.datetime.fromisoformat(m['hora']) if m['hora'] else None
-        except ValueError:
-            pass
-        dia_local = str(AHORA.astimezone((h.tzinfo if h else None) or zona.get(m['t']) or MAD).date())
-        if h:
-            if str(h.date()) != dia_local or h <= AHORA:
+            if h:
+                if h.astimezone(z).date() != dia_local or h <= AHORA:
+                    continue
+                primero[tid] = min(primero.get(tid, h), h)
+            elif m['fecha'][:10]:
+                if m['fecha'][:10] != str(dia_local):
+                    continue
+            elif m['ronda'] != siguiente:
                 continue
-            primero[m['t']] = min(primero.get(m['t'], h), h)
-        elif m['fecha'][:10] != dia_local:
-            continue
-        hoy.setdefault((m['t'], dia_local), []).append(m)
-    listos = lambda tid: (AHORA >= primero[tid] - datetime.timedelta(hours=2)) if tid in primero else AHORA.astimezone(MAD).hour >= 10
+            hoy.setdefault((tid, str(dia_local)), []).append(m)
+    diez = AHORA.astimezone(MAD).replace(hour=10, minute=0, second=0, microsecond=0)
+    listos = lambda tid: AHORA >= min(diez, primero[tid] - datetime.timedelta(hours=2)) if tid in primero else AHORA >= diez
     hoy = {k: v for k, v in hoy.items() if listos(k[0])}
     for (tid, dia_local), ms in hoy.items():
         clave = f'hoy:{tid}:{dia_local}'
@@ -463,12 +478,21 @@ if AHORA.astimezone(MAD).hour >= 8:
         fav = max(top, key=lambda m: abs(m['pre'] - .5))
         igual = min(top, key=lambda m: abs(m['pre'] - .5))
         rondas = sorted({m['ronda'] for m in ms})
-        que = RONDA_TXT.get(rondas[0], 'partidos').upper() if len(rondas) == 1 else f"{len(ms)} PARTIDOS"
+        PLURAL = {1: 'las finales', 2: 'semis', 4: 'cuartos', 8: 'octavos', 16: 'dieciseisavos', 32: 'primera ronda'}
+        if len(rondas) == 1:
+            que = (RONDA_TXT if len(ms) == 1 else PLURAL).get(rondas[0], 'partidos').upper()
+        else:
+            que = f"{len(ms)} PARTIDOS"
         fv = fav['a'] if fav['pre'] >= .5 else fav['b']
-        txt = (f"🎾 HOY EN {lugar(tid).upper()}: {que}\n\n"
-               f"⚖️ El más igualado: {par_b(igual['a'])} vs {par_b(igual['b'])} ({round(igual['pre'] * 100)}-{round((1 - igual['pre']) * 100)}%)\n"
-               f"🔒 El favorito más claro: {par_b(fv)} ({round(max(fav['pre'], 1 - fav['pre']) * 100)}%)\n\n"
-               f"👇 Los pronósticos según el Elo de Víbora. ¿Quién da la sorpresa?")
+        lineas = []
+        if len(ms) == 1:
+            lineas.append(f"⚔️ {par_b(ms[0]['a'])} vs {par_b(ms[0]['b'])} ({round(ms[0]['pre'] * 100)}-{round((1 - ms[0]['pre']) * 100)}%)")
+        else:
+            lineas.append(f"⚖️ El más igualado: {par_b(igual['a'])} vs {par_b(igual['b'])} ({round(igual['pre'] * 100)}-{round((1 - igual['pre']) * 100)}%)")
+            if fav is not igual and max(fav['pre'], 1 - fav['pre']) >= .56:
+                lineas.append(f"🔒 El favorito más claro: {par_b(fv)} ({round(max(fav['pre'], 1 - fav['pre']) * 100)}%)")
+        txt = (f"🎾 HOY EN {lugar(tid).upper()}: {que}\n\n" + '\n'.join(lineas) +
+               "\n\n👇 Los pronósticos según el Elo de Víbora. ¿Quién da la sorpresa?")
         cands.append((3, clave, txt, lambda tid=tid, top=top: img_previa(tid, top)))
 
 # Cierre de alineaciones del fantasy: 01:30 UTC del día que empieza el próximo torneo Premier
