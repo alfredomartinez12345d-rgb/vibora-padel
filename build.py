@@ -289,6 +289,13 @@ print('fotos propias', propias, '· top 100 sin foto:', ', '.join(f'{n} (id {i},
 data = {'otp': os.environ.get('FANTASY_CODIGO') == '1', 'snap': datetime.date.today().isoformat(), 'rk': rk_from[::-1], 'yt': yt_handles, 'P': P, 'T': T, 'M': M, 'Q': Q}
 # Copia de los datos de la app para manager.py (valores y puntos del fantasy)
 json.dump(data, open(os.path.join(d_meta, 'app.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+# Partido destacado en la portada (destacado.json, junto a template.html)
+try:
+    dest = json.load(open(os.path.join(os.path.dirname(os.path.abspath(tpl)), 'destacado.json'), encoding='utf-8'))
+    if dest.get('partido'):
+        data['dest'] = {'id': int(dest['partido']), 'titulo': str(dest.get('titulo') or 'Partido destacado')[:40], 'hasta': str(dest.get('hasta') or '')}
+except (OSError, ValueError, TypeError):
+    pass
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 assert '</' not in js
 push = re.sub(r'[^0-9a-fA-F-]', '', os.environ.get('ONESIGNAL_APP_ID', ''))
