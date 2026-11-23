@@ -1120,6 +1120,9 @@ inicio(){const nt=nextT(),last=lastPremier();
   if(lt0){hm=M.filter(m=>m.t===lt0.id&&inCat(m)&&m.st===3&&m.a.length&&m.b.length).sort(chrono)[0];het='Próximo partido';
     if(!hm){hm=M.filter(m=>m.t===lt0.id&&inCat(m)&&played(m)).sort(chrono).slice(-1)[0];het='Último resultado'}}
   if(!hm&&last){hm=M.find(m=>m.t===last.id&&inCat(m)&&m.round===1&&played(m));het='Final'}
+  /* Partido destacado a mano (destacado.json): manda sobre lo anterior hasta la hora indicada (de España, aprox.) y en su categoría */
+  {const ds=D.dest,dm=ds&&MM[ds.id],lim=ds&&ds.hasta?new Date(ds.hasta.replace(' ','T')+'+01:00'):null;
+   if(dm&&inCat(dm)&&dm.a.length&&dm.b.length&&(!lim||isNaN(lim)||new Date()<lim)){hm=dm;het=ds.titulo}}
   const lpI=hm&&hm.a.length&&hm.b.length?lpPartido(hm,het):'';
   const count=nt?`<div class="count" ${lvs(nt)}>${nt.photo?`<img class="cbg" src="${nt.photo}" alt="" onerror="this.remove()">`:''}<h2>${lvp(nt)} Próximo torneo</h2><div class="cd" id="cd">${cdText()}</div><b>${nt.name}</b><p class="sub">${tinfo(nt)}</p>${ckey(nt)?`<a class="back" href="#torneos" data-mapsel="${ckey(nt)}">Ver en el mapa ›</a>`:''}</div>`:'';
   const live=T.filter(t=>t.status==='live').map(t=>{const tot=Math.round((new Date(t.end)-new Date(t.start))/864e5)+1,day=Math.min(tot,Math.max(1,Math.round((new Date(D.snap)-new Date(t.start))/864e5)+1));

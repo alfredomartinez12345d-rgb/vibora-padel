@@ -1,0 +1,6 @@
+{
+  "_ayuda": "Partido destacado en la portada de la app. «partido»: su número (sale en la dirección al abrirlo, #partido-NÚMERO). «hasta»: hora de España a partir de la cual deja de destacarse. «titulo»: el texto que sale encima. Para no destacar ninguno, pon «partido»: null.",
+  "partido": 15223,
+  "titulo": "Partido destacado",
+  "hasta": "2026-11-24 12:00"
+}

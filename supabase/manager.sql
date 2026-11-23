@@ -193,6 +193,14 @@ alter table public.m_estado add column if not exists proximo int;               
 alter table public.m_estado add column if not exists proximo_nombre text;
 alter table public.m_estado add column if not exists proximo_bloqueo timestamptz;  -- cuándo se congelan las alineaciones
 alter table public.m_estado add column if not exists aviso_bloqueo int;            -- torneo del que ya se avisó
+create table if not exists public.m_excepciones_liga (     -- excepción para una liga: sus mánagers pueden alinear en ella hasta «hasta»
+  liga  uuid primary key references public.m_ligas on delete cascade,
+  hasta timestamptz not null
+);
+create table if not exists public.m_excepciones (          -- excepción para un solo mánager: puede alinear hasta «hasta»
+  user_id uuid primary key references public.perfiles on delete cascade,
+  hasta   timestamptz not null
+);
 alter table public.m_estado add column if not exists abierto_hasta timestamptz;    -- excepción: con el torneo empezado, se puede alinear y negociar hasta esta hora
 create table if not exists public.m_config (clave text primary key, valor text);
 create table if not exists public.m_avisos (user_id uuid primary key references public.perfiles on delete cascade, activo boolean not null default true);
@@ -746,7 +754,10 @@ begin
                  'estado', case when o.estado = 'pendiente' and o.creada < now() - make_interval(hours => m_cfg('oferta_h')::int) then 'caducada' else o.estado end,
                  'creada', o.creada) order by o.creada desc), '[]')
                 from m_ofertas o where o.liga = p_liga and (o.de = yo or o.para = yo) and o.creada > now() - interval '7 days'),
-    'estado', (select to_jsonb(e) || jsonb_build_object('bloqueado', m_bloqueado()) from m_estado e where id = 1),
+    'estado', (select to_jsonb(e) || (case when m_bloqueado() and greatest(x.hasta, xl.hasta) > now()
+                 then jsonb_build_object('bloqueado', false, 'abierto_hasta', greatest(x.hasta, xl.hasta), 'solo_alinear', true)
+                 else jsonb_build_object('bloqueado', m_bloqueado()) end)
+               from m_estado e left join m_excepciones x on x.user_id = yo left join m_excepciones_liga xl on xl.liga = p_liga where e.id = 1),
     'chat_sin_leer', m_chat_sin_leer(p_liga, yo),
     'yo', (select jsonb_build_object('id', yo, 'avisos', coalesce((select activo from m_avisos where user_id = yo), false), 'caja', caja, 'sobre', sobre, 'sobre_visto', sobre_visto,
               'clausulazo_hoy', clausulazo = (now() at time zone 'Europe/Madrid')::date)
@@ -787,7 +798,10 @@ returns void language plpgsql security definer set search_path = public as $$
 declare g char; n int; r int; d int; hm int; mu int;
 begin
   perform m_soy(p_liga);
-  if m_bloqueado() then raise exception 'Se está jugando un torneo: las alineaciones están bloqueadas.'; end if;
+  if m_bloqueado() and not exists (select 1 from m_excepciones where user_id = auth.uid() and hasta > now())
+     and not exists (select 1 from m_excepciones_liga where liga = p_liga and hasta > now()) then
+    raise exception 'Se está jugando un torneo: las alineaciones están bloqueadas.';
+  end if;
   select genero into g from m_ligas where id = p_liga;
   n := coalesce(array_length(p_jugadores, 1), 0);
   -- se puede guardar incompleta (1 a 3 jugadores): el hueco vacío suma 0
@@ -1068,12 +1082,86 @@ begin
   return 'Abierto hasta ' || to_char(p_hasta at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ' (hora de España)';
 end $$;
 
+-- Excepción para un solo mánager (por su nombre): puede cambiar su alineación durante p_horas horas.
+-- Uso en el SQL Editor: select m_excepcion_usuario('Rubén González', 2);
+create or replace function public.m_excepcion_usuario(p_nombre text, p_horas numeric) returns text
+language plpgsql security definer set search_path = public as $$
+declare u uuid; n int; h timestamptz := now() + make_interval(mins => round(p_horas * 60)::int);
+begin
+  select count(*) into n from perfiles where lower(nombre) = lower(btrim(p_nombre));
+  if n = 1 then select id into u from perfiles where lower(nombre) = lower(btrim(p_nombre));
+  else
+    select count(*) into n from perfiles where translate(lower(nombre), 'áéíóúüñàèìòù', 'aeiouunaeiou') like '%' || translate(lower(btrim(p_nombre)), 'áéíóúüñàèìòù', 'aeiouunaeiou') || '%';
+    if n <> 1 then
+      raise exception 'Hay % mánagers con un nombre parecido a «%»: %', n, p_nombre,
+        coalesce((select string_agg(nombre, ', ') from (select nombre from perfiles where translate(lower(nombre), 'áéíóúüñàèìòù', 'aeiouunaeiou') like '%' || translate(lower(btrim(p_nombre)), 'áéíóúüñàèìòù', 'aeiouunaeiou') || '%' order by nombre limit 15) z), 'ninguno');
+    end if;
+    select id into u from perfiles where translate(lower(nombre), 'áéíóúüñàèìòù', 'aeiouunaeiou') like '%' || translate(lower(btrim(p_nombre)), 'áéíóúüñàèìòù', 'aeiouunaeiou') || '%';
+  end if;
+  insert into m_excepciones (user_id, hasta) values (u, h) on conflict (user_id) do update set hasta = excluded.hasta;
+  perform m_push(array[u], '🔓 Tu alineación está abierta',
+    'Tienes hasta las ' || to_char(h at time zone 'Europe/Madrid', 'HH24:MI') || ' (hora de España) para cambiar tu alineación.');
+  return m_un(u) || ' puede alinear hasta las ' || to_char(h at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ' (hora de España)';
+end $$;
+
+-- Excepción para una liga (por su nombre): sus mánagers pueden cambiar la alineación de esa liga hasta p_hasta.
+-- Uso en el SQL Editor: select m_excepcion_liga('LIGA VÍBORA 1', '2026-11-23 21:30 Europe/Madrid');
+create or replace function public.m_excepcion_liga(p_nombre text, p_hasta timestamptz) returns text
+language plpgsql security definer set search_path = public as $$
+declare l m_ligas; n int;
+begin
+  if p_hasta <= now() then raise exception 'La hora tiene que ser futura.'; end if;
+  select count(*) into n from m_ligas where upper(nombre) = upper(btrim(p_nombre));
+  if n <> 1 then
+    raise exception 'Hay % ligas con ese nombre. Ligas parecidas: %', n,
+      coalesce((select string_agg(nombre, ', ') from (select nombre from m_ligas
+        where translate(lower(nombre), 'áéíóúüñ', 'aeiouun') like '%' || translate(lower(btrim(p_nombre)), 'áéíóúüñ', 'aeiouun') || '%' order by nombre limit 15) z), 'ninguna');
+  end if;
+  select * into l from m_ligas where upper(nombre) = upper(btrim(p_nombre));
+  insert into m_excepciones_liga (liga, hasta) values (l.id, p_hasta) on conflict (liga) do update set hasta = excluded.hasta;
+  perform m_push((select array_agg(user_id) from m_miembros where liga = l.id), '🔓 Alineaciones abiertas en «' || l.nombre || '»',
+    'Excepción: puedes cambiar tu alineación hasta las ' || to_char(p_hasta at time zone 'Europe/Madrid', 'HH24:MI') || ' (hora de España).');
+  return '«' || l.nombre || '»: ' || (select count(*) from m_miembros where liga = l.id) || ' mánagers pueden alinear hasta las '
+         || to_char(p_hasta at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ' (hora de España)';
+end $$;
+
 -- Al acabar la excepción: nueva foto de las alineaciones y otra vez bloqueado
 create or replace function public.m_cerrar_excepcion() returns void
 language plpgsql security definer set search_path = public as $$
-declare e m_estado;
+declare e m_estado; x record;
 begin
   select * into e from m_estado where id = 1 for update;
+  -- las de un solo mánager: su nueva foto para el torneo en juego
+  for x in delete from m_excepciones where hasta <= now() returning user_id loop
+    if e.bloqueado and e.torneo is not null then
+      delete from m_fotos where torneo = e.torneo and user_id = x.user_id;
+      insert into m_fotos (liga, user_id, torneo, jugadores, capitan, negativo)
+        select a.liga, a.user_id, e.torneo,
+               coalesce((select array_agg(j) from unnest(a.jugadores) j
+                         where exists (select 1 from m_plantilla p where p.liga = a.liga and p.user_id = a.user_id and p.jugador = j)), '{}'),
+               a.capitan, m.caja < 0
+        from m_alineacion a join m_miembros m on m.liga = a.liga and m.user_id = a.user_id
+        where a.user_id = x.user_id
+      on conflict (liga, user_id, torneo) do nothing;
+      perform m_push(array[x.user_id], '🔒 Alineación cerrada', 'Tu equipo para el ' || coalesce(e.torneo_nombre, 'torneo') || ' queda bloqueado. ¡Suerte!');
+    end if;
+  end loop;
+  -- las de una liga: nueva foto de sus mánagers en esa liga
+  for x in delete from m_excepciones_liga where hasta <= now() returning liga loop
+    if e.bloqueado and e.torneo is not null then
+      delete from m_fotos where torneo = e.torneo and liga = x.liga;
+      insert into m_fotos (liga, user_id, torneo, jugadores, capitan, negativo)
+        select a.liga, a.user_id, e.torneo,
+               coalesce((select array_agg(j) from unnest(a.jugadores) j
+                         where exists (select 1 from m_plantilla p where p.liga = a.liga and p.user_id = a.user_id and p.jugador = j)), '{}'),
+               a.capitan, m.caja < 0
+        from m_alineacion a join m_miembros m on m.liga = a.liga and m.user_id = a.user_id
+        where a.liga = x.liga
+      on conflict (liga, user_id, torneo) do nothing;
+      perform m_push((select array_agg(user_id) from m_miembros where liga = x.liga), '🔒 Alineaciones cerradas',
+                     'Tu equipo para el ' || coalesce(e.torneo_nombre, 'torneo') || ' queda bloqueado. ¡Suerte!');
+    end if;
+  end loop;
   if e.abierto_hasta is null or e.abierto_hasta > now() then return; end if;
   update m_estado set abierto_hasta = null where id = 1;
   if e.bloqueado and e.torneo is not null then
@@ -1201,6 +1289,8 @@ alter table public.m_ofertas    enable row level security;
 alter table public.m_config     enable row level security;
 alter table public.m_avisos     enable row level security;
 alter table public.m_recordado  enable row level security;
+alter table public.m_excepciones enable row level security;
+alter table public.m_excepciones_liga enable row level security;
 alter table public.m_mensajes       enable row level security;
 alter table public.m_chat_leido     enable row level security;
 alter table public.m_chat_bloqueos  enable row level security;
@@ -1215,10 +1305,10 @@ drop policy if exists leer on public.m_puntos;    create policy leer on public.m
 revoke execute on function public.m_soy(uuid), public.m_valor_plantilla(uuid, uuid), public.m_quitar_de_alineacion(uuid, uuid, int),
   public.m_log(uuid, text, uuid, uuid, int, numeric), public.m_libres(uuid), public.m_escoger(uuid, int, int, char, char, int[]),
   public.m_nuevo_mercado(uuid), public.m_dar_sobre(uuid, uuid), public.m_procesar(uuid), public.m_pts_foto(public.m_fotos),
-  public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_cerrar_excepcion(),
+  public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_excepcion_usuario(text, numeric), public.m_excepcion_liga(text, timestamptz), public.m_cerrar_excepcion(),
   public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(),
   public.m_push(uuid[], text, text), public.m_tick(), public.m_chat_sin_leer(uuid, uuid) from public, anon, authenticated;
-grant execute on function public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_cerrar_excepcion(), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
+grant execute on function public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_excepcion_usuario(text, numeric), public.m_excepcion_liga(text, timestamptz), public.m_cerrar_excepcion(), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
 revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
