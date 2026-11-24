@@ -292,8 +292,10 @@ json.dump(data, open(os.path.join(d_meta, 'app.json'), 'w', encoding='utf-8'), e
 # Partido destacado en la portada (destacado.json, junto a template.html)
 try:
     dest = json.load(open(os.path.join(os.path.dirname(os.path.abspath(tpl)), 'destacado.json'), encoding='utf-8'))
-    if dest.get('partido'):
-        data['dest'] = {'id': int(dest['partido']), 'titulo': str(dest.get('titulo') or 'Partido destacado')[:40], 'hasta': str(dest.get('hasta') or '')}
+    # uno por categoría («masculino» / «femenino»); el formato antiguo (un solo «partido») también vale
+    ds = [dest.get('masculino'), dest.get('femenino')] if ('masculino' in dest or 'femenino' in dest) else [dest]
+    data['dest'] = [{'id': int(d['partido']), 'titulo': str(d.get('titulo') or 'Partido destacado')[:40], 'hasta': str(d.get('hasta') or '')}
+                    for d in ds if isinstance(d, dict) and d.get('partido')]
 except (OSError, ValueError, TypeError):
     pass
 js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
