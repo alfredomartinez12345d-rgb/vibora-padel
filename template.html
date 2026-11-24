@@ -677,6 +677,11 @@ html[data-tema="dia"] .lp .nom,html[data-tema="dia"] .lp .txt small,html[data-te
 #favn[hidden]{display:none}
 /* modo fantasy: la app se limpia (sin la barra de abajo ni Masculino/Femenino) y se vuelve con un toque */
 body.modofx #cats,body.modofx header.top .hbtn:not(#menubtn),body.modofx nav.bot{display:none!important}
+/* Con fantasy, la app es solo el fantasy: el resto de secciones están en el menú ☰ */
+body.solofx nav.bot,body.solofx header.top a.hbtn{display:none!important}
+body.solofx .brand::after{content:"Fantasy";font-size:.55em;color:var(--pelota);margin-left:6px;align-self:flex-end;padding-bottom:4px}
+body.solofx.modofx .brand::after{content:"Fantasy"}
+body.solofx .shell{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
 body.modofx header.top{justify-content:space-between}
 body.modofx .brand::after{content:"Fantasy";font-size:.55em;color:var(--pelota);margin-left:6px;align-self:flex-end;padding-bottom:4px}
 body.modofx .mxtabs{bottom:calc(8px + env(safe-area-inset-bottom))!important}
@@ -736,6 +741,7 @@ body.modofx .mxtabs{bottom:calc(8px + env(safe-area-inset-bottom))!important}
 const D=/*DATA*/null;
 /* ---------- Idioma: español o inglés. Se elige en «Aspecto»; si no, el del móvil. Los textos en inglés están en i18n/en.txt ---------- */
 const EN_DIC=/*EN*/null;
+const OAUTH=/*OAUTH*/[];   /* acceso con Google / Apple (solo los activados en Supabase) */
 let LANG='es';try{LANG=localStorage.getItem('vibora-lang')||(/^(es|ca|gl|eu)\b/i.test(navigator.language||'es')?'es':'en')}catch(e){}
 if(!EN_DIC||LANG!=='en')LANG='es';
 const EN=LANG==='en',LOC=EN?'en-GB':'es-ES';document.documentElement.lang=LANG;
@@ -1139,16 +1145,17 @@ function temaAbrir(){const el=document.createElement('div');el.className='tsel';
 function menuAbrir(){const r=route().v,yo=typeof mx!=='undefined'&&mx.perfil?mx.perfil.nombre:'';
   const it=(h,i,t,act)=>`<a href="${h}"${act?' aria-current="page"':''}><i>${i}</i>${t}</a>`;
   const el=document.createElement('div');el.className='menu';el.setAttribute('role','dialog');el.setAttribute('aria-label','Menú');
-  el.innerHTML=`<nav class="in"><div class="cab"><div><b>Víbora</b>${yo?`<small>${esc(yo)}</small>`:''}</div><button type="button" class="hbtn" data-menu="cerrar" aria-label="Cerrar">✕</button></div>
-    ${SUPA?it('#fantasy','🏟️','Mis ligas',r==='fantasy'):''}
+  const sec=t=>`<p class="peq" style="padding:10px 10px 2px;text-transform:uppercase;letter-spacing:1px;font-size:11px;font-weight:700">${t}</p>`;
+  el.innerHTML=`<nav class="in"><div class="cab"><div><b>Víbora Fantasy</b>${yo?`<small>${esc(yo)}</small>`:''}</div><button type="button" class="hbtn" data-menu="cerrar" aria-label="Cerrar">✕</button></div>
+    ${SUPA?sec('Fantasy')+it('#fantasy','🏟️','Mis ligas',r==='fantasy')+'<button type="button" class="it" data-menu="como"><i>📖</i>Cómo se juega</button>':''}
+    ${sec('Pádel profesional')}
     ${it('#inicio','📊','Resultados y partidos',r==='inicio'||r==='partido')}
     ${it('#torneos','📅','Torneos y calendario',r==='torneos'||r==='torneo')}
     ${it('#ranking','📈','Ranking',r==='ranking'||r==='jugador'||r==='pareja')}
     ${it('#records','🏆','Récords',r==='records')}
     ${it('#favoritos','⭐','Favoritos',r==='favoritos')}
     ${it('#buscar','🔍','Buscar jugador',r==='buscar')}
-    <div class="sep"></div>
-    ${SUPA?'<button type="button" class="it" data-menu="como"><i>📖</i>Cómo se juega</button>':''}
+    ${sec('Ajustes')}
     <button type="button" class="it" data-menu="tema"><i>🎨</i>Aspecto e idioma</button>
     <div class="sep"></div><p class="peq">App no oficial de aficionados, sin relación con Premier Padel ni con la FIP.</p></nav>`;
   el.addEventListener('click',e=>{const b=e.target.closest('[data-menu]');if(e.target===el||e.target.closest('a')||b){el.remove();
@@ -1447,6 +1454,14 @@ const mxPtsFoto=f=>+f.puntos||0;
 function mxClas(tor){const L=mx.L;return L.miembros.map(m=>{const fs=L.fotos.filter(f=>f.user===m.id&&(tor==='total'||f.torneo===+tor));
   return{m,pts:fs.reduce((a,f)=>a+mxPtsFoto(f),0)}}).sort((a,b)=>b.pts-a.pts)}
 
+/* Acceso con Google / Apple */
+const OA_ICON={google:'<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>',
+  apple:'<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2-.9-3.4-.9c-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.4.8c1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.7-1-2.7-4.1ZM13.9 4.9c.7-.9 1.2-2 1-3.2-1 .1-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.4-.6 3.1-1.5Z"/></svg>'};
+const mxOAuthBtns=(acc,txt='Continuar con')=>OAUTH.map(p=>`<button type="button" class="btn" data-${acc}="${p}" style="align-self:stretch;display:flex;gap:10px;justify-content:center;align-items:center;padding:12px">${OA_ICON[p]}${txt} ${p==='google'?'Google':'Apple'}</button>`).join('');
+async function mxOAuth(p,vincular){const redirectTo=location.origin+location.pathname+'#fantasy';
+  const r=vincular?await mx.sb.auth.linkIdentity({provider:p,options:{redirectTo}}):await mx.sb.auth.signInWithOAuth({provider:p,options:{redirectTo}});
+  if(r.error)fxMsg(r.error.message||'No se ha podido conectar. Prueba de nuevo.');else gcEvent('fantasy/'+(vincular?'vincula-':'entra-')+p,'Fantasy: '+p)}
+
 /* Vistas */
 function mxView(){
   if(!SUPA)return `<h1>Fantasy</h1><p class="sub">Muy pronto.</p>${NOTE}`;
@@ -1454,7 +1469,7 @@ function mxView(){
   const msg=mx.msg?`<p class="fxmsg${mx.msg.ok?' ok':''}" role="status">${esc(mx.msg.t)}</p>`:'';
   const logo=`<div class="mxlogo"><img src="icon-192.png" alt="Víbora"><b>Víbora</b><i>FANTASY</i></div>`;
   if(!mx.ses){setTimeout(()=>bienvenida(),0);return `${logo}<p class="sub" style="text-align:center">El fantasy del pádel profesional. Ficha a tus jugadores y pica a tus amigos.</p>${msg}
-    <form class="card fxform" data-fx="login"><b style="font-size:18px">Crea tu cuenta o entra</b><label for="fxmail">Tu email</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(mx.email)}">
+    <form class="card fxform" data-fx="login"><b style="font-size:18px">Crea tu cuenta o entra</b>${mxOAuthBtns('oauth')}${OAUTH.length?'<p class="sub" style="font-size:13px;text-align:center;margin:2px 0">o con tu email</p>':''}<label for="fxmail">Tu email</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(mx.email)}">
     <button class="btn pri" type="submit" style="align-self:stretch">${mx.enviado?'Volver a enviar':'Continuar con mi email'}</button><p class="sub" style="font-size:12px">Te mandamos un enlace para entrar sin contraseña. Tu equipo queda guardado aunque cambies de móvil.</p></form>
     ${mx.enviado&&D.otp?`<form class="card fxform" data-fx="codigo"><label for="fxcod">O escribe el código del correo</label><input id="fxcod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required><button class="btn" type="submit">Entrar con el código</button></form>`:''}
     <form class="card fxform fxreg" data-fx="rapido" style="opacity:.92"><b>¿Prefieres probar sin email?</b><label for="fxnom0">Tu nombre de mánager</label><input id="fxnom0" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid" autocomplete="nickname">
@@ -1496,7 +1511,7 @@ function mxUnirse(msg){const p=mx.prev;return `<div class="mxhead"><div class="t
 function mxMisLigas(msg){const anon=mx.ses.user&&mx.ses.user.is_anonymous,pend=mx.ses.user&&mx.ses.user.new_email;
   const guardar=anon?`<details class="card fxsave"><summary><b>🔒 Guarda tu cuenta con tu email</b> <span class="sub">(opcional)</span></summary>
     <p class="sub" style="margin:8px 0">Así no la pierdes si cambias de móvil o borras la app.</p>
-    ${pend?`<p class="fxmsg ok">Revisa tu correo (${esc(pend)}) y pulsa el enlace.</p>`:`<form class="fxform" data-fx="vincular"><input id="fxmail2" type="email" required autocomplete="email" placeholder="tu@correo.com"><button class="btn" type="submit">Guardar con mi email</button></form>`}</details>`:'';
+    ${mxOAuthBtns('oauthlink','Guardar con')}${pend?`<p class="fxmsg ok">Revisa tu correo (${esc(pend)}) y pulsa el enlace.</p>`:`<form class="fxform" data-fx="vincular"><input id="fxmail2" type="email" required autocomplete="email" placeholder="tu@correo.com"><button class="btn" type="submit">Guardar con mi email</button></form>`}</details>`:'';
   return `<div class="mxhead"><div class="tt"><small>${esc(mx.perfil.nombre)}</small><h1>Mis ligas</h1></div><a class="back" href="#fantasy" data-fx="salir">Salir</a></div>${msg}
   <div class="list" style="display:flex;flex-direction:column;gap:10px">${mx.ligas.map(l=>`<button type="button" class="card mxl" data-mxliga="${l.id}"><span style="font-size:22px">${l.publica?'🌍':'🔒'}</span><span class="nm"><b>${esc(l.nombre)}</b><small>${GEN[l.genero]} · 👥 ${l.miembros}/58 mánagers${l.clausulas?' · 💥':''}</small></span><span class="pos">${l.puesto}º<small>de ${l.miembros}</small></span></button>`).join('')}</div>
   <button type="button" class="btn" data-mx="v-como" style="align-self:stretch;padding:12px">+ Unirme o crear otra liga</button>${mxPushCard()}${guardar}`}
@@ -1935,10 +1950,10 @@ document.addEventListener('change',e=>{if(e.target.id==='mxtor'){mx.tor=+e.targe
 window.addEventListener('hashchange',()=>{if(route().v!=='fantasy'&&mx.hoja){mx.hoja=null;mxHojaPintar()}const c=codigoHash();if(c&&mx.perfil){mx.vista='unirse';mx.cod=c;mx.L=null;mxPrev()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&route().v==='fantasy'&&mx.L&&!mx.hoja)mxRecargar()});
 V.fantasy=()=>mxView();
-if(SUPA){const bl=document.getElementById('brandlnk');if(bl)bl.href='#fantasy';const n=document.getElementById('navfx');if(n)n.hidden=false;document.querySelector('nav.bot').style.gridTemplateColumns='repeat(5,1fr)'}
+if(SUPA){document.body.classList.add('solofx');const bl=document.getElementById('brandlnk');if(bl)bl.href='#fantasy';const n=document.getElementById('navfx');if(n)n.hidden=false;document.querySelector('nav.bot').style.gridTemplateColumns='repeat(5,1fr)'}
 
 /* ---------- Rutas: solo #nombre con letras, cifras y guiones ---------- */
-function route(){const h=(location.hash||(SUPA?'#fantasy':'#inicio')).slice(1).split('-');return{v:V[h[0]]?h[0]:'inicio',args:h.slice(1).map(Number)}}
+function route(){const h=(location.hash||(SUPA?'#fantasy':'#inicio')).slice(1).split('-');return{v:V[h[0]]?h[0]:(SUPA?'fantasy':'inicio'),args:h.slice(1).map(Number)}}
 const TAB={favoritos:'',inicio:'inicio',partido:'inicio',torneos:'torneos',torneo:'torneos',ranking:'ranking',jugador:'ranking',pareja:'ranking',h2h:'h2h',buscar:'',records:'records',fantasy:'fantasy'};
 function render(){const r=route();
   if(r.v==='jugador'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='pareja'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='partido'&&MM[r.args[0]])cat=MM[r.args[0]].cat;
@@ -1949,7 +1964,7 @@ function render(){const r=route();
   document.getElementById('favbtn').classList.toggle('on',r.v==='favoritos');
   document.body.classList.toggle('modofx',r.v==='fantasy')}
 window.addEventListener('hashchange',()=>{document.getElementById('app').className='';render();window.scrollTo(0,0)});
-document.addEventListener('click',e=>{if(e.target.closest('#menubtn')){menuAbrir();return}if(e.target.closest('[data-bvabrir]')){bienvenida(true);return}if(e.target.closest('#temabtn')){temaAbrir();return}const b=e.target.closest('[data-rank]');if(b){rankTab=b.dataset.rank;render();return}
+document.addEventListener('click',e=>{if(e.target.closest('#menubtn')){menuAbrir();return}{const o=e.target.closest('[data-oauth],[data-oauthlink]');if(o){e.preventDefault();mxOAuth(o.dataset.oauth||o.dataset.oauthlink,!!o.dataset.oauthlink);return}}if(e.target.closest('[data-bvabrir]')){bienvenida(true);return}if(e.target.closest('#temabtn')){temaAbrir();return}const b=e.target.closest('[data-rank]');if(b){rankTab=b.dataset.rank;render();return}
   const tv=e.target.closest('[data-tv]');if(tv){tView=tv.dataset.tv;render();return}
   const fb=e.target.closest('[data-fav]');if(fb){const i=+fb.dataset.fav;favs.has(i)?favs.delete(i):(favs.add(i),gcEvent('favorito/'+slug(P[i].name),'Favorito: '+P[i].name));saveLocal();document.getElementById('app').className='noanim';render();return}
   const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else{picks[mi]=sd;if(!window.gcQn){window.gcQn=1;gcEvent('quiniela','Rellena la quiniela')}}saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
