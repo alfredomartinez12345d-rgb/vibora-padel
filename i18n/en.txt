@@ -868,3 +868,4 @@ o con tu email => or with your email
 Continuar con => Continue with
 Guardar con => Save with
 Invitar a la liga => Invite to the league
+re: ^No se ha podido entrar: (.+)$ => Couldn’t log in: $1
