@@ -676,13 +676,24 @@ html[data-tema="dia"] .lp .nom,html[data-tema="dia"] .lp .txt small,html[data-te
 #favn{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;background:var(--pelota);color:#0A1120;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}
 #favn[hidden]{display:none}
 /* modo fantasy: la app se limpia (sin la barra de abajo ni Masculino/Femenino) y se vuelve con un toque */
-#salirfx{display:none}
-body.modofx #cats,body.modofx header.top .hbtn:not(#salirfx),body.modofx nav.bot{display:none!important}
-body.modofx #salirfx{display:inline-flex;width:auto;padding:0 14px;font-weight:600;font-size:14px;gap:4px;margin-left:auto;color:var(--ink)}
+body.modofx #cats,body.modofx header.top .hbtn:not(#menubtn),body.modofx nav.bot{display:none!important}
 body.modofx header.top{justify-content:space-between}
 body.modofx .brand::after{content:"Fantasy";font-size:.55em;color:var(--pelota);margin-left:6px;align-self:flex-end;padding-bottom:4px}
 body.modofx .mxtabs{bottom:calc(8px + env(safe-area-inset-bottom))!important}
 /* selector de tema */
+.menu{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.55);display:flex}
+.menu .in{width:min(320px,84%);height:100%;overflow-y:auto;background:var(--surface);border-right:1px solid var(--line);padding:calc(18px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:4px;animation:menuin .18s ease-out}
+@keyframes menuin{from{transform:translateX(-100%)}to{transform:none}}
+.menu .cab{display:flex;align-items:center;justify-content:space-between;padding:0 6px 12px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.menu .cab b{font-family:var(--display);font-size:22px}.menu .cab small{display:block;color:var(--muted);font-size:13px}
+.menu a,.menu button.it{display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:12px;color:var(--ink);font:inherit;font-size:16px;font-weight:600;background:none;border:0;text-align:left;cursor:pointer;width:100%}
+.menu a[aria-current="page"]{background:var(--surface2)}.menu a i,.menu button.it i{font-style:normal;width:26px;text-align:center;font-size:19px}
+.menu .sep{height:1px;background:var(--line);margin:8px 4px}.menu .peq{font-size:14px;font-weight:500;color:var(--muted);padding:8px 10px}
+.bienv{position:fixed;inset:0;z-index:96;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(28px + env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom));text-align:center}
+.bienv .ic2{font-size:64px;line-height:1;margin-top:8vh}.bienv h2{font-family:var(--display);font-size:34px;line-height:1.05;margin:18px 0 10px;text-transform:uppercase}
+.bienv p{color:var(--muted);font-size:16px;line-height:1.5;max-width:420px;margin:0 auto}.bienv p b{color:var(--ink)}
+.bienv .pts{display:flex;gap:7px;justify-content:center;margin:18px 0}.bienv .pts i{width:8px;height:8px;border-radius:50%;background:var(--line)}.bienv .pts i.on{background:var(--pelota);width:22px;border-radius:5px}
+.bienv .bt{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px}.bienv .bt .btn{align-self:stretch;justify-content:center;text-align:center}
 .tsel{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
 .tsel .in{width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--line);border-radius:10px 10px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
 .tsel h3{margin:0 0 4px;font-family:var(--display);font-weight:800;font-size:26px}
@@ -709,12 +720,12 @@ body.modofx .mxtabs{bottom:calc(8px + env(safe-area-inset-bottom))!important}
 </script>
 <div class="shell">
   <header class="top">
-    <a class="brand" href="#inicio"><i></i>Víbora</a><a class="hbtn" id="salirfx" href="#inicio" aria-label="Volver a la app">‹ Volver a Víbora</a>
-    <div style="display:flex;gap:8px;align-items:center"><a class="hbtn" href="#buscar" aria-label="Buscar jugador"><svg class="ic" viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3Zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg></a><a class="hbtn" id="favbtn" href="#favoritos" aria-label="Tus favoritos"><svg class="ic" viewBox="0 0 24 24"><path d="m12 2.5 2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8L12 2.5Z"/></svg><span id="favn" hidden></span></a><button type="button" class="hbtn" id="temabtn" aria-label="Cambiar el aspecto"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.6-1.3-.6-2.1 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Zm-5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></button><div class="seg" id="cats"></div></div>
+    <div style="display:flex;align-items:center;gap:10px"><button type="button" class="hbtn" id="menubtn" aria-label="Menú" aria-haspopup="dialog"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6Zm0 5h18v2H3v-2Zm0 5h18v2H3v-2Z"/></svg></button><a class="brand" id="brandlnk" href="#inicio"><i></i>Víbora</a></div>
+    <div style="display:flex;gap:8px;align-items:center"><a class="hbtn" href="#buscar" aria-label="Buscar jugador"><svg class="ic" viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3Zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg></a><a class="hbtn" id="favbtn" href="#favoritos" aria-label="Tus favoritos"><svg class="ic" viewBox="0 0 24 24"><path d="m12 2.5 2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8L12 2.5Z"/></svg><span id="favn" hidden></span></a><div class="seg" id="cats"></div></div>
   </header>
   <main id="app"></main>
   <nav class="bot" aria-label="Secciones">
-    <a href="#inicio" data-tab="inicio"><svg class="ic" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-8Z"/></svg>Inicio</a>
+    <a href="#inicio" data-tab="inicio"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h3v8H5v-8Zm5.5-8h3v16h-3V4ZM16 9h3v11h-3V9Z" opacity=".0"/><path d="M4 5h16v2H4V5Zm0 6h16v2H4v-2Zm0 6h10v2H4v-2Z"/></svg>Resultados</a>
     <a href="#torneos" data-tab="torneos"><svg class="ic" viewBox="0 0 24 24"><path d="M7 3v2H5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2V3h-2v2H9V3H7Zm-1 7h12v8H6v-8Z"/></svg>Torneos</a>
     <a href="#ranking" data-tab="ranking"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h3v8H5v-8Zm5.5-8h3v16h-3V4ZM16 9h3v11h-3V9Z"/></svg>Ranking</a>
     <a href="#records" data-tab="records"><svg class="ic" viewBox="0 0 24 24"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3Zm0 4H6v1a2 2 0 0 0 1.2 1.8A5 5 0 0 1 7 9V7Zm10 0v2c0 .3 0 .6-.1.8A2 2 0 0 0 18 8V7h-1ZM5 21h14v1H5v-1Z"/></svg>Récords</a>
@@ -1124,6 +1135,38 @@ function temaAbrir(){const el=document.createElement('div');el.className='tsel';
   <h3 style="margin-top:16px">Idioma · Language</h3><div class="mxseg">${[['es','🇪🇸 Español'],['en','🇬🇧 English']].map(([k,n])=>`<button type="button" data-lang="${k}" aria-pressed="${LANG===k}" style="flex:1">${n}</button>`).join('')}</div></div>`;
   el.addEventListener('click',e=>{const lg=e.target.closest('[data-lang]');if(lg){if(lg.dataset.lang!==LANG)idiomaPoner(lg.dataset.lang);return}const b=e.target.closest('[data-tema]');if(b){temaPoner(b.dataset.tema);el.remove();render();return}if(e.target===el)el.remove()});
   document.body.appendChild(el)}
+/* ---------- Menú lateral (☰): el fantasy es la portada; el resto de secciones, aquí ---------- */
+function menuAbrir(){const r=route().v,yo=typeof mx!=='undefined'&&mx.perfil?mx.perfil.nombre:'';
+  const it=(h,i,t,act)=>`<a href="${h}"${act?' aria-current="page"':''}><i>${i}</i>${t}</a>`;
+  const el=document.createElement('div');el.className='menu';el.setAttribute('role','dialog');el.setAttribute('aria-label','Menú');
+  el.innerHTML=`<nav class="in"><div class="cab"><div><b>Víbora</b>${yo?`<small>${esc(yo)}</small>`:''}</div><button type="button" class="hbtn" data-menu="cerrar" aria-label="Cerrar">✕</button></div>
+    ${SUPA?it('#fantasy','🏟️','Mis ligas',r==='fantasy'):''}
+    ${it('#inicio','📊','Resultados y partidos',r==='inicio'||r==='partido')}
+    ${it('#torneos','📅','Torneos y calendario',r==='torneos'||r==='torneo')}
+    ${it('#ranking','📈','Ranking',r==='ranking'||r==='jugador'||r==='pareja')}
+    ${it('#records','🏆','Récords',r==='records')}
+    ${it('#favoritos','⭐','Favoritos',r==='favoritos')}
+    ${it('#buscar','🔍','Buscar jugador',r==='buscar')}
+    <div class="sep"></div>
+    ${SUPA?'<button type="button" class="it" data-menu="como"><i>📖</i>Cómo se juega</button>':''}
+    <button type="button" class="it" data-menu="tema"><i>🎨</i>Aspecto e idioma</button>
+    <div class="sep"></div><p class="peq">App no oficial de aficionados, sin relación con Premier Padel ni con la FIP.</p></nav>`;
+  el.addEventListener('click',e=>{const b=e.target.closest('[data-menu]');if(e.target===el||e.target.closest('a')||b){el.remove();
+    if(b&&b.dataset.menu==='tema')temaAbrir();if(b&&b.dataset.menu==='como')bienvenida(true)}});
+  document.body.appendChild(el)}
+/* ---------- Bienvenida: qué es el juego, en 4 pantallas (la primera vez, y desde el menú) ---------- */
+const BIENV=[['🐍','Bienvenido a Víbora Fantasy','El fantasy del <b>pádel profesional</b>: ficha a jugadores reales de Premier Padel y suma puntos con lo que hagan en cada torneo.'],
+  ['🎴','Tu equipo','Al entrar abres un <b>sobre con 4 jugadores</b> y tienes <b>100 M</b> para fichar más en el mercado, con pujas a ciegas. Hasta 6 en la plantilla: alineas <b>2 de drive y 2 de revés</b>, y tu <b>Pala de Oro</b> puntúa doble.'],
+  ['🏆','Cómo se puntúa','Victorias, sets, roscos 6-0, sorpresas… desde la previa hasta la final. <b>Los Major cuentan doble.</b> Tu alineación se cierra cuando empieza cada torneo: déjala lista antes.'],
+  ['🤝','Juega con amigos o con todos','<b>Crea tu liga</b> y comparte el código por WhatsApp, o entra en una <b>liga pública</b> con un toque. Activa los avisos para no perderte pujas, ofertas ni el cierre del mercado.']];
+function bienvenida(forzar){if(!forzar){try{if(localStorage.getItem('vibora-bienvenida'))return}catch(e){return}}if(document.querySelector('.bienv'))return;
+  let k=0;const el=document.createElement('div');el.className='bienv';el.setAttribute('role','dialog');el.setAttribute('aria-label','Bienvenida');
+  const fin=()=>{try{localStorage.setItem('vibora-bienvenida','1')}catch(e){}el.remove()};
+  const pinta=()=>{const [ic,t,x]=BIENV[k],u=k===BIENV.length-1;el.innerHTML=`<div style="width:100%;display:flex;justify-content:flex-end"><button type="button" class="btn" data-bv="saltar" style="padding:6px 12px">Saltar</button></div>
+    <div><div class="ic2">${ic}</div><h2>${t}</h2><p>${x}</p></div>
+    <div class="bt"><div class="pts">${BIENV.map((_,i)=>`<i class="${i===k?'on':''}"></i>`).join('')}</div><button type="button" class="btn pri" data-bv="sig" style="padding:14px">${u?(forzar?'Entendido':'Crear mi equipo'):'Siguiente'}</button>${k?'<button type="button" class="btn" data-bv="atras">Atrás</button>':''}</div>`};
+  el.addEventListener('click',e=>{const b=e.target.closest('[data-bv]');if(!b)return;const a=b.dataset.bv;if(a==='saltar')return fin();if(a==='atras'){k--;return pinta()}if(k===BIENV.length-1)return fin();k++;pinta()});
+  pinta();document.body.appendChild(el)}
 const V={
 inicio(){const nt=nextT(),last=lastPremier();
   let hm=null,het='';const lt0=T.find(t=>t.status==='live'&&!t.hidden&&M.some(m=>m.t===t.id&&inCat(m)));
@@ -1164,7 +1207,7 @@ inicio(){const nt=nextT(),last=lastPremier();
   const fl=[...favs].filter(i=>P[i]&&P[i].cat===cat);
   const favS=fl.length?`<section><div class="card"><h2><span class="gold">★</span> Tus favoritos</h2>${fl.map(i=>{const x=playerMatches(i).slice(-1)[0];return pline(i,`<span class="chip ${eloDelta(P[i])>=0?'up':'down'}">${Math.round(P[i].elo)}</span>`,x?`${x.won?'Ganó':'Perdió'} ${scoreStr(x.m,x.s)} · ${tb(x.m.t).name}`:'Sin partidos con resultado')}).join('')}</div></section>`:'';
   const lt=T.find(t=>t.status==='live'&&M.some(m=>m.t===t.id&&inCat(m)&&m.st===3));
-  const links=`<div class="links"><a href="#records">Récords y curiosidades<span>Remontadas, tie-breaks, matagigantes</span></a>${lt?`<a href="#torneo-${lt.id}" data-tv="qn">Quiniela<span>Rellena el cuadro de ${lt.loc}</span></a>`:``}</div>`;
+  const links=`<div class="links"><a href="#records">Récords y curiosidades<span>Remontadas, tie-breaks, matagigantes</span></a>${SUPA?`<a href="#fantasy">Fantasy<span>Tus ligas, tu equipo y el mercado</span></a>`:lt?`<a href="#torneo-${lt.id}" data-tv="qn">Quiniela<span>Rellena el cuadro de ${lt.loc}</span></a>`:``}</div>`;
   return `${lpI}${count}${installCard()}${favS}${live}${links}${lastCard}${tit}${rachS}${mvS}${spS}${NOTE}`},
 torneos(){const hayFip=T.some(isFipT);if(!hayFip)circ='premier';
   const sw=hayFip?`<div class="seg">${[['premier','Premier Padel'],['fip','FIP']].map(([k,l])=>`<button type="button" data-circ="${k}" aria-pressed="${circ===k}">${l}</button>`).join('')}</div>${circ==='fip'?'<p class="sub">Torneos FIP Platinum y Gold: en juego, por jugar y de las últimas semanas.</p>':''}`:'';
@@ -1410,15 +1453,15 @@ function mxView(){
   if(!mx.sb){mxInit();return `<h1>Fantasy</h1><p class="sub">Cargando…</p>`}
   const msg=mx.msg?`<p class="fxmsg${mx.msg.ok?' ok':''}" role="status">${esc(mx.msg.t)}</p>`:'';
   const logo=`<div class="mxlogo"><img src="icon-192.png" alt="Víbora"><b>Víbora</b><i>FANTASY</i></div>`;
-  if(!mx.ses)return `${logo}<p class="sub" style="text-align:center">Ficha a tus jugadores y pica a tus amigos.</p>${msg}
-    <form class="card fxform" data-fx="rapido"><label for="fxnom0">Tu nombre de mánager</label><input id="fxnom0" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid" autocomplete="nickname">
-    <button class="btn pri" type="submit" style="align-self:stretch">¡A jugar!</button><p class="sub" style="font-size:12px">Es el nombre que verán los demás. Este móvil te recordará.</p></form>
-    <details class="card fxreg"${mx.enviado?' open':''}><summary><b>Ya tengo cuenta con email</b></summary>
-    <form class="fxform" data-fx="login" style="margin-top:10px"><label for="fxmail">Tu correo</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(mx.email)}">
-    <button class="btn pri" type="submit">${mx.enviado?'Volver a enviar':'Entrar sin contraseña'}</button><p class="sub" style="font-size:12px">Te llega un correo con un enlace para entrar. Ábrelo en este mismo navegador.</p></form></details>
-    ${mx.enviado&&D.otp?`<form class="card fxform" data-fx="codigo"><label for="fxcod">Escribe el código del correo</label><input id="fxcod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required><button class="btn" type="submit">Entrar con el código</button></form>`:''}${NOTE}`;
+  if(!mx.ses){setTimeout(()=>bienvenida(),0);return `${logo}<p class="sub" style="text-align:center">El fantasy del pádel profesional. Ficha a tus jugadores y pica a tus amigos.</p>${msg}
+    <form class="card fxform" data-fx="login"><b style="font-size:18px">Crea tu cuenta o entra</b><label for="fxmail">Tu email</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(mx.email)}">
+    <button class="btn pri" type="submit" style="align-self:stretch">${mx.enviado?'Volver a enviar':'Continuar con mi email'}</button><p class="sub" style="font-size:12px">Te mandamos un enlace para entrar sin contraseña. Tu equipo queda guardado aunque cambies de móvil.</p></form>
+    ${mx.enviado&&D.otp?`<form class="card fxform" data-fx="codigo"><label for="fxcod">O escribe el código del correo</label><input id="fxcod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required><button class="btn" type="submit">Entrar con el código</button></form>`:''}
+    <form class="card fxform fxreg" data-fx="rapido" style="opacity:.92"><b>¿Prefieres probar sin email?</b><label for="fxnom0">Tu nombre de mánager</label><input id="fxnom0" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid" autocomplete="nickname">
+    <button class="btn" type="submit" style="align-self:stretch">Probar ahora</button><p class="sub" style="font-size:12px">Se guarda solo en este móvil. Puedes añadir tu email cuando quieras para no perderlo.</p></form>
+    <button type="button" class="btn" data-bvabrir style="align-self:center">📖 Cómo se juega</button>${NOTE}`}
   if(mx.perfil===undefined||mx.ligas===null&&mx.perfil)return `<h1>Fantasy</h1><p class="sub">Cargando…</p>`;
-  if(!mx.perfil)return `${logo}${msg}<form class="card fxform" data-fx="perfil"><label for="fxnom">Elige tu nombre de mánager</label><input id="fxnom" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid"><button class="btn pri" type="submit">Empezar</button></form>`;
+  if(!mx.perfil)return `${logo}${msg}<form class="card fxform" data-fx="perfil"><b style="font-size:18px">¡Ya estás dentro!</b><label for="fxnom">Elige tu nombre de mánager</label><input id="fxnom" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid"><button class="btn pri" type="submit">Empezar</button></form>`;
   if(mx.vista==='liga'&&mx.L)return mxLigaView(msg);
   if(mx.vista==='crear')return mxCrear(msg);
   if(mx.vista==='unirse')return mxUnirse(msg);
@@ -1862,10 +1905,10 @@ document.addEventListener('change',e=>{if(e.target.id==='mxtor'){mx.tor=+e.targe
 window.addEventListener('hashchange',()=>{if(route().v!=='fantasy'&&mx.hoja){mx.hoja=null;mxHojaPintar()}const c=codigoHash();if(c&&mx.perfil){mx.vista='unirse';mx.cod=c;mx.L=null;mxPrev()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&route().v==='fantasy'&&mx.L&&!mx.hoja)mxRecargar()});
 V.fantasy=()=>mxView();
-if(SUPA){const n=document.getElementById('navfx');if(n)n.hidden=false;document.querySelector('nav.bot').style.gridTemplateColumns='repeat(5,1fr)'}
+if(SUPA){const bl=document.getElementById('brandlnk');if(bl)bl.href='#fantasy';const n=document.getElementById('navfx');if(n)n.hidden=false;document.querySelector('nav.bot').style.gridTemplateColumns='repeat(5,1fr)'}
 
 /* ---------- Rutas: solo #nombre con letras, cifras y guiones ---------- */
-function route(){const h=(location.hash||'#inicio').slice(1).split('-');return{v:V[h[0]]?h[0]:'inicio',args:h.slice(1).map(Number)}}
+function route(){const h=(location.hash||(SUPA?'#fantasy':'#inicio')).slice(1).split('-');return{v:V[h[0]]?h[0]:'inicio',args:h.slice(1).map(Number)}}
 const TAB={favoritos:'',inicio:'inicio',partido:'inicio',torneos:'torneos',torneo:'torneos',ranking:'ranking',jugador:'ranking',pareja:'ranking',h2h:'h2h',buscar:'',records:'records',fantasy:'fantasy'};
 function render(){const r=route();
   if(r.v==='jugador'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='pareja'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='partido'&&MM[r.args[0]])cat=MM[r.args[0]].cat;
@@ -1876,7 +1919,7 @@ function render(){const r=route();
   document.getElementById('favbtn').classList.toggle('on',r.v==='favoritos');
   document.body.classList.toggle('modofx',r.v==='fantasy')}
 window.addEventListener('hashchange',()=>{document.getElementById('app').className='';render();window.scrollTo(0,0)});
-document.addEventListener('click',e=>{if(e.target.closest('#temabtn')){temaAbrir();return}const b=e.target.closest('[data-rank]');if(b){rankTab=b.dataset.rank;render();return}
+document.addEventListener('click',e=>{if(e.target.closest('#menubtn')){menuAbrir();return}if(e.target.closest('[data-bvabrir]')){bienvenida(true);return}if(e.target.closest('#temabtn')){temaAbrir();return}const b=e.target.closest('[data-rank]');if(b){rankTab=b.dataset.rank;render();return}
   const tv=e.target.closest('[data-tv]');if(tv){tView=tv.dataset.tv;render();return}
   const fb=e.target.closest('[data-fav]');if(fb){const i=+fb.dataset.fav;favs.has(i)?favs.delete(i):(favs.add(i),gcEvent('favorito/'+slug(P[i].name),'Favorito: '+P[i].name));saveLocal();document.getElementById('app').className='noanim';render();return}
   const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else{picks[mi]=sd;if(!window.gcQn){window.gcQn=1;gcEvent('quiniela','Rellena la quiniela')}}saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
