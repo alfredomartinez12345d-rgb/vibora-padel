@@ -315,8 +315,8 @@ if os.path.exists(f_en):
             if a.strip() and b.strip():
                 en[a.strip()] = b.strip()
 js_en = json.dumps(en, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-# Acceso con Google / Apple: solo los que estén activados en Supabase (variable SUPABASE_OAUTH, p. ej. «google,apple»)
-oauth = [x for x in re.split(r'[\s,]+', os.environ.get('SUPABASE_OAUTH', '').lower()) if x in ('google', 'apple')]
+# Acceso con Google: solo si está activado en Supabase (variable SUPABASE_OAUTH = «google»). Apple, de momento no.
+oauth = [x for x in re.split(r'[\s,]+', os.environ.get('SUPABASE_OAUTH', '').lower()) if x in ('google',)]
 html = open(tpl, encoding='utf-8').read().replace('/*EN*/null', js_en).replace('/*OAUTH*/[]', json.dumps(oauth)).replace('/*DATA*/null', js).replace('/*PUSH*/""', json.dumps(push)).replace('/*SUPA*/null', json.dumps(supa))
 open(out, 'w', encoding='utf-8').write(html)
 print('ranking de', rk_from, 'jugadores con ranking', sum(1 for p in P.values() if p[5] is not None))

@@ -137,7 +137,7 @@ jobs:
           ONESIGNAL_APP_ID: ${{ vars.ONESIGNAL_APP_ID }}
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
-          SUPABASE_OAUTH: ${{ vars.SUPABASE_OAUTH }}   # «google», «apple» o «google,apple» cuando estén activados en Supabase
+          SUPABASE_OAUTH: ${{ vars.SUPABASE_OAUTH }}   # «google» cuando esté activado en Supabase
         run: |
           python3 -I build.py datos datos template.html index.html
           echo "Tamaño: $(wc -c < index.html) bytes"
