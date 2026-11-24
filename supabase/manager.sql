@@ -1161,6 +1161,56 @@ begin
          || to_char(p_hasta at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ' (hora de España)';
 end $$;
 
+-- Pasar todo lo de un mánager a otra cuenta (p. ej. su cuenta «sin email» a la de Google), por nombre.
+-- Primero se simula (p_hacer = false) y dice qué movería; con p_hacer = true lo hace. La cuenta de destino se queda
+-- con el nombre de la de origen. Si las dos están en la misma liga, no hace nada.
+-- Uso: select m_mover_cuenta('alfredo2004', 'alfredo1903', false);
+create or replace function public.m_mover_cuenta(p_de text, p_a text, p_hacer boolean) returns text
+language plpgsql security definer set search_path = public as $$
+declare a uuid; b uuid; nom text; ligas text; comun text;
+begin
+  select id, nombre into a, nom from perfiles where lower(nombre) = lower(btrim(p_de));
+  select id into b from perfiles where lower(nombre) = lower(btrim(p_a));
+  if a is null then raise exception 'No hay ningún mánager «%».', p_de; end if;
+  if b is null then raise exception 'No hay ningún mánager «%».', p_a; end if;
+  if a = b then raise exception 'Es el mismo mánager.'; end if;
+  select string_agg(l.nombre, ', ') into comun from m_miembros x join m_miembros y on y.liga = x.liga join m_ligas l on l.id = x.liga
+    where x.user_id = a and y.user_id = b;
+  if comun is not null then raise exception 'Los dos están en la misma liga (%): habría que sacar antes a uno de ellos.', comun; end if;
+  select coalesce(string_agg(l.nombre, ', '), 'ninguna') into ligas from m_miembros m join m_ligas l on l.id = m.liga where m.user_id = a;
+  if not p_hacer then
+    return 'SIMULACIÓN: se pasarían a la cuenta de «' || p_a || '» las ligas de «' || nom || '»: ' || ligas
+      || '. Después «' || p_a || '» pasaría a llamarse «' || nom || '». Las ligas de «' || p_a || '»: '
+      || coalesce((select string_agg(l.nombre, ', ') from m_miembros m join m_ligas l on l.id = m.liga where m.user_id = b), 'ninguna')
+      || ', se quedan. Para hacerlo: select m_mover_cuenta(''' || p_de || ''', ''' || p_a || ''', true);';
+  end if;
+  -- la ficha de cada liga se copia primero a la cuenta nueva (equipo, pujas… dependen de ella) y la vieja se borra al final
+  insert into m_miembros select * from jsonb_populate_recordset(null::m_miembros,
+    (select jsonb_agg(to_jsonb(m) || jsonb_build_object('user_id', b)) from m_miembros m where m.user_id = a));
+  update m_plantilla set user_id = b where user_id = a;
+  update m_alineacion set user_id = b where user_id = a;
+  update m_pujas set user_id = b where user_id = a;
+  update m_fotos set user_id = b where user_id = a;
+  update m_actividad set quien = b where quien = a;
+  update m_actividad set otro = b where otro = a;
+  update m_ofertas set de = b where de = a;
+  update m_ofertas set para = b where para = a;
+  update m_ligas set creador = b where creador = a;
+  update m_mensajes set de = b where de = a;
+  update m_mensajes set para = b where para = a;
+  update m_chat_leido set canal = b::text where canal = a::text and not exists (select 1 from m_chat_leido z where z.liga = m_chat_leido.liga and z.user_id = m_chat_leido.user_id and z.canal = b::text);
+  update m_chat_leido set user_id = b where user_id = a and not exists (select 1 from m_chat_leido z where z.liga = m_chat_leido.liga and z.user_id = b and z.canal = m_chat_leido.canal);
+  update m_chat_bloqueos set user_id = b where user_id = a and not exists (select 1 from m_chat_bloqueos z where z.user_id = b and z.bloqueado = m_chat_bloqueos.bloqueado);
+  update m_chat_bloqueos set bloqueado = b where bloqueado = a and not exists (select 1 from m_chat_bloqueos z where z.bloqueado = b and z.user_id = m_chat_bloqueos.user_id);
+  update m_chat_denuncias set quien = b where quien = a and not exists (select 1 from m_chat_denuncias z where z.mensaje = m_chat_denuncias.mensaje and z.quien = b);
+  update m_seguidos set user_id = b where user_id = a;
+  delete from m_miembros where user_id = a;
+  -- lo que quede de la cuenta vieja (avisos, recordatorios…) se borra con su perfil, y la nueva toma su nombre
+  delete from perfiles where id = a;
+  update perfiles set nombre = nom where id = b;
+  return 'Hecho: la cuenta de «' || p_a || '» ahora se llama «' || nom || '» y tiene sus ligas (' || ligas || ').';
+end $$;
+
 -- Al acabar la excepción: nueva foto de las alineaciones y otra vez bloqueado
 create or replace function public.m_cerrar_excepcion() returns void
 language plpgsql security definer set search_path = public as $$
@@ -1342,10 +1392,10 @@ drop policy if exists leer on public.m_puntos;    create policy leer on public.m
 revoke execute on function public.m_soy(uuid), public.m_valor_plantilla(uuid, uuid), public.m_quitar_de_alineacion(uuid, uuid, int),
   public.m_log(uuid, text, uuid, uuid, int, numeric), public.m_libres(uuid), public.m_escoger(uuid, int, int, char, char, int[]),
   public.m_nuevo_mercado(uuid), public.m_dar_sobre(uuid, uuid), public.m_procesar(uuid), public.m_pts_foto(public.m_fotos),
-  public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_excepcion_usuario(text, numeric), public.m_excepcion_liga(text, timestamptz), public.m_cerrar_excepcion(),
+  public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_excepcion_usuario(text, numeric), public.m_excepcion_liga(text, timestamptz), public.m_mover_cuenta(text, text, boolean), public.m_cerrar_excepcion(),
   public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(),
   public.m_push(uuid[], text, text), public.m_tick(), public.m_chat_sin_leer(uuid, uuid) from public, anon, authenticated;
-grant execute on function public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_excepcion_usuario(text, numeric), public.m_excepcion_liga(text, timestamptz), public.m_cerrar_excepcion(), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
+grant execute on function public.m_bloquear(int, text), public.m_foto(int, boolean), public.m_excepcion(timestamptz), public.m_excepcion_usuario(text, numeric), public.m_excepcion_liga(text, timestamptz), public.m_mover_cuenta(text, text, boolean), public.m_cerrar_excepcion(), public.m_abrir(), public.m_procesar_todas(), public.m_reemplazar_fuera(), public.m_tick() to service_role;
 revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
