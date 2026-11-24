@@ -403,7 +403,7 @@ nav.bot a[hidden]{display:none}
 .mxrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);width:100%;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
 .mxrow.yo{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
 .mxrow .n{font-family:var(--display);font-weight:700;font-size:20px;width:20px;text-align:center}
-.mxrow .tx{flex:1;min-width:0}.mxrow .tx b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mxrow .tx small{color:var(--muted);font-size:12px}
+.mxrow .tx{flex:1;min-width:0}.mxrow .tx b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mxrow .tx small{color:var(--muted);font-size:12px;display:block}
 .mxrow .pt{font-family:var(--display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums}
 .mxav{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;background:hsl(var(--h),55%,45%)}
 .mxcards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.mxcards.c3{grid-template-columns:repeat(3,1fr)}
@@ -1502,7 +1502,7 @@ function mxMisLigas(msg){const anon=mx.ses.user&&mx.ses.user.is_anonymous,pend=m
   <button type="button" class="btn" data-mx="v-como" style="align-self:stretch;padding:12px">+ Unirme o crear otra liga</button>${mxPushCard()}${guardar}`}
 
 function mxLigaView(msg){const L=mx.L,yo=L.yo,tab=mx.tab,tit={clas:'Clasificación',plan:'Plantilla',merc:'Mercado',vest:'Vestuario',chat:'Chat'}[tab];
-  const head=`<div class="mxhead"><div class="tt"><small>${esc(L.liga.nombre)}</small><h1>${tit}</h1></div>${tab==='clas'?'<button type="button" class="mxpill" data-mx="invitar">🔗 Invitar</button>':''}<button type="button" class="mxpill" data-mx="reglas" aria-label="Cómo puntúa">ⓘ</button><span class="mxcaja${yo.caja<0?' neg':''}">${mxM(yo.caja)}</span></div>`;
+  const head=`<div class="mxhead"><div class="tt"><small>${esc(L.liga.nombre)}</small><h1>${tit}</h1></div>${tab==='clas'?'<button type="button" class="mxpill" data-mx="invitar">🔗 Invitar</button>':''}<button type="button" class="mxpill" data-mx="buscarj" aria-label="Buscar jugador">🔍</button><button type="button" class="mxpill" data-mx="reglas" aria-label="Cómo puntúa">ⓘ</button><span class="mxcaja${yo.caja<0?' neg':''}">${mxM(yo.caja)}</span></div>`;
   const neg=yo.caja<0?`<div class="card" style="border-color:var(--red)"><b>⚠ Estás en ${mxM(yo.caja)}</b><p class="sub" style="margin-top:4px">Si empieza el torneo así, no puntúas en todo el torneo. Vende a alguien desde tu plantilla.</p></div>`:'';
   const body=tab==='clas'?mxTabClas():tab==='plan'?mxTabPlan():tab==='merc'?mxTabMerc():tab==='chat'?mxTabChat():mxTabVest();
   const tabs=`<nav class="mxtabs" aria-label="Secciones de la liga">${[['ligas','🏟️','Ligas'],['clas','🏆','Clasif.'],['plan',PALA,'Plantilla'],['merc','🛒','Mercado'],['vest',CAMI,'Vestuario'],['chat','💬','Chat']].map(([k,i,l])=>`<button type="button" data-mxtab="${k}"${tab===k?' aria-current="page"':''} style="position:relative"><i>${i}</i>${l}${k==='vest'&&mxPend().length?`<span class="mxdot">${mxPend().length}</span>`:''}${k==='chat'&&L.chat_sin_leer?`<span class="mxdot" id="mxchatdot">${L.chat_sin_leer>99?'99+':L.chat_sin_leer}</span>`:''}</button>`).join('')}</nav>`;
@@ -1654,8 +1654,31 @@ function mxTabla(id,tid,cap){const r=mxTorneo(id,tid),n={},c={};['vict','vq','ca
 function mxFicha(id,h){const ts=SEAS(),def=(ts.filter(t=>mxTorneo(id,t.id).jugo).slice(-1)[0]||{}).id,sel=h.tor||def;
   const tot=ts.reduce((a,t)=>a+mxTorneo(id,t.id).tot,0);
   return `<div class="mxlbl">Temporada · ${Math.round(tot)} pts</div>${mxBarras(id,sel)}${sel?mxTabla(id,sel,false):''}`}
+/* ---------- Lupa: ¿está libre o quién lo tiene? ---------- */
+const mxSigo=id=>(mx.L&&mx.L.seguidos||[]).includes(id);
+const mxSigueBtn=id=>`<button type="button" class="btn${mxSigo(id)?' ok':''}" data-mx="seguir" data-id="${id}" style="align-self:stretch">${mxSigo(id)?'⭐ Lo sigues · dejar de seguir':'☆ Seguir: avísame si sale al mercado o se pone en venta'}</button>`;
+/* Estado de un jugador en la liga: de quién es, si está en venta, en el mercado de hoy, libre o no fichable */
+function mxEstadoJ(id){const L=mx.L,d=mxDueño(id),r=d&&mxReg(id);
+  if(d)return d.id===L.yo.id?{t:'Tuyo',c:'var(--mint)',k:'mio'}:r&&r.venta!=null?{t:`De ${d.nombre} · en venta (${mxM(r.venta)})`,c:'var(--cyan)',k:'venta'}:{t:`De ${d.nombre}`,c:'var(--muted)',k:'dueño'};
+  if((L.liga.mercado||[]).includes(id))return{t:'En el mercado hoy',c:'var(--gold)',k:'mercado'};
+  const j=mx.J[id],grande=L.miembros.length>16;
+  if(j&&(grande||(j.rank&&j.rank<=100)))return{t:'Libre · puede salir en el mercado',c:'var(--ink)',k:'libre'};
+  return{t:'No fichable en esta liga (fuera del top 100)',c:'var(--muted)',k:'no'}}
+function mxBuscarRes(){const L=mx.L,q=norm((mx.bq||'').trim()),g=L.liga.genero;
+  let ids=Object.keys(mx.J).map(Number).filter(i=>P[i]&&mx.J[i].lado&&(g==='X'||mx.J[i].genero===g));
+  if(mx.bfil==='seg')ids=ids.filter(mxSigo);
+  if(q)ids=ids.filter(i=>norm(P[i].name).includes(q)||norm(P[i].sn||'').includes(q));
+  if(mx.bfil==='libre')ids=ids.filter(i=>['libre','mercado','venta'].includes(mxEstadoJ(i).k));
+  if(!q&&!mx.bfil)return '<p class="sub" style="text-align:center;padding:10px 0">Escribe un nombre o mira tus ⭐ seguidos.</p>';
+  ids.sort((a,b)=>(mx.J[b].valor||0)-(mx.J[a].valor||0));
+  if(!ids.length)return '<p class="sub" style="text-align:center;padding:10px 0">Ningún jugador con ese nombre.</p>';
+  return ids.slice(0,30).map(i=>{const e=mxEstadoJ(i);return `<div class="mxrow" style="cursor:default">${av(i)}<button type="button" class="tx" data-mxj="${i}" style="background:none;border:0;padding:0;text-align:left;font:inherit;color:inherit;flex:1;cursor:pointer"><b>${esc(P[i].name)}</b><small style="color:${e.c}">${esc(e.t)}</small><small>${mxLado(i)==='R'?'Revés':'Drive'} · ${mxM(mxVal(i))}</small></button><button type="button" class="mxpill" data-mx="seguir" data-id="${i}" aria-label="${mxSigo(i)?'Dejar de seguir':'Seguir'}" style="font-size:18px">${mxSigo(i)?'⭐':'☆'}</button></div>`}).join('')}
 function mxCab(id,extra){return `<div style="display:flex;gap:12px;align-items:center"><div style="width:110px;flex:none">${cromo(id,{l3:false})}</div><div class="sub" style="display:flex;flex-direction:column;gap:3px;font-size:13px"><b style="color:var(--ink);font-size:16px">${esc(P[id]?P[id].name:mxNom(id))}</b><span>${flag(P[id]&&P[id].nat)} ${mxRank(id)?'#'+mxRank(id)+' del mundo':''}</span><span>Valor: <b style="color:var(--ink)">${mxM(mxVal(id))}</b></span>${extra||''}</div></div>`}
 function mxHojaHtml(h){const L=mx.L,id=h.id;
+  if(h.tipo==='buscar')return `<h3>Buscar jugador</h3><p class="sub" style="font-size:13px">Mira si está libre o quién lo tiene. Síguelo con ⭐ y te avisamos cuando salga al mercado o su dueño lo ponga en venta.</p>
+    <input id="mxbq" class="mxnum" style="font-size:16px" type="search" placeholder="Nombre del jugador" autocomplete="off" value="${esc(mx.bq||'')}">
+    <div class="mxseg"><button type="button" data-mx="bfil" data-f="" aria-pressed="${!mx.bfil}">Todos</button><button type="button" data-mx="bfil" data-f="seg" aria-pressed="${mx.bfil==='seg'}">⭐ Seguidos (${(L.seguidos||[]).length})</button><button type="button" data-mx="bfil" data-f="libre" aria-pressed="${mx.bfil==='libre'}">Libres</button></div>
+    <div id="mxbres" style="display:flex;flex-direction:column;gap:8px">${mxBuscarRes()}</div>`;
   if(h.tipo==='reglas')return `<h3>Cómo puntúa</h3><table class="st8"><tbody>
     <tr><td>🎟️ Gana un partido de previa</td><td></td><td>+2</td></tr><tr><td>🏆 Gana un partido hasta octavos</td><td></td><td>+3</td></tr><tr><td>🏆 Gana en cuartos · semis · final</td><td></td><td>+5 · +8 · +12</td></tr><tr><td>👑 Campeón del torneo</td><td></td><td>+5</td></tr>
     <tr><td>🎾 Cada set ganado</td><td></td><td>+1</td></tr><tr><td>🧱 Gana 2-0 sin ceder set</td><td></td><td>+1</td></tr><tr><td>🍩 Set ganado 6-0</td><td></td><td>+2</td></tr>
@@ -1683,8 +1706,9 @@ function mxHojaHtml(h){const L=mx.L,id=h.id;
     return `${mxCab(id,`<span>Dueño: <b style="color:var(--ink)">${esc(dueño.nombre)}</b></span>${cl?`<span>Cláusula: <b style="color:var(--ink)">${mxM(reg.clausula)}</b></span>`:''}${reg.venta!=null?`<span style="color:var(--cyan)">En venta · mínimo ${mxM(reg.venta)}</span>`:''}`)}
     ${reg.venta!=null?mxPujaHtml(id,Math.max(mxVal(id),+reg.venta)):''}
     ${cl?`<button type="button" class="btn gold" data-mx="clausula" style="align-self:stretch;white-space:nowrap"${motivo?' disabled':''}>${motivo?esc(motivo):'💥 Pagar cláusula · '+mxM(reg.clausula)}</button>`:''}
-    ${mxOfertaHtml(id,dueño,blo)}${mxFicha(id,h)}`}
-  return `${mxCab(id)}${mxPujaHtml(id,mxVal(id))}${mxFicha(id,h)}`}
+    ${mxOfertaHtml(id,dueño,blo)}${mxSigueBtn(id)}${mxFicha(id,h)}`}
+  if(!(L.liga.mercado||[]).includes(id)){const e=mxEstadoJ(id);return `${mxCab(id,`<span style="color:${e.c}">${esc(e.t)}</span>`)}${e.k==='libre'?'<p class="sub" style="font-size:13px">Hoy no está en el mercado. Cada día salen 8 jugadores libres al azar.</p>':''}${mxSigueBtn(id)}${mxFicha(id,h)}`}
+  return `${mxCab(id)}${mxPujaHtml(id,mxVal(id))}${mxSigueBtn(id)}${mxFicha(id,h)}`}
 function mxOfertaHtml(id,dueño,blo){const mia=(mx.L.ofertas||[]).find(o=>o.de===mx.L.yo.id&&o.jugador===id&&o.estado==='pendiente');
   if(blo)return `<p class="sub" style="font-size:12px">🤝 Durante el torneo no se pueden hacer ofertas.</p>`;
   return `<div class="mxlbl">🤝 Negociar con ${esc(dueño.nombre)}</div>${mia?`<p class="sub" style="font-size:13px">Ya le has ofrecido <b style="color:var(--ink)">${mxM(mia.cantidad)}</b>. Si envías otra, sustituye a esta.</p>`:''}
@@ -1802,6 +1826,12 @@ async function fxAccion(a,el){const sb=mx.sb;if(!sb)return;mx.msg=null;const err
   else if(a==='salir'){if(mx.ses.user&&mx.ses.user.is_anonymous&&!confirm('Tu cuenta no tiene email: si sales, no podrás recuperarla. ¿Salir igualmente?'))return;await sb.auth.signOut();mx.vista='inicio';try{localStorage.removeItem('vibora-liga')}catch(e){}rerender()}
   }catch(e){err(e)}}
 async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
+  if(a==='buscarj'){mx.bq='';mx.bfil='';mxHoja({tipo:'buscar'});setTimeout(()=>{const q=document.getElementById('mxbq');if(q)q.focus()},50);return}
+  if(a==='bfil'){mx.bfil=x.dataset.f||'';mxHojaPintar();return}
+  if(a==='seguir'){const j=+x.dataset.id,si=!mxSigo(j);const r=await mx.sb.rpc('m_seguir',{p_liga:mx.liga,p_jugador:j,p_si:si});
+    if(r.error){toast(r.error.message||'No se ha podido.');return}
+    L.seguidos=si?[...(L.seguidos||[]),j]:(L.seguidos||[]).filter(i=>i!==j);toast(si?'⭐ Te avisaremos de '+mxNom(j):'Ya no sigues a '+mxNom(j));
+    if(si&&!mxPushOn())setTimeout(()=>toast('Activa los avisos en el Vestuario para que te lleguen'),1800);mxHojaPintar();return}
   if(a.startsWith('chat-')){const c=mx.chat;
     if(a==='chat-liga'||a==='chat-priv'){c.v=a==='chat-liga'?'liga':'priv';c.datos=null;c.sel=null;c.carga=0;rerender();return}
     if(a==='chat-con'){mx.hoja=null;mxHojaPintar();mx.tab='chat';c.v=x.dataset.u;c.datos=null;c.sel=null;c.carga=0;rerender();scrollTo(0,0);return}
@@ -1939,7 +1969,8 @@ document.addEventListener('click',e=>{if(e.target.closest('#menubtn')){menuAbrir
   const br=e.target.closest('[data-br]');if(br){brStart=+br.dataset.br;render();return}
   const c=e.target.closest('[data-cat]');if(c){cat=c.dataset.cat;const v=route().v;if(v==='jugador'||v==='pareja'||v==='partido')location.hash='#ranking';else render()}});
 document.addEventListener('keydown',e=>{const pn=e.target.closest&&e.target.closest('[data-pin]');if(pn&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pn.dispatchEvent(new MouseEvent('click',{bubbles:true,detail:0}))}});
-document.addEventListener('input',e=>{if(e.target.id==='q')document.getElementById('qres').innerHTML=searchRes(e.target.value)});
+document.addEventListener('input',e=>{if(e.target.id==='q')document.getElementById('qres').innerHTML=searchRes(e.target.value);
+  if(e.target.id==='mxbq'){mx.bq=e.target.value;const r=document.getElementById('mxbres');if(r)r.innerHTML=mxBuscarRes()}});
 document.addEventListener('change',e=>{const sm=/^sim-(\d)$/.exec(e.target.id);if(sm){sim[+sm[1]]=+e.target.value;render();return}if(e.target.id==='h2h-a'){hA=+e.target.value;render()}if(e.target.id==='h2h-b'){hB=+e.target.value;render()}});
 setInterval(()=>{const el=document.getElementById('cd');if(el)el.textContent=cdText()},1000);
 /* ---------- Estadísticas de visitas (GoatCounter: anónimas, sin cookies) ---------- */

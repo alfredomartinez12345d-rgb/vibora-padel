@@ -153,6 +153,15 @@ create table if not exists public.m_recordado (
   cuando  timestamptz not null default now()
 );
 
+-- Jugadores que sigue cada mánager en cada liga (⭐): aviso cuando salen al mercado o su dueño los pone en venta
+create table if not exists public.m_seguidos (
+  liga    uuid not null references public.m_ligas on delete cascade,
+  user_id uuid not null references public.perfiles on delete cascade,
+  jugador int not null,
+  creado  timestamptz not null default now(),
+  primary key (liga, user_id, jugador)
+);
+
 -- Chat: el de la liga (para = null) y los privados entre dos mánagers de la misma liga
 create table if not exists public.m_mensajes (
   id      bigserial primary key,
@@ -466,6 +475,11 @@ begin
   end loop;
   delete from m_pujas where liga = p_liga;
   perform m_nuevo_mercado(p_liga);
+  -- ⭐ A quien sigue a alguno de los que salen hoy al mercado
+  for r in select s.user_id, string_agg(m_jn(s.jugador), ', ') as js from m_seguidos s join m_ligas lg on lg.id = s.liga
+           where s.liga = p_liga and s.jugador = any(lg.mercado) group by s.user_id loop
+    perform m_push(array[r.user_id], '⭐ En el mercado: ' || r.js, 'Sale hoy al mercado de «' || l.nombre || '». ¡Puja antes del cierre!');
+  end loop;
   -- Siguiente cierre: mañana a la misma hora (si se saltó algún día, el próximo futuro)
   update m_ligas set cierre = cierre + make_interval(days => greatest(1, ceil(extract(epoch from now() - cierre) / 86400)::int))
     where id = p_liga;
@@ -591,6 +605,20 @@ begin
   perform m_push(array[p_user], '🚪 Fuera de la liga', 'Ya no estás en «' || (select nombre from m_ligas where id = p_liga) || '».');
   delete from m_pujas where liga = p_liga and user_id = p_user;
   delete from m_miembros where liga = p_liga and user_id = p_user;
+end $$;
+
+-- Seguir (o dejar de seguir) a un jugador en una liga
+create or replace function public.m_seguir(p_liga uuid, p_jugador int, p_si boolean) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform m_soy(p_liga);
+  if p_si then
+    if not exists (select 1 from m_jugadores where id = p_jugador) then raise exception 'Ese jugador no está en el fantasy.'; end if;
+    if (select count(*) from m_seguidos where liga = p_liga and user_id = auth.uid()) >= 30 then raise exception 'Como mucho puedes seguir a 30 jugadores por liga.'; end if;
+    insert into m_seguidos (liga, user_id, jugador) values (p_liga, auth.uid(), p_jugador) on conflict do nothing;
+  else
+    delete from m_seguidos where liga = p_liga and user_id = auth.uid() and jugador = p_jugador;
+  end if;
 end $$;
 
 -- --- Chat ------------------------------------------------------------------------------
@@ -759,6 +787,7 @@ begin
                  else jsonb_build_object('bloqueado', m_bloqueado()) end)
                from m_estado e left join m_excepciones x on x.user_id = yo left join m_excepciones_liga xl on xl.liga = p_liga where e.id = 1),
     'chat_sin_leer', m_chat_sin_leer(p_liga, yo),
+    'seguidos', (select coalesce(jsonb_agg(jugador), '[]') from m_seguidos where liga = p_liga and user_id = yo),
     'yo', (select jsonb_build_object('id', yo, 'avisos', coalesce((select activo from m_avisos where user_id = yo), false), 'caja', caja, 'sobre', sobre, 'sobre_visto', sobre_visto,
               'clausulazo_hoy', clausulazo = (now() at time zone 'Europe/Madrid')::date)
            from m_miembros where liga = p_liga and user_id = yo),
@@ -871,13 +900,20 @@ end $$;
 
 create or replace function public.m_poner_venta(p_liga uuid, p_jugador int, p_minimo numeric) returns void
 language plpgsql security definer set search_path = public as $$
-declare v numeric;
+declare v numeric; antes numeric;
 begin
   perform m_soy(p_liga);
   select valor into v from m_jugadores where id = p_jugador;
   if p_minimo is not null and p_minimo < v then raise exception 'El precio mínimo no puede ser menor que su valor (%).', to_char(v, 'FM990.0') || ' M'; end if;
+  select venta into antes from m_plantilla where liga = p_liga and jugador = p_jugador and user_id = auth.uid();
   update m_plantilla set venta = round(p_minimo, 1) where liga = p_liga and jugador = p_jugador and user_id = auth.uid();
   if not found then raise exception 'Ese jugador no es tuyo.'; end if;
+  -- ⭐ A quien lo sigue, solo cuando pasa a estar en venta (no al cambiar el precio)
+  if p_minimo is not null and antes is null then
+    perform m_push((select array_agg(user_id) from m_seguidos where liga = p_liga and jugador = p_jugador and user_id <> auth.uid()),
+      '⭐ ' || m_jn(p_jugador) || ' está en venta',
+      m_un(auth.uid()) || ' lo vende en «' || (select nombre from m_ligas where id = p_liga) || '» (mínimo ' || m_fmt(round(p_minimo, 1)) || '). Puja en el mercado.');
+  end if;
 end $$;
 
 create or replace function public.m_pagar_clausula(p_liga uuid, p_jugador int) returns numeric
@@ -1292,6 +1328,7 @@ alter table public.m_recordado  enable row level security;
 alter table public.m_excepciones enable row level security;
 alter table public.m_excepciones_liga enable row level security;
 alter table public.m_mensajes       enable row level security;
+alter table public.m_seguidos       enable row level security;
 alter table public.m_chat_leido     enable row level security;
 alter table public.m_chat_bloqueos  enable row level security;
 alter table public.m_chat_denuncias enable row level security;
@@ -1313,12 +1350,12 @@ revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ve
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint) from public, anon;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean) from public, anon;
 grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint) to authenticated;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean) to authenticated;
 
 
 -- Reloj de cada minuto (solo si la extensión pg_cron está activada: Database → Extensions)
