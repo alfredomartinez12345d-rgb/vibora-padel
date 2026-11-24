@@ -201,6 +201,27 @@ jobs:
         with:
           path: '_site'
 
+      # GitHub Pages falla a veces al publicar («no artifacts found», «try again later»): se reintenta dos veces
       - name: Desplegar
+        id: desplegar1
         if: steps.pub.outputs.si == '1'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Esperar antes de reintentar
+        if: steps.pub.outputs.si == '1' && steps.desplegar1.outcome == 'failure'
+        run: sleep 45
+
+      - name: Desplegar (2.º intento)
+        id: desplegar2
+        if: steps.pub.outputs.si == '1' && steps.desplegar1.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Esperar antes del último intento
+        if: steps.pub.outputs.si == '1' && steps.desplegar1.outcome == 'failure' && steps.desplegar2.outcome == 'failure'
+        run: sleep 90
+
+      - name: Desplegar (3.er intento)
+        if: steps.pub.outputs.si == '1' && steps.desplegar1.outcome == 'failure' && steps.desplegar2.outcome == 'failure'
         uses: actions/deploy-pages@v4
