@@ -902,3 +902,7 @@ re: ^Privados \((\d+)\)$ => Private ($1)
 Cerrar sesión => Log out
 Cuenta sin email => Account without email
 Con Google => With Google
+Toca para añadir tu foto => Tap to add your photo
+Opcional · la cambias cuando quieras => Optional · change it anytime
+¡Qué buena foto! Toca para cambiarla => Great photo! Tap to change it
+Así te verán en la clasificación y en el chat => This is how others will see you in the standings and chat
