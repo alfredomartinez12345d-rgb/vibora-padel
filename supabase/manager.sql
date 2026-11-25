@@ -210,7 +210,10 @@ create table if not exists public.m_excepciones (          -- excepción para un
   user_id uuid primary key references public.perfiles on delete cascade,
   hasta   timestamptz not null
 );
-alter table public.perfiles add column if not exists foto_v bigint;   -- foto de perfil: versión (la imagen está en Storage, avatares/<id>.jpg)
+alter table public.perfiles add column if not exists foto_v bigint;
+-- Aceptación de los términos de uso y la privacidad al crear la cuenta (versión y momento)
+alter table public.perfiles add column if not exists terminos text;
+alter table public.perfiles add column if not exists terminos_en timestamptz;   -- foto de perfil: versión (la imagen está en Storage, avatares/<id>.jpg)
 -- Denuncias de fotos de perfil (se revisan en Supabase: select * from m_foto_denuncias)
 create table if not exists public.m_foto_denuncias (
   user_id uuid not null references public.perfiles on delete cascade,
