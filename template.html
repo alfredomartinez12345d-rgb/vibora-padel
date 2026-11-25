@@ -405,7 +405,41 @@ nav.bot a[hidden]{display:none}
 .mxrow .n{font-family:var(--display);font-weight:700;font-size:20px;width:20px;text-align:center}
 .mxrow .tx{flex:1;min-width:0}.mxrow .tx b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mxrow .tx small{color:var(--muted);font-size:12px;display:block}
 .mxrow .pt{font-family:var(--display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums}
-.mxav{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;background:hsl(var(--h),55%,45%)}
+.mxav{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:13px;color:#0B1023;background:#4FD1C5}
+/* «Cromos»: clasificación, último fichaje, caras en la actividad y fotos de perfil */
+.mxrow .mxav{width:38px;height:38px}
+.mxrow.p1,.mxrow.p2,.mxrow.p3{position:relative;overflow:hidden;border:0}
+.mxrow.p1{background:linear-gradient(110deg,#6B4A0E,#C99A2E 45%,#F5D77A 62%,#8C6514);color:#1E1503}
+.mxrow.p2{background:linear-gradient(110deg,#4A5568,#A9B4C4 52%,#5B6679);color:#11161F}
+.mxrow.p3{background:linear-gradient(110deg,#5B3216,#B8763F 50%,#E6AE7C 64%,#6E3C19);color:#1F0F04}
+.mxrow.p1 .tx small,.mxrow.p2 .tx small,.mxrow.p3 .tx small{color:inherit;opacity:.8}
+.mxrow.p1::after,.mxrow.p2::after,.mxrow.p3::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.3) 48%,transparent 60%);pointer-events:none}
+.mxrow.p1 .mxav,.mxrow.p2 .mxav,.mxrow.p3 .mxav{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.mxfich{position:relative;height:150px;border-radius:20px;overflow:hidden;background:linear-gradient(120deg,#0E3B2A,#1C7A4E 55%,#2FB36E);color:#fff;display:block;width:100%;text-align:left;font:inherit;border:0;cursor:pointer}
+.mxfich img{position:absolute;right:-6px;bottom:-4px;height:168px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.45))}
+.mxfich .t{position:absolute;left:16px;top:14px;right:150px}
+.mxfich small{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#C9FFDC}
+.mxfich b{display:block;font:900 30px/.95 var(--display);text-transform:uppercase;margin:4px 0}
+.mxfich .q{display:flex;align-items:center;gap:7px;font-size:13px}.mxfich .q .mxav{width:24px;height:24px;font-size:9px;box-shadow:0 0 0 1.5px #fff}
+.mxfich .pr{position:absolute;left:16px;bottom:14px;font:900 26px var(--display);background:rgba(0,0,0,.3);padding:2px 10px;border-radius:10px}
+.mxfeed .dup{position:relative;width:46px;height:40px;flex:none}
+.mxfeed .dup .j{position:absolute;left:0;top:0;width:40px;height:40px;border-radius:12px;background:var(--surface2) center 8%/cover}
+.mxfeed .dup .mxav{position:absolute;right:0;bottom:-2px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface)}
+.mxfeed .mxav.act{width:40px;height:40px;border-radius:12px;margin-right:6px}
+.mxfeed .em{width:40px;height:40px;border-radius:12px;background:var(--surface2);display:grid;place-items:center;font-size:17px;flex:none;margin-right:6px}
+.mxfeed div{align-items:center}
+.mxmrow{display:flex;gap:8px;align-items:flex-end;align-self:flex-start;max-width:92%}.mxmrow .mxav{width:30px;height:30px;font-size:11px}
+.mxmrow .mxmsg{max-width:100%}
+.mxmini{display:flex;align-items:center;gap:8px;margin-top:6px;background:rgba(0,0,0,.22);border-radius:12px;padding:5px 8px 5px 5px;font-size:12.5px;white-space:normal}
+.mxmini i{width:30px;height:30px;border-radius:9px;background:var(--surface2) center 8%/cover;flex:none}
+.mxav.grande2{width:56px;height:56px;font-size:18px;border-radius:16px}
+.mxperfil{display:flex;flex-direction:column;align-items:center;gap:12px}
+.mxperfil .grande{width:150px;height:150px;border-radius:34px;font-size:52px;box-shadow:0 0 0 3px var(--pelota),0 0 40px rgba(230,245,58,.2)}
+.mxperfil .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.mxperfil label.opt{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:14px;cursor:pointer;min-height:44px}
+.mxperfil label.opt i{font-style:normal;font-size:22px}.mxperfil label.opt small{color:var(--muted);font-weight:500;font-size:12px}
+.mxperfil input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+
 .mxcards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.mxcards.c3{grid-template-columns:repeat(3,1fr)}
 /* Cromos: el jugador recortado sale de la carta, precio grande arriba, banda con el nombre y un reflejo que la recorre */
 .cr{position:relative;border-radius:14px;padding:0 0 6px;text-align:center;border:2px solid #c0824f;min-width:0;font:inherit;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;width:100%;
@@ -695,7 +729,7 @@ body.modofx .mxtabs{bottom:calc(8px + env(safe-area-inset-bottom))!important}
 .menu a[aria-current="page"]{background:var(--surface2)}.menu a i,.menu button.it i{font-style:normal;width:26px;text-align:center;font-size:19px}
 .menu .sep{height:1px;background:var(--line);margin:8px 4px}.menu .peq{font-size:14px;font-weight:500;color:var(--muted);padding:8px 10px}
 .bienv{position:fixed;inset:0;z-index:96;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(28px + env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom));text-align:center}
-.bienv .ic2{font-size:64px;line-height:1;margin-top:8vh}.bienv h2{font-family:var(--display);font-size:34px;line-height:1.05;margin:18px 0 10px;text-transform:uppercase}
+.bienv .ic2{font:900 76px/1 var(--display);color:var(--pelota);margin-top:8vh}.bienv .ic2 small{font-size:22px;color:var(--muted);margin-left:6px}.bienv h2{font-family:var(--display);font-size:34px;line-height:1.05;margin:18px 0 10px;text-transform:uppercase}
 .bienv p{color:var(--muted);font-size:16px;line-height:1.5;max-width:420px;margin:0 auto}.bienv p b{color:var(--ink)}
 .bienv .pts{display:flex;gap:7px;justify-content:center;margin:18px 0}.bienv .pts i{width:8px;height:8px;border-radius:50%;background:var(--line)}.bienv .pts i.on{background:var(--pelota);width:22px;border-radius:5px}
 .bienv .bt{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px}.bienv .bt .btn{align-self:stretch;justify-content:center;text-align:center}
@@ -1147,7 +1181,7 @@ function menuAbrir(){const r=route().v,yo=typeof mx!=='undefined'&&mx.perfil?mx.
   const el=document.createElement('div');el.className='menu';el.setAttribute('role','dialog');el.setAttribute('aria-label','Menú');
   const sec=t=>`<p class="peq" style="padding:10px 10px 2px;text-transform:uppercase;letter-spacing:1px;font-size:11px;font-weight:700">${t}</p>`;
   el.innerHTML=`<nav class="in"><div class="cab"><div><b>Víbora Fantasy</b>${yo?`<small>${esc(yo)}</small>`:''}</div><button type="button" class="hbtn" data-menu="cerrar" aria-label="Cerrar">✕</button></div>
-    ${SUPA?sec('Fantasy')+it('#fantasy','🏟️','Mis ligas',r==='fantasy')+'<button type="button" class="it" data-menu="como"><i>📖</i>Cómo se juega</button>':''}
+    ${SUPA?sec('Fantasy')+it('#fantasy','🏟️','Mis ligas',r==='fantasy')+(yo?'<button type="button" class="it" data-menu="foto"><i>📷</i>Mi foto de perfil</button>':'')+'<button type="button" class="it" data-menu="como"><i>📖</i>Cómo se juega</button>':''}
     ${sec('Pádel profesional')}
     ${it('#inicio','📊','Resultados y partidos',r==='inicio'||r==='partido')}
     ${it('#torneos','📅','Torneos y calendario',r==='torneos'||r==='torneo')}
@@ -1159,7 +1193,7 @@ function menuAbrir(){const r=route().v,yo=typeof mx!=='undefined'&&mx.perfil?mx.
     <button type="button" class="it" data-menu="tema"><i>🎨</i>Aspecto e idioma</button>
     <div class="sep"></div><p class="peq">App no oficial de aficionados, sin relación con Premier Padel ni con la FIP.</p></nav>`;
   el.addEventListener('click',e=>{const b=e.target.closest('[data-menu]');if(e.target===el||e.target.closest('a')||b){el.remove();
-    if(b&&b.dataset.menu==='tema')temaAbrir();if(b&&b.dataset.menu==='como')bienvenida(true)}});
+    if(b&&b.dataset.menu==='tema')temaAbrir();if(b&&b.dataset.menu==='como')bienvenida(true);if(b&&b.dataset.menu==='foto'){if(route().v!=='fantasy')location.hash='#fantasy';mxAccion('perfil')}}});
   document.body.appendChild(el)}
 /* ---------- Bienvenida: qué es el juego, en 4 pantallas (la primera vez, y desde el menú) ---------- */
 const BIENV=[['🐍','Bienvenido a Víbora Fantasy','El fantasy del <b>pádel profesional</b>: ficha a jugadores reales de Premier Padel y suma puntos con lo que hagan en cada torneo.'],
@@ -1170,7 +1204,7 @@ function bienvenida(forzar){if(!forzar){try{if(localStorage.getItem('vibora-bien
   let k=0;const el=document.createElement('div');el.className='bienv';el.setAttribute('role','dialog');el.setAttribute('aria-label','Bienvenida');
   const fin=()=>{try{localStorage.setItem('vibora-bienvenida','1')}catch(e){}el.remove()};
   const pinta=()=>{const [ic,t,x]=BIENV[k],u=k===BIENV.length-1;el.innerHTML=`<div style="width:100%;display:flex;justify-content:flex-end"><button type="button" class="btn" data-bv="saltar" style="padding:6px 12px">Saltar</button></div>
-    <div><div class="ic2">${ic}</div><h2>${t}</h2><p>${x}</p></div>
+    <div><div class="ic2">${String(k+1).padStart(2,'0')}<small>/${String(BIENV.length).padStart(2,'0')}</small></div><h2>${t}</h2><p>${x}</p></div>
     <div class="bt"><div class="pts">${BIENV.map((_,i)=>`<i class="${i===k?'on':''}"></i>`).join('')}</div><button type="button" class="btn pri" data-bv="sig" style="padding:14px">${u?(forzar?'Entendido':'Crear mi equipo'):'Siguiente'}</button>${k?'<button type="button" class="btn" data-bv="atras">Atrás</button>':''}</div>`};
   el.addEventListener('click',e=>{const b=e.target.closest('[data-bv]');if(!b)return;const a=b.dataset.bv;if(a==='saltar')return fin();if(a==='atras'){k--;return pinta()}if(k===BIENV.length-1)return fin();k++;pinta()});
   pinta();document.body.appendChild(el)}
@@ -1446,7 +1480,12 @@ function cromo(id,o={}){const t=mxTier(id),f=P[id]&&P[id].photo,cl=o.cls||'',i=o
   return `<button type="button" class="cr ${t} ${cl}" data-mxj="${id}" ${o.at||''}>${o.x2?'<span class="x2">🏆 PALA DE ORO ×2</span>':''}${o.sinPrecio?'':`<span class="pr">${mxM(mxVal(id))}</span>`}${i?`<span class="ic">${i}</span>`:''}
     <span class="fc" style="--h:${(id*47)%360}${f?`;background-image:url('${f}');color:transparent`:''}">${P[id]?ini(P[id]):'?'}</span><span class="n">${esc(mxNom(id))}</span>
     <span class="sd">${mxGen(id)==='F'?'♀':'♂'} ${LADO[mxLado(id)]||''} · ${TIERN[t]}</span>${o.l3===false?'':`<span class="l3">${mxUlt3(id).map(x=>`<i>${x}</i>`).join('')}</span>`}${o.tag?`<span class="tag">${o.tag}</span>`:''}</button>`}
-const mxAv=(nombre,id)=>`<span class="mxav" style="--h:${[...String(id)].reduce((a,c)=>a+c.charCodeAt(0),0)%360}">${esc((nombre||'?').slice(0,2).toUpperCase())}</span>`;
+/* Foto de perfil de un mánager (Storage: avatares/<id>.jpg?v=versión); sin foto, sus iniciales sobre un color (nunca violeta) */
+const MXCOL=['#D9F03C','#4FD1C5','#FF8A65','#F6C453','#7CC4FF','#5BE0A0'];
+const mxFotoUrl=(id,v)=>v&&mx.sb&&mx.sb.storage?mx.sb.storage.from('avatares').getPublicUrl(id+'.jpg').data.publicUrl+'?v='+v:null;
+const mxFotoDe=id=>{if(mx.perfil&&mx.ses&&mx.ses.user&&id===mx.ses.user.id)return mxFotoUrl(id,mx.perfil.foto_v);const m=mx.L&&mx.L.miembros.find(x=>x.id===id);return m?mxFotoUrl(id,m.foto):null};
+const mxAv=(nombre,id,cls='')=>{const f=mxFotoDe(id),h=[...String(id)].reduce((a,c)=>a+c.charCodeAt(0),0);
+  return f?`<span class="mxav ${cls}" style="background:var(--surface2) url('${f}') center/cover" role="img" aria-label="${esc(nombre||'')}"></span>`:`<span class="mxav ${cls}" style="background:${MXCOL[h%MXCOL.length]}">${esc((nombre||'?').slice(0,2).toUpperCase())}</span>`};
 function falta(ts){let s=Math.max(0,(new Date(ts)-Date.now())/1000);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h} h ${m} min`:`${m} min`}
 const horaDe=ts=>new Date(ts).toLocaleTimeString(LOC,{hour:'2-digit',minute:'2-digit'});
 /* Las alineaciones se congelan con la actualización del día en que empieza el torneo (01:30 UTC): se enseña en la hora de cada uno */
@@ -1466,6 +1505,22 @@ async function mxOAuth(p,vincular){const redirectTo=location.origin+location.pat
   const r=vincular?await mx.sb.auth.linkIdentity({provider:p,options:{redirectTo}}):await mx.sb.auth.signInWithOAuth({provider:p,options:{redirectTo}});
   if(r.error)fxMsg(r.error.message||'No se ha podido conectar. Prueba de nuevo.');else gcEvent('fantasy/'+(vincular?'vincula-':'entra-')+p,'Fantasy: '+p)}
 
+/* Mi foto de perfil: se elige (cámara o galería), se recorta cuadrada a 320 px y se sube a Storage */
+function mxPerfil(msg){const yo=mx.ses.user.id,nf=mx.fotoNueva,f=nf?nf.url:mxFotoDe(yo),nom=mx.perfil.nombre;
+  return `<div class="mxhead"><div class="tt"><small>${esc(nom)}</small><h1>Mi foto</h1></div><button type="button" class="mxpill" data-mx="perfil-volver">← Volver</button></div>${msg}
+  <div class="mxperfil">${f?`<span class="mxav grande" style="background:var(--surface2) url('${f}') center/cover"></span>`:mxAv(nom,yo,'grande')}
+  <p class="sub" style="text-align:center;max-width:320px">Tu foto sale en tu cromo de la clasificación, en el chat y en cada fichaje que hagas.</p>
+  <div class="opts"><label class="opt"><i>📷</i>Hacer una foto<small>Con la cámara</small><input type="file" accept="image/*" capture="user" data-mxfoto></label><label class="opt"><i>🖼️</i>Elegir de la galería<small>Una imagen tuya</small><input type="file" accept="image/*" data-mxfoto></label></div>
+  ${nf?'<button type="button" class="btn pri" data-mx="perfil-guardar" style="align-self:stretch;padding:14px">Guardar foto</button>':''}
+  ${!nf&&mx.perfil.foto_v?'<button type="button" class="btn no" data-mx="perfil-quitar" style="align-self:stretch">Quitar mi foto</button>':''}
+  <p class="sub" style="font-size:12px;text-align:center">Sube solo fotos que puedas usar. Las fotos ofensivas se denuncian y se quitan.</p></div>`}
+/* recorta la imagen elegida al cuadrado central y la deja en 320×320 JPEG */
+function mxFotoPreparar(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const l=Math.min(im.naturalWidth,im.naturalHeight),c=document.createElement('canvas');c.width=c.height=320;
+  c.getContext('2d').drawImage(im,(im.naturalWidth-l)/2,(im.naturalHeight-l)/2,l,l,0,0,320,320);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('foto')),'image/jpeg',.85)};im.onerror=()=>rej(new Error('foto'));im.src=u})}
+document.addEventListener('change',async e=>{const t=e.target;if(!t.matches||!t.matches('[data-mxfoto]')||!t.files||!t.files[0])return;
+  try{const b=await mxFotoPreparar(t.files[0]);if(mx.fotoNueva)URL.revokeObjectURL(mx.fotoNueva.url);mx.fotoNueva={blob:b,url:URL.createObjectURL(b)};mx.msg=null;rerender()}
+  catch(x){toast('No se ha podido leer esa imagen. Prueba con otra.')}});
+
 /* Vistas */
 function mxView(){
   if(!SUPA)return `<h1>Fantasy</h1><p class="sub">Muy pronto.</p>${NOTE}`;
@@ -1481,6 +1536,7 @@ function mxView(){
     <button type="button" class="btn" data-bvabrir style="align-self:center">📖 Cómo se juega</button>${NOTE}`}
   if(mx.perfil===undefined||mx.ligas===null&&mx.perfil)return `<h1>Fantasy</h1><p class="sub">Cargando…</p>`;
   if(!mx.perfil)return `${logo}${msg}<form class="card fxform" data-fx="perfil"><b style="font-size:18px">¡Ya estás dentro!</b><label for="fxnom">Elige tu nombre de mánager</label><input id="fxnom" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid"><button class="btn pri" type="submit">Empezar</button></form>`;
+  if(mx.vista==='perfil')return mxPerfil(msg);
   if(mx.vista==='liga'&&mx.L)return mxLigaView(msg);
   if(mx.vista==='crear')return mxCrear(msg);
   if(mx.vista==='unirse')return mxUnirse(msg);
@@ -1539,7 +1595,8 @@ function mxTabClas(){const L=mx.L,ts=mxTorneos();let sel=mx.tor;if(sel!=='total'
   const filas=mxClas(sel),tn=sel==='total'?'Total':(ts.find(t=>t.id===+sel)||{}).nombre;
   return `${mxTorSel(ts,sel,'mxtor',true)}
   <div style="display:flex;justify-content:space-between;padding:0 12px" class="mxlbl"><span>Mánager</span><span>${sel==='total'?'Total':'Puntos en '+esc((tn||'').replace(/ 20\d\d$/,''))}</span></div>
-  <div style="display:flex;flex-direction:column;gap:8px">${filas.map((f,i)=>`<button type="button" class="mxrow${f.m.id===L.yo.id?' yo':''}" data-mxriv="${f.m.id}"><span class="n">${i+1}</span>${mxAv(f.m.nombre,f.m.id)}<span class="tx"><b>${esc(f.m.nombre)}${f.m.id===L.yo.id?' (tú)':''}${f.m.id===L.liga.creador?' <span title="Creó la liga">👑</span>':''}</b><small>${f.m.jugadores.length} jugadores · ${mxM(f.m.valor)}</small></span><span class="pt">${sel==='total'?'':'+'}${Math.round(f.pts)}</span></button>`).join('')}</div>
+  <div style="display:flex;flex-direction:column;gap:8px">${filas.map(f=>{const pos=1+new Set(filas.filter(g=>Math.round(g.pts)>Math.round(f.pts)).map(g=>Math.round(g.pts))).size;
+    return `<button type="button" class="mxrow${pos<=3?' p'+pos:''}${f.m.id===L.yo.id?' yo':''}" data-mxriv="${f.m.id}"><span class="n">${pos}</span>${mxAv(f.m.nombre,f.m.id)}<span class="tx"><b>${esc(f.m.nombre)}${f.m.id===L.yo.id?' (tú)':''}${f.m.id===L.liga.creador?' <span title="Creó la liga">👑</span>':''}</b><small>${f.m.jugadores.length} jugadores · ${mxM(f.m.valor)}</small></span><span class="pt">${sel==='total'?'':'+'}${Math.round(f.pts)}</span></button>`}).join('')}</div>
   ${!ts.length?`<p class="sub">Los puntos empiezan a contar cuando empiece el próximo torneo Premier. Las alineaciones se bloquean ese día.</p>`:''}`}
 function mxValida(j){const n={R:0,D:0,M:0,F:0};j.forEach(i=>{n[mxLado(i)]++;n[mxGen(i)]++});const X=mx.L.liga.genero==='X';
   /* ok: se puede guardar (también incompleta); full: las 4 posiciones cubiertas */
@@ -1592,7 +1649,13 @@ function mxChatMsgs(){const L=mx.L,d=mx.chat.datos,yo=L.yo.id,priv=mx.chat.v!=='
   let dia='';return d.mensajes.map(m=>{const mio=m.de===yo,k=new Date(m.creado).toDateString(),sep=k!==dia?(dia=k,`<span class="mxdia">${new Date().toDateString()===k?'Hoy':fd(new Date(m.creado).toISOString().slice(0,10))}</span>`):'';
     const sel=mx.chat.sel===m.id&&!m.borrado,nom=m.nombre||'Alguien';
     const acc=sel?`<div class="mxmacc${mio?' yo':''}">${mio?`<button type="button" data-mx="chat-borrar" data-id="${m.id}">🗑️ Borrar</button>`:`<button type="button" data-mx="chat-denunciar" data-id="${m.id}">🚩 Denunciar</button><button type="button" data-mx="chat-bloquear" data-u="${m.de}" data-n="${esc(nom)}">🚫 Bloquear a ${esc(nom)}</button>${priv?'':`<button type="button" data-mx="chat-con" data-u="${m.de}">✉️ Escribirle en privado</button>`}`}</div>`:'';
-    return `${sep}<button type="button" class="mxmsg${mio?' yo':''}${m.borrado?' del':''}" data-mx="chat-sel" data-id="${m.id}">${!mio&&!priv?`<b>${esc(nom)}</b>`:''}${m.borrado?'Mensaje borrado':esc(m.texto)}<small>${mxHoraMsg(m.creado)}</small></button>${acc}`}).join('')}
+    const jm=!m.borrado&&mxJugMencion(m.texto),mini=jm?`<span class="mxmini"><i style="background-image:url('${P[jm].photo}')"></i>${esc(P[jm].name)} · ${mxM(mxVal(jm))}</span>`:'';
+    const bt=`<button type="button" class="mxmsg${mio?' yo':''}${m.borrado?' del':''}" data-mx="chat-sel" data-id="${m.id}">${!mio&&!priv?`<b>${esc(nom)}</b>`:''}${m.borrado?'Mensaje borrado':esc(m.texto)}${mini}<small>${mxHoraMsg(m.creado)}</small></button>`;
+    return `${sep}${mio?bt:`<div class="mxmrow">${mxAv(nom,m.de)}${bt}</div>`}${acc}`}).join('')}
+/* Si un mensaje nombra a un jugador del fantasy (por su apellido), se enseña su ficha con foto */
+function mxJugMencion(t){if(!mx.J||!t)return null;if(!mx._jre){const m={};for(const i in mx.J){const p=P[i];if(!p||!p.photo)continue;const k=norm(p.sn||'');if(k.length>=4&&!(k in m))m[k]=+i;else if(k in m&&mx.J[i].valor>(mx.J[m[k]]||{}).valor)m[k]=+i}
+    mx._jmap=m;mx._jre=new RegExp('(?:^|[^a-z])('+Object.keys(m).sort((a,b)=>b.length-a.length).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?![a-z])')}
+  const r=mx._jre.exec(norm(t));return r?mx._jmap[r[1]]:null}
 function mxTabChat(){const L=mx.L,c=mx.chat,li=c.lista,v=c.v,pr=li?li.privados.reduce((a,x)=>a+x.sin_leer,0):0,nl=li?li.liga.sin_leer:0;
   if(Date.now()-c.carga>4000)setTimeout(()=>mxChatCargar(),0);
   const seg=`<div class="mxseg"><button type="button" data-mx="chat-liga" aria-pressed="${v==='liga'}">💬 La liga${nl?` (${nl})`:''}</button><button type="button" data-mx="chat-priv" aria-pressed="${v!=='liga'}">✉️ Privados${pr?` (${pr})`:''}</button></div>`;
@@ -1636,7 +1699,10 @@ function mxTabVest(){const L=mx.L,act=mx.todo?L.actividad:L.actividad.slice(0,5)
     <div class="mxtwo"><button type="button" class="btn ok" data-mx="aceptar" data-of="${o.id}">✓ Aceptar</button><button type="button" class="btn no" data-mx="rechazar" data-of="${o.id}">✕ Rechazar</button></div></div>`).join(''):'<div class="card sub" style="text-align:center">No tienes ofertas pendientes.</div>')
    :(env.length?env.map(o=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>Ofreces <b>${mxM(o.cantidad)}</b> a <b>${esc(nom(o.para))}</b> por <b>${esc(mxNom(o.jugador))}</b></span><button type="button" class="btn no" data-mx="cancelaroferta" data-of="${o.id}">Cancelar</button></div>`).join(''):'<div class="card sub" style="text-align:center">No has hecho ofertas. Toca a un mánager en la clasificación y luego a uno de sus jugadores.</div>')}
   ${hist.length?`<div class="card mxfeed">${hist.map(o=>`<div><span>${o.de===yo?'📤':'📥'}</span><span>${o.de===yo?'A '+esc(nom(o.para)):'De '+esc(nom(o.de))}: ${esc(mxNom(o.jugador))} por ${mxM(o.cantidad)}</span><span class="t">${EST[o.estado]||o.estado}</span></div>`).join('')}</div>`:''}
-  <div class="mxlbl">Actividad de la liga</div><div class="card mxfeed">${act.map(a=>{const [i,t]=mxActTxt(a);return `<div><span>${i}</span><span>${t}</span><span class="t">${hace(a.cuando)}</span></div>`}).join('')||'<span class="sub">Todavía no ha pasado nada.</span>'}
+  ${(f=>f?`<button type="button" class="mxfich" data-mxj="${f.jugador}">${P[f.jugador]&&P[f.jugador].photo?`<img src="${P[f.jugador].photo}" alt="" onerror="this.remove()">`:''}<span class="t"><small>${f.tipo==='clausula'?'💥 Último clausulazo':f.tipo==='traspaso'?'🤝 Último traspaso':'💰 Último fichaje'}</small><b>${esc(P[f.jugador]?P[f.jugador].name:mxNom(f.jugador))}</b><span class="q">${mxAv(f.quien,f.quien_id)}${esc(f.quien||'')}</span></span>${f.cantidad!=null?`<span class="pr">${mxM(f.cantidad)}</span>`:''}</button>`:'')(L.actividad.find(a=>a.jugador&&a.quien_id&&['ficha','clausula','traspaso'].includes(a.tipo)))}
+  <div class="mxlbl">Actividad de la liga</div><div class="card mxfeed">${act.map(a=>{const [i,t]=mxActTxt(a),ph=a.jugador&&P[a.jugador]&&P[a.jugador].photo;
+    const ico=ph?`<span class="dup"><span class="j" style="background-image:url('${ph}')"></span>${a.quien_id?mxAv(a.quien,a.quien_id):''}</span>`:a.quien_id&&a.tipo!=='mercado'?mxAv(a.quien,a.quien_id,'act'):`<span class="em">${i}</span>`;
+    return `<div>${ico}<span>${t}</span><span class="t">${hace(a.cuando)}</span></div>`}).join('')||'<span class="sub">Todavía no ha pasado nada.</span>'}
   ${!mx.todo&&L.actividad.length>5?'<button type="button" class="btn" data-mx="todo" style="align-self:center">Ver toda la actividad</button>':''}</div>
   <button type="button" class="btn no" data-mx="salirliga" style="align-self:center;margin-top:8px">Salir de la liga</button>`}
 const mxPend=()=>mx.L&&mx.L.ofertas?mx.L.ofertas.filter(o=>o.para===mx.L.yo.id&&o.estado==='pendiente'):[];
@@ -1709,8 +1775,9 @@ function mxHojaHtml(h){const L=mx.L,id=h.id;
     return `<h3>Invitar a la liga</h3><p class="sub">Comparte este código o el enlace: tus amigos entran directamente.</p><div class="mxcod" style="letter-spacing:10px">${esc(L.liga.codigo)}</div>
     <div class="mxtwo"><button type="button" class="btn" data-mx="copiar">Copiar código</button><button type="button" class="btn ok" data-mx="compartir">WhatsApp / compartir</button></div><p class="sub" style="font-size:12px;word-break:break-all">${esc(url)}</p>`}
   if(h.tipo==='rival'){const m=L.miembros.find(x=>x.id===h.u);if(!m)return '';
-    return `<h3>Plantilla de ${esc(m.nombre)}</h3><p class="sub">${m.jugadores.length} jugadores · ${mxM(m.valor)}${m.id===L.yo.id?'':' · la alineación no se ve hasta que empieza el torneo'}</p>
+    return `<div style="display:flex;align-items:center;gap:12px">${mxAv(m.nombre,m.id,'grande2')}<h3 style="margin:0">Plantilla de ${esc(m.nombre)}</h3></div><p class="sub">${m.jugadores.length} jugadores · ${mxM(m.valor)}${m.id===L.yo.id?'':' · la alineación no se ve hasta que empieza el torneo'}</p>
     <div class="mxcards c3">${m.jugadores.map(p=>cromo(p.id)).join('')}</div>${m.id!==L.yo.id?`<p class="sub" style="font-size:12px">Toca un jugador para negociar o pagar su cláusula.</p><button type="button" class="btn" data-mx="chat-con" data-u="${m.id}" style="align-self:stretch">💬 Escribir a ${esc(m.nombre)}</button>`:''}
+    ${m.id===L.yo.id?'<button type="button" class="btn" data-mx="perfil" style="align-self:stretch">📷 Cambiar mi foto de perfil</button>':m.foto?`<button type="button" class="btn" data-mx="denfoto" data-u="${m.id}" style="align-self:stretch">🚩 Denunciar su foto</button>`:''}
     ${L.liga.creador===L.yo.id&&m.id!==L.yo.id?`<button type="button" class="btn rojo" data-mx="echar" data-u="${m.id}" style="align-self:stretch">🚪 Echar a ${esc(m.nombre)} de la liga</button>`:''}`}
   const reg=mxReg(id),dueño=mxDueño(id),mio=dueño&&dueño.id===L.yo.id,yo=mxYo(),blo=L.estado&&L.estado.bloqueado,cl=L.liga.clausulas;
   if(h.tipo==='pts')return `${mxCab(id)}${mxTabla(id,h.tor,h.cap)}`;
@@ -1845,6 +1912,16 @@ async function fxAccion(a,el){const sb=mx.sb;if(!sb)return;mx.msg=null;const err
   else if(a==='salir'){if(mx.ses.user&&mx.ses.user.is_anonymous&&!confirm('Tu cuenta no tiene email: si sales, no podrás recuperarla. ¿Salir igualmente?'))return;await sb.auth.signOut();mx.vista='inicio';try{localStorage.removeItem('vibora-liga')}catch(e){}rerender()}
   }catch(e){err(e)}}
 async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
+  if(a==='perfil'){mx.hoja=null;mxHojaPintar();mx.vistaPrev=mx.vista;mx.vista='perfil';mx.fotoNueva=null;rerender();scrollTo(0,0);return}
+  if(a==='perfil-volver'){mx.vista=mx.vistaPrev&&mx.vistaPrev!=='perfil'?mx.vistaPrev:'inicio';mx.fotoNueva=null;rerender();return}
+  if(a==='perfil-guardar'&&mx.fotoNueva){const yo=mx.ses.user.id;mx.ocupado=true;
+    try{const up=await mx.sb.storage.from('avatares').upload(yo+'.jpg',mx.fotoNueva.blob,{upsert:true,contentType:'image/jpeg',cacheControl:'3600'});if(up.error)throw up.error;
+      const v=Date.now(),r=await mx.sb.rpc('m_foto_perfil',{p_v:v});if(r.error)throw r.error;mx.perfil.foto_v=v;URL.revokeObjectURL(mx.fotoNueva.url);mx.fotoNueva=null;toast('📷 Foto guardada');gcEvent('fantasy/foto','Fantasy: foto de perfil');
+      if(mx.liga)await mxAbrir(mx.liga);mx.vista=mx.vistaPrev&&mx.vistaPrev!=='perfil'?mx.vistaPrev:'inicio';rerender()}
+    catch(x){toast((x&&x.message)||'No se ha podido subir la foto.')}finally{mx.ocupado=false}return}
+  if(a==='perfil-quitar'){if(!confirm('¿Quitar tu foto de perfil?'))return;const yo=mx.ses.user.id;await mx.sb.storage.from('avatares').remove([yo+'.jpg']).catch(()=>{});
+    if(await mxRpc('m_foto_perfil',{p_v:null},'Foto quitada')){mx.perfil.foto_v=null;if(mx.liga)await mxAbrir(mx.liga);mx.vista='perfil';rerender()}return}
+  if(a==='denfoto'){if(!confirm('¿Denunciar esta foto de perfil? La revisará Víbora.'))return;await mxRpc('m_denunciar_foto',{p_user:x.dataset.u},'Denuncia enviada. ¡Gracias!');return}
   if(a==='buscarj'){mx.bq='';mx.bfil='';mxHoja({tipo:'buscar'});setTimeout(()=>{const q=document.getElementById('mxbq');if(q)q.focus()},50);return}
   if(a==='bfil'){mx.bfil=x.dataset.f||'';mxHojaPintar();return}
   if(a==='seguir'){const j=+x.dataset.id,si=!mxSigo(j);const r=await mx.sb.rpc('m_seguir',{p_liga:mx.liga,p_jugador:j,p_si:si});

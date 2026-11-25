@@ -210,6 +210,14 @@ create table if not exists public.m_excepciones (          -- excepción para un
   user_id uuid primary key references public.perfiles on delete cascade,
   hasta   timestamptz not null
 );
+alter table public.perfiles add column if not exists foto_v bigint;   -- foto de perfil: versión (la imagen está en Storage, avatares/<id>.jpg)
+-- Denuncias de fotos de perfil (se revisan en Supabase: select * from m_foto_denuncias)
+create table if not exists public.m_foto_denuncias (
+  user_id uuid not null references public.perfiles on delete cascade,
+  quien   uuid not null references public.perfiles on delete cascade,
+  creada  timestamptz not null default now(),
+  primary key (user_id, quien)
+);
 alter table public.m_estado add column if not exists abierto_hasta timestamptz;    -- excepción: con el torneo empezado, se puede alinear y negociar hasta esta hora
 create table if not exists public.m_config (clave text primary key, valor text);
 create table if not exists public.m_avisos (user_id uuid primary key references public.perfiles on delete cascade, activo boolean not null default true);
@@ -621,6 +629,39 @@ begin
   end if;
 end $$;
 
+-- Foto de perfil: la app la sube a Storage (avatares/<id>.jpg) y aquí apunta su versión (null = sin foto)
+create or replace function public.m_foto_perfil(p_v bigint) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'Entra en el fantasy primero.'; end if;
+  update perfiles set foto_v = p_v where id = auth.uid();
+end $$;
+
+create or replace function public.m_denunciar_foto(p_user uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'Entra en el fantasy primero.'; end if;
+  if p_user = auth.uid() then raise exception 'No puedes denunciar tu propia foto.'; end if;
+  insert into m_foto_denuncias (user_id, quien) values (p_user, auth.uid()) on conflict do nothing;
+end $$;
+
+-- Almacén de fotos de perfil (Supabase Storage): público para ver, y cada uno solo sube, cambia o borra la suya
+do $$ begin
+  if to_regclass('storage.buckets') is not null then
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+      values ('avatares', 'avatares', true, 400000, array['image/jpeg'])
+      on conflict (id) do update set public = true, file_size_limit = 400000, allowed_mime_types = array['image/jpeg'];
+    execute 'drop policy if exists "avatares: subir la propia" on storage.objects';
+    execute 'drop policy if exists "avatares: cambiar la propia" on storage.objects';
+    execute 'drop policy if exists "avatares: borrar la propia" on storage.objects';
+    execute 'drop policy if exists "avatares: ver" on storage.objects';
+    execute $p$create policy "avatares: subir la propia" on storage.objects for insert to authenticated with check (bucket_id = 'avatares' and name = auth.uid()::text || '.jpg')$p$;
+    execute $p$create policy "avatares: cambiar la propia" on storage.objects for update to authenticated using (bucket_id = 'avatares' and name = auth.uid()::text || '.jpg')$p$;
+    execute $p$create policy "avatares: borrar la propia" on storage.objects for delete to authenticated using (bucket_id = 'avatares' and name = auth.uid()::text || '.jpg')$p$;
+    execute $p$create policy "avatares: ver" on storage.objects for select using (bucket_id = 'avatares')$p$;
+  end if;
+end $$;
+
 -- --- Chat ------------------------------------------------------------------------------
 -- Escribir: p_para null = chat de la liga; si no, privado a ese mánager
 create or replace function public.m_chat_enviar(p_liga uuid, p_para uuid, p_texto text) returns bigint
@@ -792,7 +833,7 @@ begin
               'clausulazo_hoy', clausulazo = (now() at time zone 'Europe/Madrid')::date)
            from m_miembros where liga = p_liga and user_id = yo),
     'alineacion', (select jsonb_build_object('jugadores', jugadores, 'capitan', capitan) from m_alineacion where liga = p_liga and user_id = yo),
-    'miembros', (select jsonb_agg(jsonb_build_object('id', m.user_id, 'nombre', pf.nombre,
+    'miembros', (select jsonb_agg(jsonb_build_object('id', m.user_id, 'nombre', pf.nombre, 'foto', pf.foto_v,
                    'valor', m_valor_plantilla(p_liga, m.user_id),
                    'jugadores', (select coalesce(jsonb_agg(jsonb_build_object('id', p.jugador, 'clausula', p.clausula,
                                    'protegido', p.protegido, 'venta', p.venta, 'precio', case when m.user_id = yo then p.precio end) order by j.valor desc), '[]')
@@ -809,7 +850,7 @@ begin
     'venganza', (select coalesce(jsonb_agg(distinct a.jugador), '[]') from m_actividad a
                  where a.liga = p_liga and a.tipo = 'clausula' and a.otro = yo and a.cuando > now() - make_interval(days => m_cfg('venganza')::int)),
     'actividad', (select coalesce(jsonb_agg(x order by x.cuando desc), '[]') from (
-                   select a.cuando, a.tipo, a.jugador, a.cantidad, q.nombre as quien, o.nombre as otro
+                   select a.cuando, a.tipo, a.jugador, a.cantidad, q.nombre as quien, o.nombre as otro, a.quien as quien_id, a.otro as otro_id
                    from m_actividad a left join perfiles q on q.id = a.quien left join perfiles o on o.id = a.otro
                    where a.liga = p_liga and a.tipo <> 'mercado' order by a.cuando desc limit 40) x)
   ) into r;
@@ -1379,6 +1420,7 @@ alter table public.m_excepciones enable row level security;
 alter table public.m_excepciones_liga enable row level security;
 alter table public.m_mensajes       enable row level security;
 alter table public.m_seguidos       enable row level security;
+alter table public.m_foto_denuncias enable row level security;
 alter table public.m_chat_leido     enable row level security;
 alter table public.m_chat_bloqueos  enable row level security;
 alter table public.m_chat_denuncias enable row level security;
@@ -1400,12 +1442,12 @@ revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ve
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean) from public, anon;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean), public.m_foto_perfil(bigint), public.m_denunciar_foto(uuid) from public, anon;
 grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean) to authenticated;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean), public.m_foto_perfil(bigint), public.m_denunciar_foto(uuid) to authenticated;
 
 
 -- Reloj de cada minuto (solo si la extensión pg_cron está activada: Database → Extensions)
