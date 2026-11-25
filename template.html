@@ -440,6 +440,8 @@ nav.bot a[hidden]{display:none}
 .mxcuenta .btn{padding:9px 14px;font-size:14px;white-space:nowrap}
 .chi{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;margin-right:7px;vertical-align:-6px;font-style:normal}
 .chi.liga{background:#D9F03C;color:#0B1023}.chi.priv{background:#4C8DFF;color:#fff}
+.mxechar{align-self:stretch;border:1.5px solid var(--red);background:rgba(239,83,80,.1);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.mxechar b{font-size:16px}.mxechar p{margin:0;font-size:14px;color:var(--ink);opacity:.9}.mxechar.fin{background:rgba(239,83,80,.2);border-width:2px}
 .fxfoto{display:flex;flex-direction:column;align-items:center;gap:4px;margin:8px 0 10px;cursor:pointer;position:relative;text-align:center}
 .fxfoto .ring{position:relative;width:112px;height:112px;border-radius:50%;padding:4px;background:conic-gradient(from 200deg,#D9F03C,#4FD1C5,#4C8DFF,#D9F03C);margin-bottom:6px;transition:transform .15s}
 .fxfoto:hover .ring{transform:scale(1.03)}.fxfoto:active .ring{transform:scale(.97)}
@@ -1802,7 +1804,9 @@ function mxHojaHtml(h){const L=mx.L,id=h.id;
     return `<div style="display:flex;align-items:center;gap:12px">${mxAv(m.nombre,m.id,'grande2')}<h3 style="margin:0">Plantilla de ${esc(m.nombre)}</h3></div><p class="sub">${m.jugadores.length} jugadores · ${mxM(m.valor)}${m.id===L.yo.id?'':' · la alineación no se ve hasta que empieza el torneo'}</p>
     <div class="mxcards c3">${m.jugadores.map(p=>cromo(p.id)).join('')}</div>${m.id!==L.yo.id?`<p class="sub" style="font-size:12px">Toca un jugador para negociar o pagar su cláusula.</p><button type="button" class="btn" data-mx="chat-con" data-u="${m.id}" style="align-self:stretch">💬 Escribir a ${esc(m.nombre)}</button>`:''}
     ${m.id===L.yo.id?'<button type="button" class="btn" data-mx="perfil" style="align-self:stretch">📷 Cambiar mi foto de perfil</button>':m.foto?`<button type="button" class="btn" data-mx="denfoto" data-u="${m.id}" style="align-self:stretch">🚩 Denunciar su foto</button>`:''}
-    ${L.liga.creador===L.yo.id&&m.id!==L.yo.id?`<button type="button" class="btn rojo" data-mx="echar" data-u="${m.id}" style="align-self:stretch">🚪 Echar a ${esc(m.nombre)} de la liga</button>`:''}`}
+    ${L.liga.creador===L.yo.id&&m.id!==L.yo.id?(!h.echar?`<button type="button" class="btn rojo" data-mx="echar" data-u="${m.id}" style="align-self:stretch">🚪 Echar a ${esc(m.nombre)} de la liga</button>`
+      :h.echar===1?`<div class="mxechar" id="mxechar"><b>¿Seguro que quieres echar a ${esc(m.nombre)}?</b><p>Saldrá de «${esc(L.liga.nombre)}», sus jugadores vuelven a quedar libres y pierde sus puntos en la liga. Le llegará un aviso.</p><div class="mxtwo"><button type="button" class="btn" data-mx="echar-no">Cancelar</button><button type="button" class="btn rojo" data-mx="echar-sig">Sí, quiero echarle</button></div></div>`
+      :`<div class="mxechar fin" id="mxechar"><b>⚠️ Último paso: confírmalo</b><p>Vas a echar a <b>${esc(m.nombre)}</b> de la liga. <b>No se puede deshacer.</b></p><div class="mxtwo"><button type="button" class="btn" data-mx="echar-no">No, me lo he pensado</button><button type="button" class="btn rojo" data-mx="echar-ok" data-u="${m.id}">Confirmar y echar</button></div></div>`):''}`}
   const reg=mxReg(id),dueño=mxDueño(id),mio=dueño&&dueño.id===L.yo.id,yo=mxYo(),blo=L.estado&&L.estado.bloqueado,cl=L.liga.clausulas;
   if(h.tipo==='pts')return `${mxCab(id)}${mxTabla(id,h.tor,h.cap)}`;
   if(mio){const enAli=mx.borr.j.includes(id);
@@ -1987,7 +1991,8 @@ async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
     if(a==='aceptar'&&!confirm(`¿Vender a ${mxNom(o.jugador)} por ${mxM(o.cantidad)}?`))return;
     if(await mxRpc('m_responder_oferta',{p_oferta:o.id,p_aceptar:a==='aceptar'},a==='aceptar'?'🤝 Traspaso hecho':'Oferta rechazada'))await mxRecargar();return}
   if(a==='cancelaroferta'){if(await mxRpc('m_cancelar_oferta',{p_oferta:+x.dataset.of},'Oferta cancelada'))await mxRecargar();return}
-  if(a==='echar'){const m=L.miembros.find(z=>z.id===x.dataset.u);if(!m||!confirm(`¿Echar a ${m.nombre} de la liga? Sus jugadores vuelven a quedar libres. No se puede deshacer.`))return;
+  if(a==='echar'||a==='echar-sig'||a==='echar-no'){if(!h)return;h.echar=a==='echar'?1:a==='echar-sig'?2:0;mxHojaPintar();const c=document.getElementById('mxechar');if(c)c.scrollIntoView({block:'center',behavior:'smooth'});return}
+  if(a==='echar-ok'){const m=L.miembros.find(z=>z.id===x.dataset.u);if(!m||!h||h.echar!==2)return;
     if(await mxRpc('m_echar',{p_liga:mx.liga,p_user:m.id},m.nombre+' ya no está en la liga')){mx.hoja=null;await mxRecargar()}return}
   if(a==='salirliga'){if(!confirm('¿Salir de esta liga? Perderás tu plantilla y tus puntos en ella. No se puede deshacer.'))return;
     if(await mxRpc('m_salir',{p_liga:mx.liga},'Has salido de la liga')){mx.vista='inicio';mx.L=null;mx.liga=null;try{localStorage.removeItem('vibora-liga')}catch(e){}await mxLigas();rerender()}return}
