@@ -602,6 +602,29 @@ begin
   perform m_log(p_liga, 'sale', auth.uid(), null, null, null);
 end $$;
 
+-- Borrar mi cuenta (lo exigen App Store y Google Play): sale de sus ligas, pasa la creación de sus ligas privadas
+-- al mánager más antiguo, borra las ligas que se quedan vacías y elimina el usuario con todos sus datos.
+-- La foto de perfil la borra la app antes (Storage no deja borrarla desde SQL).
+create or replace function public.m_borrar_cuenta() returns void
+language plpgsql security definer set search_path = public as $$
+declare yo uuid := auth.uid(); l uuid;
+begin
+  if yo is null then raise exception 'No has iniciado sesión.'; end if;
+  delete from m_ofertas where de = yo or para = yo;
+  for l in select liga from m_miembros where user_id = yo loop
+    delete from m_pujas where liga = l and user_id = yo;
+    delete from m_miembros where liga = l and user_id = yo;
+    if not exists (select 1 from m_miembros where liga = l) then delete from m_ligas where id = l;
+    else update m_ligas set creador = (select user_id from m_miembros where liga = l order by unido limit 1)
+      where id = l and creador = yo and not publica;
+    end if;
+  end loop;
+  update m_actividad set quien = null where quien = yo;
+  update m_actividad set otro = null where otro = yo;
+  delete from perfiles where id = yo;
+  delete from auth.users where id = yo;
+end $$;
+
 -- El creador de la liga puede echar a un mánager (sus jugadores vuelven a quedar libres)
 create or replace function public.m_echar(p_liga uuid, p_user uuid) returns void
 language plpgsql security definer set search_path = public as $$
@@ -1445,12 +1468,12 @@ revoke execute on function public.m_crear_liga(text, char, boolean), public.m_ve
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean), public.m_foto_perfil(bigint), public.m_denunciar_foto(uuid) from public, anon;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean), public.m_foto_perfil(bigint), public.m_denunciar_foto(uuid), public.m_borrar_cuenta() from public, anon;
 grant execute on function public.m_crear_liga(text, char, boolean), public.m_ver_liga(text), public.m_unirse(text), public.m_unirse_publica(), public.m_salir(uuid),
   public.m_mis_ligas(), public.m_liga(uuid), public.m_sobre_visto(uuid), public.m_alinear(uuid, int[], int), public.m_pujar(uuid, int, numeric),
   public.m_retirar_puja(uuid, int), public.m_vender_ya(uuid, int), public.m_poner_venta(uuid, int, numeric),
   public.m_pagar_clausula(uuid, int), public.m_blindar(uuid, int, numeric),
-  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean), public.m_foto_perfil(bigint), public.m_denunciar_foto(uuid) to authenticated;
+  public.m_echar(uuid, uuid), public.m_ofertar(uuid, int, numeric), public.m_responder_oferta(bigint, boolean), public.m_cancelar_oferta(bigint), public.m_avisos_set(boolean), public.m_chat_enviar(uuid, uuid, text), public.m_chat(uuid, uuid, bigint), public.m_chats(uuid), public.m_chat_borrar(bigint), public.m_chat_bloquear(uuid, boolean), public.m_chat_denunciar(bigint), public.m_seguir(uuid, int, boolean), public.m_foto_perfil(bigint), public.m_denunciar_foto(uuid), public.m_borrar_cuenta() to authenticated;
 
 
 -- Reloj de cada minuto (solo si la extensión pg_cron está activada: Database → Extensions)

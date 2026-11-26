@@ -435,6 +435,7 @@ nav.bot a[hidden]{display:none}
 .mxseg button:has(.chi){display:flex;align-items:center;justify-content:center;gap:8px;line-height:1.1;min-height:42px}
 .chi.liga{background:#D9F03C;color:#0B1023}.chi.priv{background:#4C8DFF;color:#fff}
 .mxechar{align-self:stretch;border:1.5px solid var(--red);background:rgba(239,83,80,.1);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.mxborrar{align-self:stretch;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}.mxborrar>b{font-size:16px}.mxborrar .sub{margin:0;font-size:13px}.mxechar input{padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;letter-spacing:2px}
 .mxechar b{font-size:16px}.mxechar p{margin:0;font-size:14px;color:var(--ink);opacity:.9}.mxechar.fin{background:rgba(239,83,80,.2);border-width:2px}
 .tsel.info .in{max-height:88vh;overflow-y:auto;position:relative;border-radius:16px 16px 0 0;line-height:1.5}
 .tsel.info h3{padding-right:44px;margin-bottom:10px}.tsel.info h4{margin:16px 0 4px;font-size:15px}.tsel.info p{margin:0 0 8px;font-size:15px}.tsel.info ul{margin:0 0 8px;padding-left:20px;font-size:15px}
@@ -1241,7 +1242,7 @@ privacidad:()=>`<h3>Política de privacidad</h3><p class="sub">Versión del ${fe
   <h4>Para qué y por qué</h4><ul><li>Para que puedas jugar: es necesario para darte el servicio que aceptas en los términos.</li><li>Para enviarte avisos al móvil: solo con tu consentimiento, y puedes quitarlo cuando quieras.</li><li>Para moderar el chat, evitar abusos y mejorar la app con estadísticas: por nuestro interés legítimo.</li></ul>
   <p>No vendemos tus datos ni hacemos publicidad personalizada con ellos.</p>
   <h4>Quién los ve</h4><p>Tu nombre, tu foto, tu equipo, tus puntos y tus mensajes del chat de la liga los ven los mánagers de tus ligas. Los chats privados, solo las dos personas. Usamos estos proveedores para que la app funcione: Supabase (base de datos, cuentas y fotos), GitHub Pages (web), OneSignal (notificaciones), Google (inicio de sesión y tipos de letra) y GoatCounter (estadísticas). Alguno puede tratar datos fuera de la UE, con las garantías que exige el RGPD.</p>
-  <h4>Cuánto tiempo</h4><p>Mientras tengas tu cuenta. Si nos pides borrarla, la eliminamos en un plazo máximo de 30 días, salvo lo que la ley nos obligue a guardar.</p>
+  <h4>Cuánto tiempo</h4><p>Mientras tengas tu cuenta. Puedes borrarla tú mismo cuando quieras desde la app (menú ☰ → «Borrar mi cuenta»): tu perfil, tu foto, tus equipos y tus mensajes se eliminan al momento. Si lo prefieres, escríbenos y la borramos en un plazo máximo de 30 días, salvo lo que la ley nos obligue a guardar.</p>
   <h4>Tus derechos</h4><p>Puedes pedir acceder a tus datos, corregirlos, borrarlos, llevártelos, oponerte o limitar su uso escribiendo a ${VIBORA_MAIL}. Si no estás conforme, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</p>
   <h4>Menores</h4><p>Víbora es para mayores de 14 años.</p>`};
 function fechaLegal(){const [y,m,d]=LEGAL_V.split('-');return `${+d}/${+m}/${y}`}
@@ -1260,7 +1261,7 @@ function menuAbrir(){const r=route().v,yo=typeof mx!=='undefined'&&mx.perfil?mx.
   const el=document.createElement('div');el.className='menu';el.setAttribute('role','dialog');el.setAttribute('aria-label','Menú');
   const sec=t=>`<p class="peq" style="padding:10px 10px 2px;text-transform:uppercase;letter-spacing:1px;font-size:11px;font-weight:700">${t}</p>`;
   el.innerHTML=`<nav class="in"><div class="cab"><div><b>Víbora Fantasy</b>${yo?`<small>${esc(yo)}</small>`:''}</div><button type="button" class="hbtn" data-menu="cerrar" aria-label="Cerrar">✕</button></div>
-    ${SUPA?sec('Fantasy')+it('#fantasy','🏟️','Mis ligas',r==='fantasy')+(yo?`<button type="button" class="it" data-menu="foto"><i>📷</i>${mx.perfil.foto_v?'Cambiar mi foto':'Poner mi foto'}</button>`:'')+'<button type="button" class="it" data-menu="como"><i>📖</i>Cómo se juega</button>':''}
+    ${SUPA?sec('Fantasy')+it('#fantasy','🏟️','Mis ligas',r==='fantasy')+(yo?`<button type="button" class="it" data-menu="foto"><i>📷</i>${mx.perfil.foto_v?'Cambiar mi foto':'Poner mi foto'}</button><button type="button" class="it" data-menu="borrar"><i>🗑️</i>Borrar mi cuenta</button>`:'')+'<button type="button" class="it" data-menu="como"><i>📖</i>Cómo se juega</button>':''}
     ${sec('Pádel profesional')}
     ${it('#inicio','📊','Resultados y partidos',r==='inicio'||r==='partido')}
     ${it('#torneos','📅','Torneos y calendario',r==='torneos'||r==='torneo')}
@@ -1275,7 +1276,7 @@ function menuAbrir(){const r=route().v,yo=typeof mx!=='undefined'&&mx.perfil?mx.
     <button type="button" class="it" data-menu="tema"><i>🎨</i>Aspecto e idioma</button>
     <div class="sep"></div><p class="peq">App no oficial de aficionados, sin relación con Premier Padel ni con la FIP.</p><p class="peq" style="padding-top:0"><button type="button" class="lnk" data-menu="terminos">Términos de uso</button> · <button type="button" class="lnk" data-menu="privacidad">Privacidad</button></p></nav>`;
   el.addEventListener('click',e=>{const b=e.target.closest('[data-menu]');if(e.target===el||e.target.closest('a')||b){el.remove();
-    if(b&&b.dataset.menu==='tema')temaAbrir();if(b&&['quienes','contacto','terminos','privacidad'].includes(b.dataset.menu))infoAbrir(b.dataset.menu);if(b&&b.dataset.menu==='como')bienvenida(true);if(b&&b.dataset.menu==='foto'){if(route().v!=='fantasy')location.hash='#fantasy';mxAccion('perfil')}}});
+    if(b&&b.dataset.menu==='tema')temaAbrir();if(b&&['quienes','contacto','terminos','privacidad'].includes(b.dataset.menu))infoAbrir(b.dataset.menu);if(b&&b.dataset.menu==='como')bienvenida(true);if(b&&(b.dataset.menu==='foto'||b.dataset.menu==='borrar')){if(route().v!=='fantasy')location.hash='#fantasy';mxAccion('perfil',b.dataset.menu==='borrar'?{dataset:{borrar:1}}:null)}}});
   document.body.appendChild(el)}
 /* ---------- Bienvenida: qué es el juego, en 4 pantallas (la primera vez, y desde el menú) ---------- */
 const BIENV=[['🐍','Bienvenido a Víbora Fantasy','El fantasy del <b>pádel profesional</b>: ficha a jugadores reales de Premier Padel y suma puntos con lo que hagan en cada torneo.'],
@@ -1589,13 +1590,16 @@ async function mxOAuth(p,vincular){const redirectTo=location.origin+location.pat
 
 /* Mi foto de perfil: se elige (cámara o galería), se recorta cuadrada a 320 px y se sube a Storage */
 function mxPerfil(msg){const yo=mx.ses.user.id,nf=mx.fotoNueva,f=nf?nf.url:mxFotoDe(yo),nom=mx.perfil.nombre;
-  return `<div class="mxhead"><div class="tt"><small>${esc(nom)}</small><h1>Mi foto</h1></div><button type="button" class="mxpill" data-mx="perfil-volver">← Volver</button></div>${msg}
+  return `<div class="mxhead"><div class="tt"><small>${esc(nom)}</small><h1>Mi perfil</h1></div><button type="button" class="mxpill" data-mx="perfil-volver">← Volver</button></div>${msg}
   <div class="mxperfil">${f?`<span class="mxav grande" style="background:var(--surface2) url('${f}') center/cover"></span>`:mxAv(nom,yo,'grande')}
   <p class="sub" style="text-align:center;max-width:320px">Tu foto sale en tu cromo de la clasificación, en el chat y en cada fichaje que hagas.</p>
   <div class="opts"><label class="opt"><i>📷</i>Hacer una foto<small>Con la cámara</small><input type="file" accept="image/*" capture="user" data-mxfoto></label><label class="opt"><i>🖼️</i>Elegir de la galería<small>Una imagen tuya</small><input type="file" accept="image/*" data-mxfoto></label></div>
   ${nf?'<button type="button" class="btn pri" data-mx="perfil-guardar" style="align-self:stretch;padding:14px">Guardar foto</button>':''}
   ${!nf&&mx.perfil.foto_v?'<button type="button" class="btn no" data-mx="perfil-quitar" style="align-self:stretch">Quitar mi foto</button>':''}
-  <p class="sub" style="font-size:12px;text-align:center">Sube solo fotos que puedas usar. Las fotos ofensivas se denuncian y se quitan.</p></div>`}
+  <p class="sub" style="font-size:12px;text-align:center">Sube solo fotos que puedas usar. Las fotos ofensivas se denuncian y se quitan.</p>
+  <div class="mxborrar" id="mxborrar"><b>Mi cuenta</b>${!mx.borrar?`<p class="sub">Si borras tu cuenta, desaparecen tu perfil, tu foto, tus equipos, tus mensajes y tu sitio en todas tus ligas.</p><button type="button" class="btn no" data-mx="borrar" style="align-self:stretch">🗑️ Borrar mi cuenta</button>`
+    :mx.borrar===1?`<div class="mxechar"><b>¿Seguro que quieres borrar tu cuenta?</b><p>Saldrás de todas tus ligas y se borrarán para siempre tu perfil, tu foto, tus plantillas, tus puntos y tus mensajes. Si creaste una liga privada, pasará al mánager más antiguo.</p><div class="mxtwo"><button type="button" class="btn" data-mx="borrar-no">Cancelar</button><button type="button" class="btn rojo" data-mx="borrar-sig">Sí, quiero borrarla</button></div></div>`
+    :`<div class="mxechar fin"><b>⚠️ Último paso: confírmalo</b><p><b>No se puede deshacer.</b> Escribe <b>BORRAR</b> para confirmar.</p><input id="mxborrartxt" autocomplete="off" autocapitalize="characters" placeholder="BORRAR" aria-label="Escribe BORRAR para confirmar"><div class="mxtwo"><button type="button" class="btn" data-mx="borrar-no">No, me lo he pensado</button><button type="button" class="btn rojo" data-mx="borrar-ok">Borrar mi cuenta</button></div></div>`}</div></div>`}
 /* sube la foto elegida (mx.fotoNueva) como avatares/<id>.jpg y apunta su versión en el perfil */
 async function mxFotoSubir(){const yo=mx.ses.user.id,up=await mx.sb.storage.from('avatares').upload(yo+'.jpg',mx.fotoNueva.blob,{upsert:true,contentType:'image/jpeg',cacheControl:'3600'});if(up.error)throw up.error;
   const v=Date.now(),r=await mx.sb.rpc('m_foto_perfil',{p_v:v});if(r.error)throw r.error;if(mx.perfil)mx.perfil.foto_v=v;URL.revokeObjectURL(mx.fotoNueva.url);mx.fotoNueva=null;gcEvent('fantasy/foto','Fantasy: foto de perfil')}
@@ -2004,8 +2008,15 @@ async function fxAccion(a,el){const sb=mx.sb;if(!sb)return;mx.msg=null;const err
   else if(a==='salir'){if(mx.ses.user&&mx.ses.user.is_anonymous&&!confirm('Tu cuenta no tiene email: si sales, no podrás recuperarla. ¿Salir igualmente?'))return;await sb.auth.signOut();mx.vista='inicio';try{localStorage.removeItem('vibora-liga')}catch(e){}rerender()}
   }catch(e){err(e)}}
 async function mxAccion(a,x){const L=mx.L,h=mx.hoja,id=h&&h.id;
-  if(a==='perfil'){mx.hoja=null;mxHojaPintar();mx.vistaPrev=mx.vista;mx.vista='perfil';mx.fotoNueva=null;rerender();scrollTo(0,0);return}
-  if(a==='perfil-volver'){mx.vista=mx.vistaPrev&&mx.vistaPrev!=='perfil'?mx.vistaPrev:'inicio';mx.fotoNueva=null;rerender();return}
+  if(a==='perfil'){mx.hoja=null;mxHojaPintar();if(mx.vista!=='perfil')mx.vistaPrev=mx.vista;mx.vista='perfil';mx.fotoNueva=null;mx.borrar=x&&x.dataset&&x.dataset.borrar?1:0;rerender();if(mx.borrar){const c=document.getElementById('mxborrar');if(c)c.scrollIntoView({block:'center'})}else scrollTo(0,0);return}
+  if(a==='borrar'||a==='borrar-sig'||a==='borrar-no'){mx.borrar=a==='borrar'?1:a==='borrar-sig'?2:0;rerender();const c=document.getElementById('mxborrar');if(c)c.scrollIntoView({block:'center',behavior:'smooth'});if(a==='borrar-sig')setTimeout(()=>{const i=document.getElementById('mxborrartxt');if(i)i.focus()},300);return}
+  if(a==='borrar-ok'){const i=document.getElementById('mxborrartxt');if(mx.borrar!==2||!i||i.value.trim().toUpperCase()!=='BORRAR'){toast('Escribe BORRAR para confirmar.');return}
+    const yo=mx.ses.user.id;if(mx.perfil&&mx.perfil.foto_v)await mx.sb.storage.from('avatares').remove([yo+'.jpg']).catch(()=>{});
+    if(!await mxRpc('m_borrar_cuenta',{}))return;gcEvent('fantasy/borra-cuenta','Fantasy: borra su cuenta');
+    try{if(window.OneSignal&&OneSignal.logout)await OneSignal.logout()}catch(e){}
+    try{await mx.sb.auth.signOut({scope:'local'})}catch(e){}try{localStorage.removeItem('vibora-liga')}catch(e){}
+    mx.borrar=0;mx.ses=null;mx.perfil=undefined;mx.ligas=null;mx.liga=null;mx.L=null;mx.vista='inicio';rerender();toast('Tu cuenta se ha borrado. ¡Gracias por jugar!');return}
+  if(a==='perfil-volver'){mx.borrar=0;mx.vista=mx.vistaPrev&&mx.vistaPrev!=='perfil'?mx.vistaPrev:'inicio';mx.fotoNueva=null;rerender();return}
   if(a==='perfil-guardar'&&mx.fotoNueva){mx.ocupado=true;
     try{await mxFotoSubir();toast('📷 Foto guardada');
       if(mx.liga)await mxAbrir(mx.liga);mx.vista=mx.vistaPrev&&mx.vistaPrev!=='perfil'?mx.vistaPrev:'inicio';rerender()}
