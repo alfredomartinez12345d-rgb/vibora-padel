@@ -448,13 +448,16 @@ nav.bot a[hidden]{display:none}
 .lnk,.tsel button.lnk{background:none;border:0;padding:0;font:inherit;color:var(--cyan);text-decoration:underline;cursor:pointer;border-radius:0;overflow:visible}
 .fxacepta{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--muted);margin:10px 0 4px;cursor:pointer;text-align:left}
 .fxacepta input{width:20px;height:20px;flex:none;margin:1px 0 0;accent-color:var(--pelota)}.fxacepta a{color:var(--cyan)}
-.fxfoto{display:flex;flex-direction:column;align-items:center;gap:4px;margin:8px 0 10px;cursor:pointer;position:relative;text-align:center}
-.fxfoto .ring{position:relative;width:112px;height:112px;border-radius:50%;padding:4px;background:conic-gradient(from 200deg,#D9F03C,#4FD1C5,#4C8DFF,#D9F03C);margin-bottom:6px;transition:transform .15s}
+.fxfoto{display:flex;flex-direction:row;align-items:center;gap:12px;margin:4px 0 8px;cursor:pointer;position:relative;text-align:left}.fxfoto .tx{display:flex;flex-direction:column;gap:2px}
+.fxfoto .ring{position:relative;flex:none;width:60px;height:60px;border-radius:50%;padding:3px;background:conic-gradient(from 200deg,#D9F03C,#4FD1C5,#4C8DFF,#D9F03C);margin:0;transition:transform .15s}
 .fxfoto:hover .ring{transform:scale(1.03)}.fxfoto:active .ring{transform:scale(.97)}
 .fxfoto .ph{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--surface2);color:var(--muted);border:3px solid var(--surface)}
-.fxfoto .mas{position:absolute;right:2px;bottom:2px;width:32px;height:32px;border-radius:50%;background:#D9F03C;color:#0B1023;font:800 22px/30px var(--sans,inherit);text-align:center;border:3px solid var(--surface)}
-.fxfoto .ring.si .mas{font-size:0}.fxfoto .ring.si .mas::before{content:"✎";font-size:15px}
-.fxfoto b{font-size:15px}.fxfoto small{color:var(--muted);font-size:12px;font-weight:500}
+.fxfoto .mas{position:absolute;right:-3px;bottom:-3px;width:22px;height:22px;border-radius:50%;background:#D9F03C;color:#0B1023;font:800 16px/18px var(--sans,inherit);text-align:center;border:3px solid var(--surface)}
+.fxfoto .ring.si .mas{font-size:0}.fxfoto .ring.si .mas::before{content:"✎";font-size:11px}
+.fxfoto .ph svg{width:24px;height:24px}.fxfoto .ph{border-width:2px}
+.fxlegal{font-size:12px;color:var(--muted);text-align:center;margin:2px 0 0;line-height:1.4}.fxlegal a{color:var(--cyan)}
+.fxinv{align-self:stretch}.fxinv>summary{list-style:none;cursor:pointer;text-align:center;padding:12px;border:1px dashed var(--line);border-radius:14px;color:var(--muted);font-weight:700}.fxinv>summary::-webkit-details-marker{display:none}.fxinv>summary small{display:block;font-weight:500;font-size:12px}.fxinv[open]>summary{margin-bottom:10px}
+.fxfoto b{font-size:14px}.fxfoto small{color:var(--muted);font-size:12px;font-weight:500}
 .fxfoto input{position:absolute;width:1px;height:1px;opacity:0}
 .fxfoto:focus-within .ring{outline:2px solid var(--pelota);outline-offset:3px}
 .mxperfil{display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -750,13 +753,26 @@ body.modofx .mxtabs{bottom:calc(8px + env(safe-area-inset-bottom))!important}
 .menu .cab{display:flex;align-items:center;justify-content:space-between;padding:0 6px 12px;border-bottom:1px solid var(--line);margin-bottom:8px}
 .menu .cab b{font-family:var(--display);font-size:22px}.menu .cab small{display:block;color:var(--muted);font-size:13px}
 .menu a,.menu button.it{display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:12px;color:var(--ink);font:inherit;font-size:16px;font-weight:600;background:none;border:0;text-align:left;cursor:pointer;width:100%}
-.menu a[aria-current="page"]{background:var(--surface2)}.menu a i,.menu button.it i{font-style:normal;width:26px;text-align:center;font-size:19px}
+.menu a[aria-current="page"]{background:var(--surface2)}.menu a i,.menu button.it i{font-style:normal;width:26px;display:grid;place-items:center;color:var(--muted)}.menu a[aria-current="page"] i{color:var(--pelota)}.menu i svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .menu .sep{height:1px;background:var(--line);margin:8px 4px}.menu .peq{font-size:14px;font-weight:500;color:var(--muted);padding:8px 10px}
-.bienv{position:fixed;inset:0;z-index:96;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(28px + env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom));text-align:center}
-.bienv .ic2{font:900 76px/1 var(--display);color:var(--pelota);margin-top:8vh}.bienv .ic2 small{font-size:22px;color:var(--muted);margin-left:6px}.bienv h2{font-family:var(--display);font-size:34px;line-height:1.05;margin:18px 0 10px;text-transform:uppercase}
-.bienv p{color:var(--muted);font-size:16px;line-height:1.5;max-width:420px;margin:0 auto}.bienv p b{color:var(--ink)}
-.bienv .pts{display:flex;gap:7px;justify-content:center;margin:18px 0}.bienv .pts i{width:8px;height:8px;border-radius:50%;background:var(--line)}.bienv .pts i.on{background:var(--pelota);width:22px;border-radius:5px}
-.bienv .bt{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px}.bienv .bt .btn{align-self:stretch;justify-content:center;text-align:center}
+.bienv{position:fixed;inset:0;z-index:96;background:var(--bg);display:flex;flex-direction:column;padding:calc(16px + env(safe-area-inset-top)) 22px calc(20px + env(safe-area-inset-bottom));text-align:center}
+.bienv .top{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:420px;margin:0 auto}.bienv .paso{color:var(--muted);font-weight:800;font-size:13px;letter-spacing:1px}
+.bienv .cuerpo{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:0}
+.bienv h2{font-family:var(--display);font-size:32px;line-height:1.05;margin:22px 0 8px;text-transform:uppercase}
+.bienv p{color:var(--muted);font-size:16px;line-height:1.5;max-width:380px;margin:0 auto}.bienv p b{color:var(--ink)}.bienv .cuerpo .lnk{margin-top:12px;color:var(--cyan);font-weight:700}
+.bienv .pts{display:flex;gap:7px;justify-content:center;margin:14px 0}.bienv .pts i{width:8px;height:8px;border-radius:50%;background:var(--line)}.bienv .pts i.on{background:var(--pelota);width:22px;border-radius:5px}
+.bienv .bt{width:100%;max-width:420px;margin:0 auto}.bienv .fila2{display:grid;grid-template-columns:1fr 2fr;gap:10px}.bienv .fila2 .btn{justify-content:center;text-align:center;padding:14px}
+.bvd{height:200px;width:100%;max-width:340px;position:relative;display:flex;align-items:center;justify-content:center}
+.bvc{width:96px;height:132px;border-radius:14px;background:linear-gradient(160deg,var(--surface2),var(--surface));border:2px solid var(--line);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;position:relative;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.bvc img{position:absolute;left:0;top:0;width:100%;height:calc(100% - 26px);object-fit:cover;object-position:top}
+.bvc b{position:relative;display:block;width:100%;background:var(--surface);font-size:12px;font-weight:800;line-height:26px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.bvc i{position:absolute;top:6px;left:6px;font-style:normal;font-size:10px;font-weight:800;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;padding:2px 5px}
+.bvc.oro{border-color:#F6C453;box-shadow:0 0 0 3px rgba(246,196,83,.25),0 10px 24px rgba(0,0,0,.35)}.bvc em{position:absolute;top:6px;right:6px;font-style:normal;font-weight:900;font-size:12px;background:#F6C453;color:#1E1503;border-radius:6px;padding:2px 5px}
+.bvd.abanico .bvc{position:absolute;width:108px;height:150px;transform:translate(var(--x),var(--y,0)) rotate(var(--r))}
+.bvd.equipo{display:grid;grid-template-columns:repeat(2,92px);gap:10px;height:auto}.bvd.equipo .bvc{width:92px;height:104px}
+.bvd.puntos{gap:14px}.bvd.puntos .chips{display:flex;flex-direction:column;gap:8px;text-align:left}.bvd.puntos .chips span{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font:400 22px/1 var(--display);color:var(--pelota)}.bvd.puntos .chips small{display:block;font-size:11px;font-weight:600;line-height:1.3;color:var(--muted);margin-top:3px;font-family:inherit}.bvd.puntos .chips .oro{color:#F6C453}
+.bvd.tabla{flex-direction:column;gap:8px;height:auto}.bvd.tabla .fila{display:flex;align-items:center;gap:10px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px}.bvd.tabla .yo{border-color:var(--pelota)}.bvd.tabla .pos{font:400 20px var(--display);width:16px;color:var(--muted)}.bvd.tabla .av2{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:11px;color:#0B1023}.bvd.tabla b{flex:1;text-align:left}.bvd.tabla .pt{font:400 20px var(--display);color:var(--pelota)}.bvd.tabla .pt small{font-size:11px;color:var(--muted)}
+@media (max-height:660px){.bvd{transform:scale(.78);margin:-22px 0}.bienv h2{font-size:26px;margin-top:10px}}
 .tsel{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
 .tsel .in{width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--line);border-radius:10px 10px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
 .tsel h3{margin:0 0 4px;font-family:var(--display);font-weight:800;font-size:26px}
@@ -807,14 +823,22 @@ const EN=LANG==='en',LOC=EN?'en-GB':'es-ES';document.documentElement.lang=LANG;
 const TRPAT=EN?Object.keys(EN_DIC).filter(k=>k.startsWith('re:')).map(k=>[new RegExp(k.slice(3).trim(),'gu'),EN_DIC[k]]):[];
 const TRRE=EN?new RegExp(Object.keys(EN_DIC).filter(k=>!k.startsWith('re:')&&(k.length>=3||k==='en')).sort((a,b)=>b.length-a.length)
   .map(k=>{const L=/^[\p{L}\p{N}]/u.test(k),R=/[\p{L}\p{N}]$/u.test(k);return (L?'(?<![\\p{L}\\p{N}])':'')+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+(R?'(?![\\p{L}\\p{N}])':'')}).join('|'),'gu'):null;
+/* palabras que delatan una frase en español: si quedan tras traducir palabra a palabra, la frase se deja entera en español (mejor que «ni for premios») */
+const ES_RESTO=/(?<![\p{L}])(de|la|el|los|las|que|y|con|para|por|una|del|al|se|su|sus|tu|tus|es|lo|más|cuando|desde|hasta|sin|muy|pero|como|hay|este|esta|tiene|puedes|también|ya|si|o)(?![\p{L}])/u;
 function tr(s){if(!EN||typeof s!=='string'||!s)return s;const t=s.trim();if(!t)return s;const e=EN_DIC[t];if(e!=null)return s.replace(t,e);
-  for(const [re,v] of TRPAT)s=s.replace(re,v);const e2=EN_DIC[s.trim()];if(e2!=null)return s.replace(s.trim(),e2);return s.replace(TRRE,m=>EN_DIC[m]??m).replace(/«/g,'“').replace(/»/g,'”')}
+  const s0=s;for(const [re,v] of TRPAT)s=s.replace(re,v);const e2=EN_DIC[s.trim()];if(e2!=null)return s.replace(s.trim(),e2);
+  const r=s.replace(TRRE,m=>EN_DIC[m]??m);if(r!==s&&t.split(/\s+/).length>=4&&ES_RESTO.test(r))return s0;return r.replace(/«/g,'“').replace(/»/g,'”')}
 const TR_AT=['placeholder','title','aria-label','alt'];
 function trAt(n){for(const a of TR_AT){const v=n.getAttribute(a);if(v){const t=tr(v);if(t!==v)n.setAttribute(a,t)}}}
-function trTree(n){if(n.nodeType===3){const v=n.nodeValue,t=tr(v);if(t!==v)n.nodeValue=t;return}
-  if(n.nodeType!==1||n.tagName==='SCRIPT'||n.tagName==='STYLE'||n.tagName==='TEXTAREA')return;trAt(n);for(let c=n.firstChild;c;c=c.nextSibling)trTree(c)}
+/* direcciones en inglés: #home, #tournaments, #player-12… (por dentro se siguen llamando igual) */
+const RUTA_EN={inicio:'home',torneos:'tournaments',torneo:'tournament',jugador:'player',pareja:'pair',partido:'match',favoritos:'favourites',buscar:'search'},RUTA_ES={};for(const k in RUTA_EN)RUTA_ES[RUTA_EN[k]]=k;
+const hashEN=h=>{const m=/^#([a-z]+)(.*)$/.exec(h||'');return m&&RUTA_EN[m[1]]?'#'+RUTA_EN[m[1]]+m[2]:h};
+function trTree(n){if(n.nodeType===3){if(n.parentElement&&n.parentElement.closest('[data-notr]'))return;const v=n.nodeValue,t=tr(v);if(t!==v)n.nodeValue=t;return}
+  if(n.nodeType!==1||n.tagName==='SCRIPT'||n.tagName==='STYLE'||n.tagName==='TEXTAREA'||n.hasAttribute('data-notr'))return;
+  if(n.tagName==='A'){const h=n.getAttribute('href');if(h&&h[0]==='#'){const e=hashEN(h);if(e!==h)n.setAttribute('href',e)}}
+  trAt(n);for(let c=n.firstChild;c;c=c.nextSibling)trTree(c)}
 if(EN){trTree(document.body);document.title=tr(document.title);
-  new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')trTree(m.target);else if(m.type==='attributes')trAt(m.target);else m.addedNodes.forEach(trTree)}})
+  new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')trTree(m.target);else if(m.type==='attributes'){if(!m.target.closest('[data-notr]'))trAt(m.target)}else if(!(m.target.closest&&m.target.closest('[data-notr]')))m.addedNodes.forEach(trTree)}})
     .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:TR_AT});
   for(const f of ['alert','confirm','prompt']){const o=window[f].bind(window);window[f]=(m,...r)=>o(tr(String(m)),...r)}}
 function idiomaPoner(l){try{localStorage.setItem('vibora-lang',l)}catch(e){}location.reload()}
@@ -1102,7 +1126,7 @@ function oopCourts(ms){const by={};ms.forEach(m=>(by[m.court||'Pista']??=[]).pus
   return Object.entries(by).sort((x,y)=>peso(x[0])-peso(y[0])||x[0].localeCompare(y[0]))
     .map(([c,l])=>[c,l.sort((x,y)=>(x.ord??99)-(y.ord??99)||(x.at||0)-(y.at||0))])}
 const oopSel={}; /* por torneo: {d: día elegido, c: pista elegida} */
-function oopBoard(tid,ms){const cs=oopCourts(ms),sel=(oopSel[tid]||{}).c,i=cs.findIndex(x=>x[0]===sel),cur=sel==='*'?-1:(i<0?0:i);
+function oopBoard(tid,ms){const cs=oopCourts(ms),sel=(oopSel[tid]||{}).c,i=cs.findIndex(x=>x[0]===sel),cur=i<0?-1:i;
   const chips=cs.length>1?`<div class="seg oopseg">${cs.map(([c,l],k)=>`<button type="button" data-oopc="${tid}|${k}" aria-pressed="${k===cur}">${c} <small>${l.length}</small></button>`).join('')}<button type="button" data-oopc="${tid}|*" aria-pressed="${cur<0}">Todas</button></div>`:'';
   const show=cur<0?cs:[cs[cur]];
   return `${chips}${show.map(([c,l])=>`<div class="oopc">${cur<0||cs.length<2?`<h2>${c}</h2>`:''}<div class="list">${l.map(oopRow).join('')}</div></div>`).join('')}`}
@@ -1217,7 +1241,7 @@ contacto:()=>`<h3>Contacto y ayuda</h3>
   <details><summary>¿Cómo no pierdo mi cuenta?</summary><p>Si entraste sin email, tu cuenta solo vive en ese móvil. Guárdala con Google o con tu email desde «Mis ligas» y podrás entrar desde cualquier sitio.</p></details>
   <details><summary>¿Cómo cambio mi foto?</summary><p>En el menú, «Cambiar mi foto», o tocando tu foto en «Mis ligas».</p></details>
   <details><summary>¿Cómo denuncio un mensaje o una foto?</summary><p>Toca el mensaje en el chat, o abre la ficha del mánager desde la clasificación, y pulsa «Denunciar».</p></details>
-  <details><summary>Quiero borrar mi cuenta o mis datos</summary><p>Escríbenos a ${VIBORA_MAIL} desde el correo de tu cuenta, o indicándonos tu nombre de mánager, y la borramos.</p></details>
+  <details><summary>Quiero borrar mi cuenta o mis datos</summary><p>Abre el menú ☰ y pulsa «Borrar mi cuenta»: se borra al momento. También puedes escribirnos a ${VIBORA_MAIL}.</p></details>
   <details><summary>¿Cuesta dinero?</summary><p>No. Víbora es gratis. Los millones (M) del juego son ficticios: no se compran ni se cambian por dinero.</p></details>
   <p class="sub" style="font-size:13px"><button type="button" class="lnk" data-info="terminos">Términos de uso</button> · <button type="button" class="lnk" data-info="privacidad">Privacidad</button></p>`,
 terminos:()=>`<h3>Términos de uso</h3><p class="sub">Versión del ${fechaLegal()}</p>
@@ -1229,7 +1253,7 @@ terminos:()=>`<h3>Términos de uso</h3><p class="sub">Versión del ${fechaLegal(
   <h4>6. Premios y patrocinios</h4><p>Si alguna vez hay premios, serán gratuitos (nunca habrá que pagar para participar) y tendrán sus propias bases, publicadas antes. El contenido patrocinado se señalará como tal.</p>
   <h4>7. Datos e imágenes del pádel</h4><p>Usamos resultados y datos públicos del circuito con fines informativos y de juego. Los nombres, marcas e imágenes de jugadores y competiciones pertenecen a sus titulares. Si eres titular de algún contenido y quieres que lo retiremos, escríbenos y lo haremos.</p>
   <h4>8. Funcionamiento</h4><p>Hacemos lo posible para que todo funcione y los datos sean correctos, pero puede haber errores o interrupciones. Si una puntuación es errónea, podemos corregirla.</p>
-  <h4>9. Tus derechos como consumidor</h4><p>Nada de estos términos limita los derechos que te reconoce la normativa de consumidores y usuarios. Puedes dejar de usar Víbora cuando quieras y pedirnos que borremos tu cuenta.</p>
+  <h4>9. Tus derechos como consumidor</h4><p>Nada de estos términos limita los derechos que te reconoce la normativa de consumidores y usuarios. Puedes dejar de usar Víbora cuando quieras y borrar tu cuenta desde la app.</p>
   <h4>10. Cambios</h4><p>Si cambiamos estos términos de forma importante, te lo diremos en la app y, si hace falta, te pediremos que los aceptes de nuevo.</p>
   <h4>11. Ley y reclamaciones</h4><p>Se aplica la ley española. Para cualquier queja escríbenos primero a ${VIBORA_MAIL}. Si eres consumidor, puedes reclamar ante los juzgados de tu domicilio y ante los servicios de consumo de tu comunidad.</p>`,
 privacidad:()=>`<h3>Política de privacidad</h3><p class="sub">Versión del ${fechaLegal()}</p>
@@ -1245,51 +1269,140 @@ privacidad:()=>`<h3>Política de privacidad</h3><p class="sub">Versión del ${fe
   <h4>Cuánto tiempo</h4><p>Mientras tengas tu cuenta. Puedes borrarla tú mismo cuando quieras desde la app (menú ☰ → «Borrar mi cuenta»): tu perfil, tu foto, tus equipos y tus mensajes se eliminan al momento. Si lo prefieres, escríbenos y la borramos en un plazo máximo de 30 días, salvo lo que la ley nos obligue a guardar.</p>
   <h4>Tus derechos</h4><p>Puedes pedir acceder a tus datos, corregirlos, borrarlos, llevártelos, oponerte o limitar su uso escribiendo a ${VIBORA_MAIL}. Si no estás conforme, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</p>
   <h4>Menores</h4><p>Víbora es para mayores de 14 años.</p>`};
+/* Textos largos en inglés: se escriben enteros (no se traducen palabra a palabra) */
+const INFO_EN={
+quienes:()=>`<h3>About us</h3>
+  <p>Víbora is <b>the fantasy game of professional padel</b>, made by fans for fans.</p>
+  <p>Open your pack, sign real players from the tour, pick your line-up for every tournament and compete with your friends in private leagues, or against everyone in the public leagues. You also get results, draws, rankings and records from professional padel.</p>
+  <p>We want following padel to be as much fun as playing it: winding up your group chat, nailing the signing and suffering every point of the tournament.</p>
+  <h4>Follow us</h4>
+  <div class="redes"><a href="https://www.tiktok.com/@viborafantasy" target="_blank" rel="noopener"><i class="rs tk">♪</i><span><b>TikTok</b><small>@viborafantasy</small></span></a>
+  <a href="https://x.com/viborafantasy" target="_blank" rel="noopener"><i class="rs tw">𝕏</i><span><b>X (Twitter)</b><small>@viborafantasy</small></span></a></div>
+  <p class="sub" style="font-size:12px">Unofficial fan app, not affiliated with Premier Padel or the FIP.</p>`,
+contacto:()=>`<h3>Contact and help</h3>
+  <p>Got a problem, an idea or want to work with us? Write to us:</p>
+  <a class="btn pri mailbtn" href="mailto:${VIBORA_MAIL}">✉️ ${VIBORA_MAIL}</a>
+  <h4>FAQ</h4>
+  <details><summary>How do I make sure I don't lose my account?</summary><p>If you joined without an email, your account only lives on that phone. Save it with Google or your email from “My leagues” and you can sign in from anywhere.</p></details>
+  <details><summary>How do I change my photo?</summary><p>In the menu, “Change my photo”, or tap your photo in “My leagues”.</p></details>
+  <details><summary>How do I report a message or a photo?</summary><p>Tap the message in the chat, or open the manager's card from the standings, and press “Report”.</p></details>
+  <details><summary>I want to delete my account or my data</summary><p>Open the menu ☰ and tap “Delete my account”. It is deleted straight away. You can also email us at ${VIBORA_MAIL}.</p></details>
+  <details><summary>Does it cost money?</summary><p>No. Víbora is free. The in-game millions (M) are fictional: you can't buy them or exchange them for money.</p></details>
+  <p class="sub" style="font-size:13px"><button type="button" class="lnk" data-info="terminos">Terms of use</button> · <button type="button" class="lnk" data-info="privacidad">Privacy</button></p>`,
+terminos:()=>`<h3>Terms of use</h3><p class="sub">Version of ${fechaLegal()}</p>
+  <h4>1. Who we are</h4><p>Víbora Fantasy (“Víbora”) is a fan app. Contact: <a href="mailto:${VIBORA_MAIL}">${VIBORA_MAIL}</a>. It is not affiliated with Premier Padel, the FIP or the players.</p>
+  <h4>2. What Víbora is</h4><p>A free entertainment game. You don't pay to play and no money is bet. The in-game millions (M) are fictional: they have no real value, can't be bought and can't be exchanged for money or prizes.</p>
+  <h4>3. Your account</h4><p>You must be at least 14 years old. You can play as a guest (the account is saved only on that device) or with Google or your email. You are responsible for what is done with your account. One manager name per person and account.</p>
+  <h4>4. House rules</h4><p>Insults, harassment, sexual, violent, discriminatory or illegal content and impersonating anyone are not allowed in the chat, your name or your photo. Only upload photos you have the right to use. We may remove content and suspend or delete accounts that break these rules. Anyone can report a message or a photo from the app.</p>
+  <h4>5. Leagues</h4><p>Whoever creates a private league can invite and remove managers. We may change the game rules to improve it; we will announce important changes in the app.</p>
+  <h4>6. Prizes and sponsorship</h4><p>If there are ever prizes, they will be free (you will never have to pay to take part) and will have their own rules, published beforehand. Sponsored content will be labelled as such.</p>
+  <h4>7. Padel data and images</h4><p>We use public results and data from the tour for information and game purposes. Names, brands and images of players and competitions belong to their owners. If you own any content and want us to remove it, write to us and we will.</p>
+  <h4>8. How it works</h4><p>We do our best to keep everything working and the data correct, but there may be errors or outages. If a score is wrong, we may correct it.</p>
+  <h4>9. Your consumer rights</h4><p>Nothing in these terms limits your rights under consumer law. You can stop using Víbora whenever you want and delete your account from the app.</p>
+  <h4>10. Changes</h4><p>If we change these terms in an important way, we will tell you in the app and, if needed, ask you to accept them again.</p>
+  <h4>11. Law and complaints</h4><p>Spanish law applies. For any complaint, write to us first at ${VIBORA_MAIL}. If you are a consumer, you can also complain to the courts of your place of residence and to your local consumer services.</p>`,
+privacidad:()=>`<h3>Privacy policy</h3><p class="sub">Version of ${fechaLegal()}</p>
+  <h4>Controller</h4><p>Víbora Fantasy. Contact for anything about your data: <a href="mailto:${VIBORA_MAIL}">${VIBORA_MAIL}</a>.</p>
+  <h4>What data we process</h4><ul><li><b>Your account:</b> manager name and, if you sign in that way, your email or the basic data of your Google account (name, email and identifier).</li>
+  <li><b>Your profile photo</b>, if you upload one.</li><li><b>Your game:</b> squad, bids, offers, leagues, points and activity.</li>
+  <li><b>Chat:</b> your messages, and the reports and blocks you make.</li><li><b>Notifications:</b> a device identifier, only if you turn notifications on.</li>
+  <li><b>Visit statistics</b>, anonymous and cookie-free.</li></ul>
+  <p>Theme, language and favourites are stored only on your phone.</p>
+  <h4>Why and on what basis</h4><ul><li>So you can play: it is needed to provide the service you accept in the terms.</li><li>To send you notifications: only with your consent, which you can withdraw at any time.</li><li>To moderate the chat, prevent abuse and improve the app with statistics: our legitimate interest.</li></ul>
+  <p>We don't sell your data or use it for personalised advertising.</p>
+  <h4>Who sees it</h4><p>Your name, photo, squad, points and league chat messages are seen by the managers in your leagues. Private chats, only by the two people. We use these providers to run the app: Supabase (database, accounts and photos), GitHub Pages (website), OneSignal (notifications), Google (sign-in and fonts) and GoatCounter (statistics). Some may process data outside the EU, with the safeguards required by the GDPR.</p>
+  <h4>How long</h4><p>As long as you have your account. You can delete it yourself at any time from the app (menu ☰ → “Delete my account”): your profile, photo, squads and messages are deleted straight away. If you prefer, write to us and we will delete it within 30 days, except what the law requires us to keep.</p>
+  <h4>Your rights</h4><p>You can ask to access, correct, delete or take your data with you, object to or restrict its use by writing to ${VIBORA_MAIL}. If you are not satisfied, you can complain to the Spanish Data Protection Agency (aepd.es).</p>
+  <h4>Minors</h4><p>Víbora is for people aged 14 and over.</p>`};
+
+/* Reglas completas («Cómo se juega»), en los dos idiomas */
+const PUNTOS=en=>en?[['🎟️','Wins a qualifying match','+2'],['🏆','Wins a match up to the round of 16','+3'],['🏆','Wins a quarter-final · semi-final · final','+5 · +8 · +12'],['👑','Wins the tournament','+5'],['🎾','Each set won','+1'],['🧱','Wins without dropping a set','+1'],['🍩','Set won 6-0','+2'],['⚡','Upset: beats a pair with a higher Elo','+2 / +4'],['❌','Loses their first match','−2'],['🕳️','Set lost 0-6','−1']]
+  :[['🎟️','Gana un partido de previa','+2'],['🏆','Gana un partido hasta octavos','+3'],['🏆','Gana en cuartos · semis · final','+5 · +8 · +12'],['👑','Campeón del torneo','+5'],['🎾','Cada set ganado','+1'],['🧱','Gana sin ceder un set','+1'],['🍩','Set ganado 6-0','+2'],['⚡','Sorpresa: gana a una pareja con más Elo','+2 / +4'],['❌','Pierde su primer partido','−2'],['🕳️','Set perdido 0-6','−1']];
+const tablaPuntos=en=>`<table class="st8"><tbody>${PUNTOS(en).map(([i,t,p])=>`<tr${p.startsWith('−')?' class="neg"':''}><td>${i} ${t}</td><td></td><td>${p}</td></tr>`).join('')}
+  <tr><td><b>${en?'Major tournament':'Torneo Major'}</b> ${en?'(everything)':'(todo)'}</td><td></td><td style="color:var(--gold)">×2</td></tr><tr><td><b>${en?'Golden Racket':'Pala de Oro'}</b></td><td></td><td style="color:var(--gold)">×2</td></tr></tbody></table>`;
+INFO.reglas=()=>`<h3>Cómo se juega</h3>
+  <p>Víbora Fantasy es un juego gratuito: compites con tus amigos con jugadores reales de Premier Padel. Gana quien más puntos sume durante la temporada.</p>
+  <h4>1. Tu plantilla</h4><ul><li>Al entrar en una liga abres un <b>sobre con 4 jugadores</b>. Si el sobre vale menos de 45 M, la diferencia se suma a tu caja.</li><li>Empiezas con <b>100 M en caja</b> para fichar. Los millones son ficticios.</li><li>Puedes tener <b>hasta 6 jugadores</b>. Solo se fichan jugadores del top 100 de su ranking.</li></ul>
+  <h4>2. El mercado</h4><ul><li>Cada día salen <b>8 jugadores libres</b> nuevos.</li><li>Las <b>pujas son a ciegas</b>: nadie ve las de los demás. Al cerrar el mercado, gana la puja más alta.</li><li>Puedes pujar hasta tu caja más un 20 % del valor de tu plantilla. Si te quedas en negativo cuando empieza un torneo, no puntúas en él.</li><li>Puedes <b>vender a la liga</b> al momento, por su valor, o poner a un jugador en venta para recibir ofertas.</li><li>Las <b>ofertas entre mánagers</b> duran 48 horas.</li></ul>
+  <h4>3. Cláusulas (si tu liga las tiene)</h4><ul><li>Cada jugador tiene una cláusula: 1,25 veces lo que se pagó por él. Cualquiera puede pagarla y llevárselo.</li><li>Durante los 7 días siguientes a ficharlo, nadie puede pagar su cláusula.</li><li>Puedes <b>blindarlo</b>: cada 1 M que pagas sube la cláusula 2 M, hasta 1,5 veces su valor.</li><li>Si te quitan un jugador por cláusula, no puedes recuperarlo hasta pasados 7 días.</li></ul>
+  <h4>4. Tu alineación</h4><ul><li>En cada torneo alineas a <b>4 jugadores: 2 de drive y 2 de revés</b>.</li><li>Uno de ellos es tu <b>Pala de Oro</b>: puntúa doble.</li><li>La alineación se cierra cuando empieza el torneo. Los partidos de previa también puntúan.</li></ul>
+  <h4>5. Puntos</h4>${tablaPuntos(false)}
+  <p class="sub">Los Major puntúan doble (lo que sumas y lo que restas). Si un jugador se retira o no juega, suma 0.</p>
+  <h4>6. Dinero por puntos</h4><p>Al acabar cada torneo cobras <b>0,2 M por punto</b> para seguir fichando.</p>
+  <h4>7. Ligas</h4><ul><li><b>Privadas:</b> creas la liga y compartes el código. Caben hasta 58 mánagers y quien la crea puede echar a alguien.</li><li><b>Públicas:</b> entras con un toque. Si pasas 21 días sin entrar, sales de ella.</li></ul>
+  <button type="button" class="btn" data-info="intro" style="width:100%;margin-top:6px">Ver la introducción</button>`;
+INFO_EN.reglas=()=>`<h3>How to play</h3>
+  <p>Víbora Fantasy is a free game: you compete with your friends using real Premier Padel players. Whoever scores the most points over the season wins.</p>
+  <h4>1. Your squad</h4><ul><li>When you join a league you open a <b>pack with 4 players</b>. If the pack is worth less than 45 M, the difference is added to your budget.</li><li>You start with <b>100 M</b> to sign players. The millions are fictional.</li><li>You can have <b>up to 6 players</b>. Only players in the top 100 of their ranking can be signed.</li></ul>
+  <h4>2. The market</h4><ul><li>Every day <b>8 new free agents</b> come out.</li><li><b>Bids are blind</b>: nobody sees anyone else's. When the market closes, the highest bid wins.</li><li>You can bid up to your budget plus 20% of your squad's value. If you are in the red when a tournament starts, you don't score in it.</li><li>You can <b>sell to the league</b> straight away, at the player's value, or list a player to receive offers.</li><li><b>Offers between managers</b> last 48 hours.</li></ul>
+  <h4>3. Release clauses (if your league has them)</h4><ul><li>Every player has a release clause: 1.25 times what was paid for them. Anyone can pay it and take the player.</li><li>For 7 days after signing a player, nobody can pay their clause.</li><li>You can <b>shield</b> a player: every 1 M you pay raises the clause by 2 M, up to 1.5 times their value.</li><li>If a player is taken from you by clause, you can't get them back for 7 days.</li></ul>
+  <h4>4. Your line-up</h4><ul><li>For each tournament you field <b>4 players: 2 forehand-side (drive) and 2 backhand-side</b>.</li><li>One of them is your <b>Golden Racket</b>: they score double.</li><li>The line-up locks when the tournament starts. Qualifying matches also score.</li></ul>
+  <h4>5. Points</h4>${tablaPuntos(true)}
+  <p class="sub">Majors score double (both what you gain and what you lose). If a player retires or doesn't play, they score 0.</p>
+  <h4>6. Money from points</h4><p>At the end of each tournament you earn <b>0.2 M per point</b> to keep signing players.</p>
+  <h4>7. Leagues</h4><ul><li><b>Private:</b> create the league and share the code. Up to 58 managers, and the creator can remove someone.</li><li><b>Public:</b> join with one tap. If you don't open it for 21 days, you leave it.</li></ul>
+  <button type="button" class="btn" data-info="intro" style="width:100%;margin-top:6px">See the introduction</button>`;
+
 function fechaLegal(){const [y,m,d]=LEGAL_V.split('-');return `${+d}/${+m}/${y}`}
 function infoAbrir(k){document.querySelectorAll('.tsel.info').forEach(x=>x.remove());const el=document.createElement('div');el.className='tsel info';el.setAttribute('role','dialog');el.setAttribute('aria-label','Información');
-  el.innerHTML=`<div class="in"><button type="button" class="hbtn x" data-info="cerrar" aria-label="Cerrar">✕</button>${INFO[k]()}<button type="button" class="btn" data-info="cerrar" style="width:100%;margin-top:14px">Cerrar</button></div>`;
-  el.addEventListener('click',e=>{const b=e.target.closest('[data-info]');if(e.target===el||b&&b.dataset.info==='cerrar'){el.remove();return}if(b){infoAbrir(b.dataset.info)}});
+  el.innerHTML=`<div class="in"><button type="button" class="hbtn x" data-info="cerrar" aria-label="Cerrar">✕</button><div${EN?' data-notr':''}>${(EN?INFO_EN:INFO)[k]()}</div><button type="button" class="btn" data-info="cerrar" style="width:100%;margin-top:14px">Cerrar</button></div>`;
+  el.addEventListener('click',e=>{const b=e.target.closest('[data-info]');if(e.target===el||b&&b.dataset.info==='cerrar'){el.remove();return}if(b&&b.dataset.info==='intro'){el.remove();bienvenida(true);return}if(b){infoAbrir(b.dataset.info)}});
   document.body.appendChild(el);el.querySelector('.in').scrollTop=0}
 /* Casilla de aceptación al registrarse (solo al crear la cuenta, con cualquier forma de entrar) */
 const ACEPTA=`<label class="fxacepta"><input type="checkbox" required data-acepta><span>He leído y acepto los <a href="#" data-info="terminos">Términos de uso</a> y la <a href="#" data-info="privacidad">Política de privacidad</a>, y tengo 14 años o más.</span></label>`;
 document.addEventListener('invalid',e=>{if(e.target.matches&&e.target.matches('[data-acepta]'))e.target.setCustomValidity(tr('Para entrar, marca que aceptas los términos y la privacidad.'))},true);
 document.addEventListener('change',e=>{if(e.target.matches&&e.target.matches('[data-acepta]'))e.target.setCustomValidity('')});
-document.addEventListener('click',e=>{const a=e.target.closest('.fxacepta [data-info]');if(a){e.preventDefault();infoAbrir(a.dataset.info)}});
+document.addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('.fxinv')&&typeof mx!=='undefined')mx.invitado=e.target.open},true);
+document.addEventListener('click',e=>{const a=e.target.closest('.fxacepta [data-info],.fxlegal [data-info]');if(a){e.preventDefault();infoAbrir(a.dataset.info)}});
 /* ---------- Menú lateral (☰): el fantasy es la portada; el resto de secciones, aquí ---------- */
+const MIC={ligas:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',foto:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>',borrar:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>',como:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>',resultados:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',torneos:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',ranking:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>',records:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/></svg>',favoritos:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21 7 14.2 2 9.3l6.9-1z"/></svg>',buscar:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',quienes:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',contacto:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>',tema:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.3A5.7 5.7 0 0 0 22 9.7C22 5.4 17.5 2 12 2z"/></svg>'};
 function menuAbrir(){const r=route().v,yo=typeof mx!=='undefined'&&mx.perfil?mx.perfil.nombre:'';
   const it=(h,i,t,act)=>`<a href="${h}"${act?' aria-current="page"':''}><i>${i}</i>${t}</a>`;
   const el=document.createElement('div');el.className='menu';el.setAttribute('role','dialog');el.setAttribute('aria-label','Menú');
   const sec=t=>`<p class="peq" style="padding:10px 10px 2px;text-transform:uppercase;letter-spacing:1px;font-size:11px;font-weight:700">${t}</p>`;
   el.innerHTML=`<nav class="in"><div class="cab"><div><b>Víbora Fantasy</b>${yo?`<small>${esc(yo)}</small>`:''}</div><button type="button" class="hbtn" data-menu="cerrar" aria-label="Cerrar">✕</button></div>
-    ${SUPA?sec('Fantasy')+it('#fantasy','🏟️','Mis ligas',r==='fantasy')+(yo?`<button type="button" class="it" data-menu="foto"><i>📷</i>${mx.perfil.foto_v?'Cambiar mi foto':'Poner mi foto'}</button><button type="button" class="it" data-menu="borrar"><i>🗑️</i>Borrar mi cuenta</button>`:'')+'<button type="button" class="it" data-menu="como"><i>📖</i>Cómo se juega</button>':''}
+    ${SUPA?sec('Fantasy')+it('#fantasy',MIC.ligas,'Mis ligas',r==='fantasy')+(yo?`<button type="button" class="it" data-menu="foto"><i>${MIC.foto}</i>${mx.perfil.foto_v?'Cambiar mi foto':'Poner mi foto'}</button><button type="button" class="it" data-menu="borrar"><i>${MIC.borrar}</i>Borrar mi cuenta</button>`:'')+`<button type="button" class="it" data-menu="como"><i>${MIC.como}</i>Cómo se juega</button>`:''}
     ${sec('Pádel profesional')}
-    ${it('#inicio','📊','Resultados y partidos',r==='inicio'||r==='partido')}
-    ${it('#torneos','📅','Torneos y calendario',r==='torneos'||r==='torneo')}
-    ${it('#ranking','📈','Ranking',r==='ranking'||r==='jugador'||r==='pareja')}
-    ${it('#records','🏆','Récords',r==='records')}
-    ${it('#favoritos','⭐','Favoritos',r==='favoritos')}
-    ${it('#buscar','🔍','Buscar jugador',r==='buscar')}
+    ${it('#inicio',MIC.resultados,'Resultados y partidos',r==='inicio'||r==='partido')}
+    ${it('#torneos',MIC.torneos,'Torneos y calendario',r==='torneos'||r==='torneo')}
+    ${it('#ranking',MIC.ranking,'Ranking',r==='ranking'||r==='jugador'||r==='pareja')}
+    ${it('#records',MIC.records,'Récords',r==='records')}
+    ${it('#favoritos',MIC.favoritos,'Favoritos',r==='favoritos')}
+    ${it('#buscar',MIC.buscar,'Buscar jugador',r==='buscar')}
     ${sec('Víbora')}
-    <button type="button" class="it" data-menu="quienes"><i>🐍</i>¿Quiénes somos?</button>
-    <button type="button" class="it" data-menu="contacto"><i>✉️</i>Contacto y ayuda</button>
+    <button type="button" class="it" data-menu="quienes"><i>${MIC.quienes}</i>¿Quiénes somos?</button>
+    <button type="button" class="it" data-menu="contacto"><i>${MIC.contacto}</i>Contacto y ayuda</button>
     ${sec('Ajustes')}
-    <button type="button" class="it" data-menu="tema"><i>🎨</i>Aspecto e idioma</button>
+    <button type="button" class="it" data-menu="tema"><i>${MIC.tema}</i>Aspecto e idioma</button>
     <div class="sep"></div><p class="peq">App no oficial de aficionados, sin relación con Premier Padel ni con la FIP.</p><p class="peq" style="padding-top:0"><button type="button" class="lnk" data-menu="terminos">Términos de uso</button> · <button type="button" class="lnk" data-menu="privacidad">Privacidad</button></p></nav>`;
   el.addEventListener('click',e=>{const b=e.target.closest('[data-menu]');if(e.target===el||e.target.closest('a')||b){el.remove();
-    if(b&&b.dataset.menu==='tema')temaAbrir();if(b&&['quienes','contacto','terminos','privacidad'].includes(b.dataset.menu))infoAbrir(b.dataset.menu);if(b&&b.dataset.menu==='como')bienvenida(true);if(b&&(b.dataset.menu==='foto'||b.dataset.menu==='borrar')){if(route().v!=='fantasy')location.hash='#fantasy';mxAccion('perfil',b.dataset.menu==='borrar'?{dataset:{borrar:1}}:null)}}});
+    if(b&&b.dataset.menu==='tema')temaAbrir();if(b&&['quienes','contacto','terminos','privacidad'].includes(b.dataset.menu))infoAbrir(b.dataset.menu);if(b&&b.dataset.menu==='como')infoAbrir('reglas');if(b&&(b.dataset.menu==='foto'||b.dataset.menu==='borrar')){if(route().v!=='fantasy')location.hash='#fantasy';mxAccion('perfil',b.dataset.menu==='borrar'?{dataset:{borrar:1}}:null)}}});
   document.body.appendChild(el)}
-/* ---------- Bienvenida: qué es el juego, en 4 pantallas (la primera vez, y desde el menú) ---------- */
-const BIENV=[['🐍','Bienvenido a Víbora Fantasy','El fantasy del <b>pádel profesional</b>: ficha a jugadores reales de Premier Padel y suma puntos con lo que hagan en cada torneo.'],
-  ['🎴','Tu equipo','Al entrar abres un <b>sobre con 4 jugadores</b> y tienes <b>100 M</b> para fichar más en el mercado, con pujas a ciegas. Hasta 6 en la plantilla: alineas <b>2 de drive y 2 de revés</b>, y tu <b>Pala de Oro</b> puntúa doble.'],
-  ['🏆','Cómo se puntúa','Victorias, sets, roscos 6-0, sorpresas… desde la previa hasta la final. <b>Los Major cuentan doble.</b> Tu alineación se cierra cuando empieza cada torneo: déjala lista antes.'],
-  ['🤝','Juega con amigos o con todos','<b>Crea tu liga</b> y comparte el código por WhatsApp, o entra en una <b>liga pública</b> con un toque. Activa los avisos para no perderte pujas, ofertas ni el cierre del mercado.']];
+/* ---------- Bienvenida: qué es el juego, en 4 pantallas con dibujo (la primera vez y desde «Cómo se juega») ---------- */
+/* jugadores de ejemplo: los mejores del ranking masculino con foto */
+const bvTop=()=>Object.values(P).filter(p=>p.cat==='men'&&p.rank&&p.photo).sort((a,b)=>a.rank-b.rank).slice(0,4);
+const bvCarta=(p,o={})=>`<span class="bvc${o.oro?' oro':''}" style="${o.st||''}">${p?`<img src="${p.photo}" alt="">`:''}<b>${p?esc(p.sn||p.name):''}</b>${o.lado?`<i>${o.lado}</i>`:''}${o.oro?'<em>×2</em>':''}</span>`;
+const BV_DIB=[
+  en=>{const t=bvTop();return `<div class="bvd abanico">${bvCarta(t[2],{st:'--r:-14deg;--x:-62px'})}${bvCarta(t[1],{st:'--r:14deg;--x:62px'})}${bvCarta(t[0],{st:'--r:0deg;--x:0;--y:-10px'})}</div>`},
+  en=>{const t=bvTop(),D=en?'Drive':'Drive',R=en?'Backhand':'Revés';return `<div class="bvd equipo">${bvCarta(t[0],{lado:D,oro:true})}${bvCarta(t[3],{lado:D})}${bvCarta(t[1],{lado:R})}${bvCarta(t[2],{lado:R})}</div>`},
+  en=>{const t=bvTop();return `<div class="bvd puntos">${bvCarta(t[0])}<div class="chips"><span>+5 <small>${en?'Quarter-final won':'Gana en cuartos'}</small></span><span>+2 <small>${en?'Set won 6-0':'Set 6-0'}</small></span><span class="oro">×2 <small>${en?'Major':'Major'}</small></span></div></div>`},
+  en=>`<div class="bvd tabla">${[[en?'You':'Tú',212,'#D9F03C'],['Nacho',187,'#4FD1C5'],['Ángel',165,'#4C8DFF'],['Lucía',140,'#FF8A65']].map(([n,p,c],i)=>`<div class="fila${i?'':' yo'}"><span class="pos">${i+1}</span><span class="av2" style="background:${c}">${esc(n.slice(0,2).toUpperCase())}</span><b>${esc(n)}</b><span class="pt">${p} <small>pts</small></span></div>`).join('')}</div>`];
+const BIENV={es:[['Bienvenido a Víbora Fantasy','El fantasy del <b>pádel profesional</b>: ficha a jugadores reales de Premier Padel y suma puntos con lo que hagan en cada torneo.'],
+  ['Tu equipo','Empiezas con un <b>sobre de 4 jugadores</b>. Ficha más en el mercado y, en cada torneo, alinea a <b>2 de drive y 2 de revés</b>.'],
+  ['Cómo se puntúa','Tus jugadores suman con cada victoria, set y sorpresa. <b>Los Major cuentan doble.</b>'],
+  ['Juega con amigos','<b>Crea tu liga</b> y compártela por WhatsApp, o entra en una <b>liga pública</b> con un toque.']],
+ en:[['Welcome to Víbora Fantasy','The fantasy game of <b>professional padel</b>: sign real Premier Padel players and score points with what they do in every tournament.'],
+  ['Your team','You start with a <b>pack of 4 players</b>. Sign more in the market and, for each tournament, field <b>2 forehand-side (drive) and 2 backhand-side</b> players.'],
+  ['How you score','Your players score with every win, set and upset. <b>Majors count double.</b>'],
+  ['Play with friends','<b>Create your league</b> and share it on WhatsApp, or join a <b>public league</b> with one tap.']]};
 function bienvenida(forzar){if(!forzar){try{if(localStorage.getItem('vibora-bienvenida'))return}catch(e){return}}if(document.querySelector('.bienv'))return;
-  let k=0;const el=document.createElement('div');el.className='bienv';el.setAttribute('role','dialog');el.setAttribute('aria-label','Bienvenida');
+  const L=BIENV[EN?'en':'es'],tx=EN?{saltar:'Skip',sig:'Next',atras:'Back',fin:'Create my team',ok:'Got it',reglas:'See all the rules'}:{saltar:'Saltar',sig:'Siguiente',atras:'Atrás',fin:'Crear mi equipo',ok:'Entendido',reglas:'Ver todas las reglas'};
+  let k=0;const el=document.createElement('div');el.className='bienv';el.setAttribute('data-notr','');el.setAttribute('role','dialog');el.setAttribute('aria-label',EN?'Welcome':'Bienvenida');
   const fin=()=>{try{localStorage.setItem('vibora-bienvenida','1')}catch(e){}el.remove()};
-  const pinta=()=>{const [ic,t,x]=BIENV[k],u=k===BIENV.length-1;el.innerHTML=`<div style="width:100%;display:flex;justify-content:flex-end"><button type="button" class="btn" data-bv="saltar" style="padding:6px 12px">Saltar</button></div>
-    <div><div class="ic2">${String(k+1).padStart(2,'0')}<small>/${String(BIENV.length).padStart(2,'0')}</small></div><h2>${t}</h2><p>${x}</p></div>
-    <div class="bt"><div class="pts">${BIENV.map((_,i)=>`<i class="${i===k?'on':''}"></i>`).join('')}</div><button type="button" class="btn pri" data-bv="sig" style="padding:14px">${u?(forzar?'Entendido':'Crear mi equipo'):'Siguiente'}</button>${k?'<button type="button" class="btn" data-bv="atras">Atrás</button>':''}</div>`};
-  el.addEventListener('click',e=>{const b=e.target.closest('[data-bv]');if(!b)return;const a=b.dataset.bv;if(a==='saltar')return fin();if(a==='atras'){k--;return pinta()}if(k===BIENV.length-1)return fin();k++;pinta()});
+  const pinta=()=>{const [t,x]=L[k],u=k===L.length-1;el.innerHTML=`<div class="top"><span class="paso">${k+1}/${L.length}</span><button type="button" class="btn" data-bv="saltar" style="padding:6px 12px">${tx.saltar}</button></div>
+    <div class="cuerpo">${BV_DIB[k](EN)}<h2>${t}</h2><p>${x}</p>${u?`<button type="button" class="lnk" data-bv="reglas">${tx.reglas}</button>`:''}</div>
+    <div class="bt"><div class="pts">${L.map((_,i)=>`<i class="${i===k?'on':''}"></i>`).join('')}</div><div class="fila2"><button type="button" class="btn" data-bv="atras"${k?'':' style="visibility:hidden" tabindex="-1" aria-hidden="true"'}>${tx.atras}</button><button type="button" class="btn pri" data-bv="sig">${u?(forzar?tx.ok:tx.fin):tx.sig}</button></div></div>`};
+  el.addEventListener('click',e=>{const b=e.target.closest('[data-bv]');if(!b)return;const a=b.dataset.bv;if(a==='saltar')return fin();if(a==='reglas'){fin();return infoAbrir('reglas')}if(a==='atras'){if(k){k--;pinta()}return}if(k===L.length-1)return fin();k++;pinta()});
   pinta();document.body.appendChild(el)}
 const V={
 inicio(){const nt=nextT(),last=lastPremier();
@@ -1311,7 +1424,7 @@ inicio(){const nt=nextT(),last=lastPremier();
     const odm=od?od.ms.filter(inCat):[],oop=odm.length?`<div class="card oopcard"><h2>Orden de juego · ${dayName(od.k)} · ${odm.length} partidos</h2>${oopBoard(t.id,odm)}<a class="back" style="display:inline-block;margin-top:10px" href="#torneo-${t.id}" data-tv="hr">Ver los otros días ›</a>${OOPNOTE}</div>`:(nx.length?`<div class="list">${nx.map(m=>mc(m,RN[m.round])).join('')}</div>`:'');
     return `<section><a class="livecard" ${lvs(t)} href="#torneo-${t.id}"><h2><span class="dot"></span>En juego ${lvp(t)}</h2><div class="big">${t.name}</div><p class="sub">${tinfo(t)} · Día ${day} de ${tot}</p><div class="track"><i style="width:${Math.round(100*day/tot)}%"></i></div></a>${oop}</section>`}).join('');
   const fin=c=>M.find(m=>m.t===last.id&&m.cat===c&&m.round===1);
-  const lastCard=`<section><div class="card"><h2>${IC.trophy} Último torneo ${lvp(last)}</h2><a href="#torneo-${last.id}"><h1 style="font-size:28px;margin:6px 0 10px">${last.name}</h1></a>${['men','women'].map(c=>{const m=fin(c);return m?`<a href="#partido-${m.id}" style="display:block;padding:8px 0;border-top:1px solid var(--line)"><h2>${c==='men'?'Masculino':'Femenino'}</h2>${rows(m)}</a>`:''}).join('')}</div></section>`;
+  const lastCard=`<section><div class="card"><h2>${IC.trophy} Último torneo ${lvp(last)}</h2><a href="#torneo-${last.id}"><h1 style="font-size:28px;margin:6px 0 10px">${last.name}</h1></a>${[cat].map(c=>{const m=fin(c);return m?`<a href="#partido-${m.id}" style="display:block;padding:8px 0;border-top:1px solid var(--line)"><h2>Final ${c==='men'?'masculina':'femenina'}</h2>${rows(m)}</a>`:''}).join('')}</div></section>`;
   /* títulos por pareja */
   const tp={};M.filter(m=>inCat(m)&&m.round===1&&played(m)&&!tb(m.t).level.startsWith('fip')).forEach(m=>{const pr=m.w?m.b:m.a,k=key(pr),lv=tb(m.t).level;(tp[k]??={pr,n:0,lv:{}}).n++;tp[k].lv[lv]=(tp[k].lv[lv]||0)+1});
   const tl=Object.values(tp).sort((a,b)=>b.n-a.n).slice(0,5),mx=tl.length?tl[0].n:1;
@@ -1322,9 +1435,10 @@ inicio(){const nt=nextT(),last=lastPremier();
   const rach=Object.values(ps).filter(o=>o.st>=3&&recent.has(o.t)).sort((a,b)=>b.st-a.st).slice(0,4);
   const rachS=rach.length?`<section><div class="card"><h2>En racha</h2>${rach.map(o=>`<a class="prow" href="#pareja-${key(o.pr)}">${duo(o.pr)}<span class="tx"><b>${pl(o.pr)}</b><span>Victorias seguidas</span></span><span class="chip fire">${o.st}</span></a>`).join('')}</div></section>`:'';
   /* suben y bajan */
-  const mv=Object.values(P).filter(p=>p.cat===cat&&p.lastT===last.id&&nPlayed(p)>=5).map(p=>({p,d:eloDelta(p)})).sort((a,b)=>b.d-a.d);
+  const tMv=T.filter(t=>!t.hidden&&!isFipT(t)&&M.some(m=>m.t===t.id&&m.cat===cat&&played(m))).sort((a,b)=>a.start<b.start?1:-1)[0]||last;
+  const mv=Object.values(P).filter(p=>p.cat===cat&&p.lastT===tMv.id&&nPlayed(p)>=5).map(p=>({p,d:eloDelta(p)})).sort((a,b)=>b.d-a.d);
   const sel=[...mv.slice(0,3),...mv.slice(-2).filter(x=>x.d<0)];
-  const mvS=sel.length?`<section><div class="card"><h2>Suben y bajan · Elo tras ${last.name}</h2>${sel.map(x=>pline(x.p.id,`<span class="chip ${x.d>=0?'up':'down'}">${x.d>=0?'↑':'↓'} ${Math.abs(x.d)}</span>`,`Elo ${Math.round(x.p.elo)} · ${flag(x.p.nat)} ${x.p.nat||''}`)).join('')}</div></section>`:'';
+  const mvS=sel.length?`<section><div class="card"><h2>Suben y bajan · Elo ${tMv.status==='live'?'en':'tras'} ${tMv.name}${tMv.status==='live'?' (en juego)':''}</h2>${sel.map(x=>pline(x.p.id,`<span class="chip ${x.d>=0?'up':'down'}">${x.d>=0?'↑':'↓'} ${Math.abs(x.d)}</span>`,`Elo ${Math.round(x.p.elo)} · ${flag(x.p.nat)} ${x.p.nat||''}`)).join('')}</div></section>`:'';
   /* sorpresas */
   const sp=M.filter(m=>inCat(m)&&played(m)&&m.pre!=null&&recent.has(m.t)&&nPlayed(P[m.a[0]])>=5&&nPlayed(P[m.b[0]])>=5).sort((x,y)=>winP(x)-winP(y)).slice(0,3);
   const spS=sp.length?`<section><h2>Sorpresas recientes</h2><div class="list">${sp.map(m=>mc(m,`Tenían un ${Math.round(winP(m)*100)}% · ${tb(m.t).name}`)).join('')}</div></section>`:'';
@@ -1434,7 +1548,7 @@ jugador([id]){const p=P[id];if(!p)return V.ranking();const ms=playerMatches(id),
   <div style="margin-top:8px">${res.map(x=>`<a class="tres" href="#partido-${x.m.id}"><span class="tx"><b>${x.t.name}</b> <span class="pill ${x.champ?'hot':x.lvl<0?'next':''}">${x.champ?'Ganó':x.lvl<0?'Sigue en juego':'Llegó a '+RL[x.m.round]}</span><span>vs ${pl(x.s?x.m.a:x.m.b)}</span></span><span class="rs ${x.champ?'gold':x.won?'up':'down'}">${scoreStr(x.m,x.s)}</span></a>`).join('')}</div></div></section>`:''}
   <section><div class="card"><h2>Con cada compañero</h2><table><thead><tr><th>Compañero</th><th>V-D</th><th>% vict.</th><th>Química</th></tr></thead><tbody>${[...partners].map(([q,xs])=>{const rr=rec(xs),ex=xs.reduce((n,x)=>n+(x.m.pre!=null?(x.s?1-x.m.pre:x.m.pre):0.5),0),d=rr.w-ex;return `<tr><td><a href="#pareja-${key([id,q])}">${P[q].name}</a></td><td>${rr.w}-${rr.l}</td><td>${pct(rr)}</td><td class="${d>=0.5?'up':d<=-0.5?'down':''}">${d>=0?'+':'−'}${Math.abs(d).toFixed(1)}</td></tr>`}).join('')||'<tr><td>Sin partidos con resultado</td><td></td><td></td><td></td></tr>'}</tbody></table><p class="sub">Química: victorias de más o de menos respecto a lo que pronosticaba el Elo.</p></div></section>
   <section><div class="card"><h2>Según la pista</h2><table><thead><tr><th>Condición</th><th>V-D</th><th>% vict.</th></tr></thead><tbody><tr><td>Indoor</td><td>${inR.w}-${inR.l}</td><td>${pct(inR)}</td></tr><tr><td>Outdoor</td><td>${outR.w}-${outR.l}</td><td>${pct(outR)}</td></tr></tbody></table><p class="sub">Solo torneos con el tipo de pista informado.</p></div></section>${NOTE}`},
-pareja(a){const pr=a.slice(0,2);if(pr.length<2||!P[pr[0]]||!P[pr[1]])return V.ranking();const ms=pairMatches(pr),r=rec(ms);
+pareja(a){const pr=ordPar(a.slice(0,2));if(pr.length<2||!P[pr[0]]||!P[pr[1]])return V.ranking();const ms=pairMatches(pr),r=rec(ms);
   return `<a class="back" href="#ranking">‹ Ranking</a>
   <div style="display:flex;gap:14px;align-items:center">${duo(pr,'lg')}<div><h1>${pl(pr)}</h1><p class="sub">${pr.map(i=>`<a class="back" href="#jugador-${i}">${P[i].name}</a>`).join(' y ')}</p>${ms.length?`<div class="form" style="margin-top:8px">${ms.slice(-6).map(x=>`<i class="${x.won?'w':'l'}">${x.won?'V':'D'}</i>`).join('')}</div>`:''}</div></div>
   <div class="kpis"><div class="kpi a"><b>${Math.round(avg(pr))}</b><span>Elo medio</span></div><div class="kpi b"><b>${r.w}-${r.l}</b><span>Juntos</span></div><div class="kpi c"><b>${titles(ms)}</b><span>Títulos juntos</span></div></div>
@@ -1607,7 +1721,7 @@ async function mxFotoSubir(){const yo=mx.ses.user.id,up=await mx.sb.storage.from
 function mxFotoPreparar(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const l=Math.min(im.naturalWidth,im.naturalHeight),c=document.createElement('canvas');c.width=c.height=320;
   c.getContext('2d').drawImage(im,(im.naturalWidth-l)/2,(im.naturalHeight-l)/2,l,l,0,0,320,320);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('foto')),'image/jpeg',.85)};im.onerror=()=>rej(new Error('foto'));im.src=u})}
 document.addEventListener('change',async e=>{const t=e.target;if(!t.matches||!t.matches('[data-mxfoto]')||!t.files||!t.files[0])return;
-  try{const b=await mxFotoPreparar(t.files[0]);if(mx.fotoNueva)URL.revokeObjectURL(mx.fotoNueva.url);mx.fotoNueva={blob:b,url:URL.createObjectURL(b)};if(t.dataset.mxfoto==='reg'){const v=document.getElementById('fxfotoprev'),tt=document.getElementById('fxfotot');if(v){v.innerHTML='';v.style.background=`url('${mx.fotoNueva.url}') center/cover`;v.parentNode.classList.add('si')}if(tt)tt.textContent='¡Qué buena foto! Toca para cambiarla';return}mx.msg=null;rerender()}
+  try{const b=await mxFotoPreparar(t.files[0]);if(mx.fotoNueva)URL.revokeObjectURL(mx.fotoNueva.url);mx.fotoNueva={blob:b,url:URL.createObjectURL(b)};if(t.dataset.mxfoto==='reg'){const v=document.getElementById('fxfotoprev'),tt=document.getElementById('fxfotot');if(v){v.innerHTML='';v.style.background=`url('${mx.fotoNueva.url}') center/cover`;v.parentNode.classList.add('si')}if(tt)tt.textContent='¡Buena foto! Toca para cambiarla';return}mx.msg=null;rerender()}
   catch(x){toast('No se ha podido leer esa imagen. Prueba con otra.')}});
 
 /* Vistas */
@@ -1617,14 +1731,14 @@ function mxView(){
   const msg=mx.msg?`<p class="fxmsg${mx.msg.ok?' ok':''}" role="status">${esc(mx.msg.t)}</p>`:'';
   const logo=`<div class="mxlogo"><img src="icon-192.png" alt="Víbora"><b>Víbora</b><i>FANTASY</i></div>`;
   if(!mx.ses){setTimeout(()=>bienvenida(),0);return `${logo}<p class="sub" style="text-align:center">El fantasy del pádel profesional. Ficha a tus jugadores y pica a tus amigos.</p>${msg}
-    <form class="card fxform" data-fx="login"><b style="font-size:18px">Crea tu cuenta o entra</b>${mxOAuthBtns('oauth')}${OAUTH.length?'<p class="sub" style="font-size:13px;text-align:center;margin:2px 0">o con tu email</p>':''}<label for="fxmail">Tu email</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(mx.email)}">
-    <button class="btn pri" type="submit" style="align-self:stretch">${mx.enviado?'Volver a enviar':'Continuar con mi email'}</button><p class="sub" style="font-size:12px">Te mandamos un enlace para entrar sin contraseña. Tu equipo queda guardado aunque cambies de móvil.</p></form>
+    <form class="card fxform fxlogin" data-fx="login"><b style="font-size:20px">Crea tu cuenta o entra</b><span class="sub" style="font-size:13px;margin:-4px 0 4px">Tu equipo queda guardado y juegas desde cualquier móvil.</span>${mxOAuthBtns('oauth')}${OAUTH.length?'<p class="sub" style="font-size:13px;text-align:center;margin:2px 0">o con tu email</p>':''}<label for="fxmail">Tu email</label><input id="fxmail" type="email" required autocomplete="email" placeholder="tu@correo.com" value="${esc(mx.email)}">
+    <button class="btn pri" type="submit" style="align-self:stretch">${mx.enviado?'Volver a enviar':'Continuar con mi email'}</button><p class="sub" style="font-size:12px">Te mandamos un enlace para entrar sin contraseña.</p><p class="fxlegal">Al continuar aceptas los <a href="#" data-info="terminos">Términos de uso</a> y la <a href="#" data-info="privacidad">Política de privacidad</a>.</p></form>
     ${mx.enviado&&D.otp?`<form class="card fxform" data-fx="codigo"><label for="fxcod">O escribe el código del correo</label><input id="fxcod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required><button class="btn" type="submit">Entrar con el código</button></form>`:''}
-    <form class="card fxform fxreg" data-fx="rapido" style="opacity:.92"><b>¿Prefieres probar sin email?</b><label class="fxfoto"><span class="ring"><span id="fxfotoprev" class="ph"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.7l1.3-2h5l1.3 2h1.7A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg></span><span class="mas" aria-hidden="true">+</span></span><b id="fxfotot">Toca para añadir tu foto</b><small>Opcional · la cambias cuando quieras</small><input type="file" accept="image/*" data-mxfoto="reg"></label><label for="fxnom0">Tu nombre de mánager</label><input id="fxnom0" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid" autocomplete="nickname">${ACEPTA}
-    <button class="btn" type="submit" style="align-self:stretch">Probar ahora</button><p class="sub" style="font-size:12px">Se guarda solo en este móvil. Puedes añadir tu email cuando quieras para no perderlo.</p></form>
-    <button type="button" class="btn" data-bvabrir style="align-self:center">📖 Cómo se juega</button>${NOTE}`}
+    <details class="fxinv"${mx.invitado?' open':''}><summary>¿Prefieres probar sin cuenta?<small>Modo invitado · se guarda solo en este móvil</small></summary><form class="card fxform fxreg" data-fx="rapido"><label class="fxfoto"><span class="ring"><span id="fxfotoprev" class="ph"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.7l1.3-2h5l1.3 2h1.7A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg></span><span class="mas" aria-hidden="true">+</span></span><span class="tx"><b id="fxfotot">Añadir foto</b><small>Opcional · la cambias cuando quieras</small></span><input type="file" accept="image/*" data-mxfoto="reg"></label><label for="fxnom0">Tu nombre de mánager</label><input id="fxnom0" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid" autocomplete="nickname">${ACEPTA}
+    <button class="btn" type="submit" style="align-self:stretch">Probar ahora</button><p class="sub" style="font-size:12px">Puedes añadir tu email cuando quieras para no perderlo.</p></form></details>
+    <button type="button" class="lnk" data-bvabrir style="align-self:center;color:var(--cyan);font-weight:700;padding:8px">Cómo se juega</button>${NOTE}`}
   if(mx.perfil===undefined||mx.ligas===null&&mx.perfil)return `<h1>Fantasy</h1><p class="sub">Cargando…</p>`;
-  if(!mx.perfil)return `${logo}${msg}<form class="card fxform" data-fx="perfil"><b style="font-size:20px;text-align:center">¡Ya estás dentro!</b><span class="sub" style="text-align:center;margin-bottom:4px">Así te verán en la clasificación y en el chat</span><label class="fxfoto"><span class="ring"><span id="fxfotoprev" class="ph"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.7l1.3-2h5l1.3 2h1.7A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg></span><span class="mas" aria-hidden="true">+</span></span><b id="fxfotot">Toca para añadir tu foto</b><small>Opcional · la cambias cuando quieras</small><input type="file" accept="image/*" data-mxfoto="reg"></label><label for="fxnom">Tu nombre de mánager</label><input id="fxnom" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid">${ACEPTA}<button class="btn pri" type="submit" style="align-self:stretch;padding:14px;margin-top:6px">Empezar</button></form>`;
+  if(!mx.perfil)return `${logo}${msg}<form class="card fxform" data-fx="perfil"><b style="font-size:20px;text-align:center">¡Ya estás dentro!</b><span class="sub" style="text-align:center;margin-bottom:4px">Así te verán en la clasificación y en el chat</span><label class="fxfoto"><span class="ring"><span id="fxfotoprev" class="ph"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.7l1.3-2h5l1.3 2h1.7A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg></span><span class="mas" aria-hidden="true">+</span></span><span class="tx"><b id="fxfotot">Añadir foto</b><small>Opcional · la cambias cuando quieras</small></span><input type="file" accept="image/*" data-mxfoto="reg"></label><label for="fxnom">Tu nombre de mánager</label><input id="fxnom" required minlength="3" maxlength="20" pattern="[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ _.\\-]{3,20}" placeholder="Ej.: LaVíboraDeMadrid">${ACEPTA}<button class="btn pri" type="submit" style="align-self:stretch;padding:14px;margin-top:6px">Empezar</button></form>`;
   if(mx.vista==='perfil')return mxPerfil(msg);
   if(mx.vista==='liga'&&mx.L)return mxLigaView(msg);
   if(mx.vista==='crear')return mxCrear(msg);
@@ -2137,7 +2251,7 @@ V.fantasy=()=>mxView();
 if(SUPA){document.body.classList.add('solofx');const bl=document.getElementById('brandlnk');if(bl)bl.href='#fantasy';const n=document.getElementById('navfx');if(n)n.hidden=false;document.querySelector('nav.bot').style.gridTemplateColumns='repeat(5,1fr)'}
 
 /* ---------- Rutas: solo #nombre con letras, cifras y guiones ---------- */
-function route(){const h=(location.hash||(SUPA?'#fantasy':'#inicio')).slice(1).split('-');return{v:V[h[0]]?h[0]:(SUPA?'fantasy':'inicio'),args:h.slice(1).map(Number)}}
+function route(){const h=(location.hash||(SUPA?'#fantasy':'#inicio')).slice(1).split('-');if(RUTA_ES[h[0]])h[0]=RUTA_ES[h[0]];return{v:V[h[0]]?h[0]:(SUPA?'fantasy':'inicio'),args:h.slice(1).map(Number)}}
 const TAB={favoritos:'',inicio:'inicio',partido:'inicio',torneos:'torneos',torneo:'torneos',ranking:'ranking',jugador:'ranking',pareja:'ranking',h2h:'h2h',buscar:'',records:'records',fantasy:'fantasy'};
 function render(){const r=route();
   if(r.v==='jugador'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='pareja'&&P[r.args[0]])cat=P[r.args[0]].cat;if(r.v==='partido'&&MM[r.args[0]])cat=MM[r.args[0]].cat;
@@ -2147,8 +2261,9 @@ function render(){const r=route();
   const fn=document.getElementById('favn'),nf=[...favs].filter(i=>P[i]).length;if(fn){fn.hidden=!nf;fn.textContent=nf}
   document.getElementById('favbtn').classList.toggle('on',r.v==='favoritos');
   document.body.classList.toggle('modofx',r.v==='fantasy')}
-window.addEventListener('hashchange',()=>{document.getElementById('app').className='';render();window.scrollTo(0,0)});
-document.addEventListener('click',e=>{if(e.target.closest('#menubtn')){menuAbrir();return}{const o=e.target.closest('[data-oauth],[data-oauthlink]');if(o){e.preventDefault();mxOAuth(o.dataset.oauth||o.dataset.oauthlink,!!o.dataset.oauthlink);return}}if(e.target.closest('[data-bvabrir]')){bienvenida(true);return}if(e.target.closest('#temabtn')){temaAbrir();return}const b=e.target.closest('[data-rank]');if(b){rankTab=b.dataset.rank;render();return}
+const hashAlIdioma=()=>{if(EN){const e=hashEN(location.hash);if(e!==location.hash)history.replaceState(null,'',e)}};hashAlIdioma();
+window.addEventListener('hashchange',()=>{hashAlIdioma();document.getElementById('app').className='';render();window.scrollTo(0,0)});
+document.addEventListener('click',e=>{if(e.target.closest('#menubtn')){menuAbrir();return}{const o=e.target.closest('[data-oauth],[data-oauthlink]');if(o){e.preventDefault();mxOAuth(o.dataset.oauth||o.dataset.oauthlink,!!o.dataset.oauthlink);return}}if(e.target.closest('[data-bvabrir]')){infoAbrir('reglas');return}if(e.target.closest('#temabtn')){temaAbrir();return}const b=e.target.closest('[data-rank]');if(b){rankTab=b.dataset.rank;render();return}
   const tv=e.target.closest('[data-tv]');if(tv){tView=tv.dataset.tv;render();return}
   const fb=e.target.closest('[data-fav]');if(fb){const i=+fb.dataset.fav;favs.has(i)?favs.delete(i):(favs.add(i),gcEvent('favorito/'+slug(P[i].name),'Favorito: '+P[i].name));saveLocal();document.getElementById('app').className='noanim';render();return}
   const pk=e.target.closest('[data-pick]');if(pk){const [mi,sd]=pk.dataset.pick.split(':').map(Number);if(picks[mi]===sd)delete picks[mi];else{picks[mi]=sd;if(!window.gcQn){window.gcQn=1;gcEvent('quiniela','Rellena la quiniela')}}saveLocal();const w=document.querySelector('.brwrap'),sl=w?w.scrollLeft:0;document.getElementById('app').className='noanim';render();const w2=document.querySelector('.brwrap');if(w2)w2.scrollLeft=sl;return}
